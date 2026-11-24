@@ -15,7 +15,7 @@ from institutions.permissions import InstitutionRole, resolve_membership
 from ledger.models import Account, balance
 from settlement.models import SettlementBatch
 
-from .domain import PaymentError, price, resolve_amount, transition, validate_fields
+from .domain import PaymentError, price, resolve_source, transition
 from .models import Method, Status, Transaction
 from .providers import INSTRUCTIONS, SCENARIOS, InvalidSignature, get_provider
 from .webhooks import process_webhook
@@ -30,6 +30,8 @@ class PaymentCreateSerializer(serializers.Serializer):
     method = serializers.ChoiceField(Method.choices)
     payer_phone = serializers.RegexField(r"^\+258[28]\d{8}$", required=False, allow_blank=True)
     scenario = serializers.ChoiceField(list(SCENARIOS), required=False, help_text="Só em ambiente de demonstração.")
+    quote = serializers.CharField(required=False, help_text="Obrigatório em serviços de valor por consulta.")
+    request = serializers.CharField(required=False, help_text="Código do pedido (serviços de nível 3).")
 
 
 class PaymentSerializer(serializers.ModelSerializer):
@@ -85,21 +87,20 @@ class PaymentCreate(APIView):
         if d.get("scenario") and not settings.DEMO_MODE:
             return Response({"scenario": "Indisponível fora do ambiente de demonstração."}, status=400)
         try:
-            payload = validate_fields(service, d["fields"])
-            amounts = price(service, resolve_amount(service, d.get("amount")))
-        except PaymentError as e:
-            return Response({"detail": e.args[0]} if isinstance(e.args[0], str) else {"fields": e.args[0]}, 400)
-
-        try:
             with db.atomic():
+                src = resolve_source(service, d)
+                amount = src.pop("amount")
                 txn = Transaction.objects.create(
-                    service=service, institution=service.institution, payload=payload,
+                    service=service, institution=service.institution,
                     user=request.user if request.user.is_authenticated else None,
-                    payer_phone=d.get("payer_phone", ""), description=service.name, method=d["method"],
-                    demo_scenario=d.get("scenario", ""), idempotency_key=key, request_hash=req_hash, **amounts,
+                    payer_phone=d.get("payer_phone", ""), method=d["method"],
+                    demo_scenario=d.get("scenario", ""), idempotency_key=key, request_hash=req_hash,
+                    **src, **price(service, amount),
                 )  # fmt: skip
                 init = get_provider(txn.method).initiate(txn)
                 transition(txn.pk, Status.PENDING, provider_ref=init.provider_ref)
+        except PaymentError as e:
+            return Response({"detail": e.args[0]} if isinstance(e.args[0], str) else {"fields": e.args[0]}, 400)
         except IntegrityError:  # corrida com o mesmo Idempotency-Key
             return self._replay(Transaction.objects.get(idempotency_key=key), req_hash)
         txn.refresh_from_db()

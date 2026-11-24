@@ -52,6 +52,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/catalog/services/{id}/quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Nível 1/2 com valor por consulta: pergunta à instituição quanto se deve. */
+        post: operations["catalog_services_quote_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -150,6 +167,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/portal/{institution_slug}/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["portal_requests_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/{institution_slug}/requests/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["portal_requests_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/{institution_slug}/requests/{code}/attachments/{att_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["portal_requests_attachments_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/{institution_slug}/requests/{code}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["portal_requests_status_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/portal/{institution_slug}/services": {
         parameters: {
             query?: never;
@@ -203,6 +284,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description multipart: `service`, `fields` (JSON), e um ficheiro por cada campo do tipo file. */
+        post: operations["requests_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/requests/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description O código (~50 bits aleatórios) dá acesso ao estado; formulário e anexos não são expostos. */
+        get: operations["requests_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/webhooks/{method}": {
         parameters: {
             query?: never;
@@ -223,6 +338,17 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        Attachment: {
+            readonly id: number;
+            field: string;
+            original_name: string;
+            content_type: string;
+            /** Format: int64 */
+            size: number;
+            sha256: string;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
         Balances: {
             a_liquidar: number;
             liquidado: number;
@@ -246,6 +372,12 @@ export interface components {
          * @enum {string}
          */
         CommissionPayerEnum: "cidadao" | "instituicao";
+        Event: {
+            status: components["schemas"]["StatusC51Enum"];
+            note?: string;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
         Health: {
             status: string;
             database: string;
@@ -285,6 +417,21 @@ export interface components {
          * @enum {string}
          */
         MethodEnum: "mpesa" | "emola" | "mkesh" | "cartao" | "referencia_bancaria" | "qr";
+        PaginatedRequestPublicList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["RequestPublic"][];
+        };
         PaginatedServicePortalList: {
             /** @example 123 */
             count: number;
@@ -368,7 +515,7 @@ export interface components {
         };
         Payment: {
             readonly reference: string;
-            status?: components["schemas"]["StatusEnum"];
+            status?: components["schemas"]["PaymentStatusEnum"];
             service: number;
             service_name: string;
             institution_name: string;
@@ -415,7 +562,23 @@ export interface components {
              *     * `webhook_repetido` - webhook_repetido
              */
             scenario?: components["schemas"]["ScenarioEnum"];
+            /** @description Obrigatório em serviços de valor por consulta. */
+            quote?: string;
+            /** @description Código do pedido (serviços de nível 3). */
+            request?: string;
         };
+        /**
+         * @description * `CRIADA` - Created
+         *     * `PENDENTE` - Pending
+         *     * `CONFIRMADA` - Confirmed
+         *     * `LIQUIDADA` - Settled
+         *     * `FALHADA` - Failed
+         *     * `EXPIRADA` - Expired
+         *     * `REVERTIDA` - Reversed
+         *     * `EM_DISPUTA` - Disputed
+         * @enum {string}
+         */
+        PaymentStatusEnum: "CRIADA" | "PENDENTE" | "CONFIRMADA" | "LIQUIDADA" | "FALHADA" | "EXPIRADA" | "REVERTIDA" | "EM_DISPUTA";
         /**
          * @description * `fixo` - Valor fixo
          *     * `consulta` - Valor obtido por consulta
@@ -423,6 +586,58 @@ export interface components {
          * @enum {string}
          */
         PricingEnum: "fixo" | "consulta" | "aberto";
+        QuoteRequest: {
+            fields: {
+                [key: string]: string;
+            };
+        };
+        QuoteResponse: {
+            readonly id: string;
+            /** Format: int64 */
+            amount: number;
+            description: string;
+            holder?: string;
+            /** Format: date-time */
+            expires_at: string;
+            commission: number;
+            total: number;
+            commission_payer: string;
+        };
+        RequestCreate: {
+            service: number;
+            /** @description JSON */
+            fields: string;
+            applicant_phone?: string;
+        };
+        RequestPortal: {
+            readonly code: string;
+            status?: components["schemas"]["StatusC51Enum"];
+            service: number;
+            service_name: string;
+            institution_name: string;
+            amount: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            events: components["schemas"]["Event"][];
+            form?: unknown;
+            applicant_phone?: string;
+            attachments: components["schemas"]["Attachment"][];
+        };
+        RequestPublic: {
+            readonly code: string;
+            status?: components["schemas"]["StatusC51Enum"];
+            service: number;
+            service_name: string;
+            institution_name: string;
+            amount: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            events: components["schemas"]["Event"][];
+        };
         /**
          * @description * `admin` - Administrador
          *     * `financeiro` - Financeiro
@@ -534,17 +749,23 @@ export interface components {
             readonly created_at: string;
         };
         /**
-         * @description * `CRIADA` - Created
-         *     * `PENDENTE` - Pending
-         *     * `CONFIRMADA` - Confirmed
-         *     * `LIQUIDADA` - Settled
-         *     * `FALHADA` - Failed
-         *     * `EXPIRADA` - Expired
-         *     * `REVERTIDA` - Reversed
-         *     * `EM_DISPUTA` - Disputed
+         * @description * `AGUARDA_PAGAMENTO` - A aguardar pagamento
+         *     * `SUBMETIDO` - Submetido à instituição
+         *     * `EM_ANALISE` - Em análise
+         *     * `PENDENTE_INFO` - Falta informação
+         *     * `APROVADO` - Aprovado
+         *     * `PRONTO` - Pronto para levantamento
+         *     * `CONCLUIDO` - Concluído
+         *     * `REJEITADO` - Rejeitado
+         *     * `CANCELADO` - Cancelado
          * @enum {string}
          */
-        StatusEnum: "CRIADA" | "PENDENTE" | "CONFIRMADA" | "LIQUIDADA" | "FALHADA" | "EXPIRADA" | "REVERTIDA" | "EM_DISPUTA";
+        StatusC51Enum: "AGUARDA_PAGAMENTO" | "SUBMETIDO" | "EM_ANALISE" | "PENDENTE_INFO" | "APROVADO" | "PRONTO" | "CONCLUIDO" | "REJEITADO" | "CANCELADO";
+        StatusChange: {
+            status: components["schemas"]["StatusC51Enum"];
+            /** @default  */
+            note: string;
+        };
         /**
          * @description * `text` - text
          *     * `number` - number
@@ -625,6 +846,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ServicePublic"];
+                };
+            };
+        };
+    };
+    catalog_services_quote_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuoteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["QuoteRequest"];
+                "multipart/form-data": components["schemas"]["QuoteRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteResponse"];
                 };
             };
         };
@@ -759,6 +1007,103 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Balances"];
+                };
+            };
+        };
+    };
+    portal_requests_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+            };
+            header?: never;
+            path: {
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedRequestPublicList"];
+                };
+            };
+        };
+    };
+    portal_requests_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestPortal"];
+                };
+            };
+        };
+    };
+    portal_requests_attachments_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                att_id: number;
+                code: string;
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": string;
+                };
+            };
+        };
+    };
+    portal_requests_status_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusChange"];
+                "application/x-www-form-urlencoded": components["schemas"]["StatusChange"];
+                "multipart/form-data": components["schemas"]["StatusChange"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestPortal"];
                 };
             };
         };
@@ -915,6 +1260,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaginatedSettlementList"];
+                };
+            };
+        };
+    };
+    requests_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["RequestCreate"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestPublic"];
+                };
+            };
+        };
+    };
+    requests_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestPublic"];
                 };
             };
         };

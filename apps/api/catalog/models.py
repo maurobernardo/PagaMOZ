@@ -42,6 +42,8 @@ class Service(Commission):
     max_amount = models.PositiveBigIntegerField("máximo (centavos)", null=True, blank=True)
     # Campos que o cidadão preenche: [{"name","label","type","required","pattern"}]
     fields = models.JSONField(default=list, blank=True)
+    connector = models.CharField(max_length=40, default="simulado")
+    connector_config = models.JSONField(default=dict, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -67,6 +67,12 @@ class Transaction(models.Model):
     expires_at = models.DateTimeField(default=default_expiry)
     confirmed_at = models.DateTimeField(null=True, blank=True)
     settled_at = models.DateTimeField(null=True, blank=True)
+    quote = models.OneToOneField("connectors.Quote", null=True, blank=True, on_delete=models.PROTECT)
+    service_request = models.ForeignKey(
+        "servicerequests.ServiceRequest", null=True, blank=True, on_delete=models.PROTECT, related_name="payments"
+    )
+    institution_ref = models.CharField(max_length=64, blank=True)  # recibo da instituição (confirm_payment)
+    institution_notified_at = models.DateTimeField(null=True, blank=True)
     settlement = models.ForeignKey(
         "settlement.SettlementBatch", null=True, blank=True, on_delete=models.PROTECT, related_name="transactions"
     )

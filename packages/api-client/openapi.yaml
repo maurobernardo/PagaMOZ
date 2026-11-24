@@ -65,6 +65,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/ServicePublic'
           description: ''
+  /api/catalog/services/{id}/quote:
+    post:
+      operationId: catalog_services_quote_create
+      description: 'Nível 1/2 com valor por consulta: pergunta à instituição quanto
+        se deve.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - catalog
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuoteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/QuoteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/QuoteRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResponse'
+          description: ''
   /api/health:
     get:
       operationId: health_retrieve
@@ -192,6 +227,125 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Balances'
+          description: ''
+  /api/portal/{institution_slug}/requests:
+    get:
+      operationId: portal_requests_list
+      parameters:
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - portal
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRequestPublicList'
+          description: ''
+  /api/portal/{institution_slug}/requests/{code}:
+    get:
+      operationId: portal_requests_retrieve
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestPortal'
+          description: ''
+  /api/portal/{institution_slug}/requests/{code}/attachments/{att_id}:
+    get:
+      operationId: portal_requests_attachments_retrieve
+      parameters:
+      - in: path
+        name: att_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: code
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  /api/portal/{institution_slug}/requests/{code}/status:
+    post:
+      operationId: portal_requests_status_create
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusChange'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StatusChange'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StatusChange'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestPortal'
           description: ''
   /api/portal/{institution_slug}/services:
     get:
@@ -385,6 +539,52 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedSettlementList'
           description: ''
+  /api/requests:
+    post:
+      operationId: requests_create
+      description: 'multipart: `service`, `fields` (JSON), e um ficheiro por cada
+        campo do tipo file.'
+      tags:
+      - requests
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RequestCreate'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestPublic'
+          description: ''
+  /api/requests/{code}:
+    get:
+      operationId: requests_retrieve
+      description: O código (~50 bits aleatórios) dá acesso ao estado; formulário
+        e anexos não são expostos.
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        required: true
+      tags:
+      - requests
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestPublic'
+          description: ''
   /api/webhooks/{method}:
     post:
       operationId: webhooks_create
@@ -407,6 +607,41 @@ paths:
           description: ''
 components:
   schemas:
+    Attachment:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        field:
+          type: string
+          maxLength: 60
+        original_name:
+          type: string
+          maxLength: 200
+        content_type:
+          type: string
+          maxLength: 60
+        size:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        sha256:
+          type: string
+          maxLength: 64
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - content_type
+      - created_at
+      - field
+      - id
+      - original_name
+      - sha256
+      - size
     Balances:
       type: object
       properties:
@@ -463,6 +698,21 @@ components:
       description: |-
         * `cidadao` - Cidadão
         * `instituicao` - Instituição
+    Event:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/StatusC51Enum'
+        note:
+          type: string
+          maxLength: 500
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - status
     Health:
       type: object
       properties:
@@ -552,6 +802,29 @@ components:
         * `cartao` - Cartão Visa/Mastercard
         * `referencia_bancaria` - Referência bancária
         * `qr` - QR Code
+    PaginatedRequestPublicList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RequestPublic'
     PaginatedServicePortalList:
       type: object
       required:
@@ -700,7 +973,7 @@ components:
           type: string
           readOnly: true
         status:
-          $ref: '#/components/schemas/StatusEnum'
+          $ref: '#/components/schemas/PaymentStatusEnum'
         service:
           type: integer
         service_name:
@@ -805,9 +1078,35 @@ components:
             * `timeout` - timeout
             * `duplicado` - duplicado
             * `webhook_repetido` - webhook_repetido
+        quote:
+          type: string
+          description: Obrigatório em serviços de valor por consulta.
+        request:
+          type: string
+          description: Código do pedido (serviços de nível 3).
       required:
       - method
       - service
+    PaymentStatusEnum:
+      enum:
+      - CRIADA
+      - PENDENTE
+      - CONFIRMADA
+      - LIQUIDADA
+      - FALHADA
+      - EXPIRADA
+      - REVERTIDA
+      - EM_DISPUTA
+      type: string
+      description: |-
+        * `CRIADA` - Created
+        * `PENDENTE` - Pending
+        * `CONFIRMADA` - Confirmed
+        * `LIQUIDADA` - Settled
+        * `FALHADA` - Failed
+        * `EXPIRADA` - Expired
+        * `REVERTIDA` - Reversed
+        * `EM_DISPUTA` - Disputed
     PricingEnum:
       enum:
       - fixo
@@ -818,6 +1117,145 @@ components:
         * `fixo` - Valor fixo
         * `consulta` - Valor obtido por consulta
         * `aberto` - Valor introduzido pelo cidadão
+    QuoteRequest:
+      type: object
+      properties:
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - fields
+    QuoteResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        amount:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        description:
+          type: string
+          maxLength: 200
+        holder:
+          type: string
+          maxLength: 80
+        expires_at:
+          type: string
+          format: date-time
+        commission:
+          type: integer
+        total:
+          type: integer
+        commission_payer:
+          type: string
+      required:
+      - amount
+      - commission
+      - commission_payer
+      - description
+      - expires_at
+      - id
+      - total
+    RequestCreate:
+      type: object
+      properties:
+        service:
+          type: integer
+        fields:
+          type: string
+          description: JSON
+        applicant_phone:
+          type: string
+      required:
+      - fields
+      - service
+    RequestPortal:
+      type: object
+      properties:
+        code:
+          type: string
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/StatusC51Enum'
+        service:
+          type: integer
+        service_name:
+          type: string
+        institution_name:
+          type: string
+        amount:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
+        form: {}
+        applicant_phone:
+          type: string
+          maxLength: 13
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attachment'
+      required:
+      - amount
+      - attachments
+      - code
+      - created_at
+      - events
+      - institution_name
+      - service
+      - service_name
+      - updated_at
+    RequestPublic:
+      type: object
+      properties:
+        code:
+          type: string
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/StatusC51Enum'
+        service:
+          type: integer
+        service_name:
+          type: string
+        institution_name:
+          type: string
+        amount:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
+      required:
+      - amount
+      - code
+      - created_at
+      - events
+      - institution_name
+      - service
+      - service_name
+      - updated_at
     RoleEnum:
       enum:
       - admin
@@ -1067,26 +1505,39 @@ components:
       - gross
       - id
       - net
-    StatusEnum:
+    StatusC51Enum:
       enum:
-      - CRIADA
-      - PENDENTE
-      - CONFIRMADA
-      - LIQUIDADA
-      - FALHADA
-      - EXPIRADA
-      - REVERTIDA
-      - EM_DISPUTA
+      - AGUARDA_PAGAMENTO
+      - SUBMETIDO
+      - EM_ANALISE
+      - PENDENTE_INFO
+      - APROVADO
+      - PRONTO
+      - CONCLUIDO
+      - REJEITADO
+      - CANCELADO
       type: string
       description: |-
-        * `CRIADA` - Created
-        * `PENDENTE` - Pending
-        * `CONFIRMADA` - Confirmed
-        * `LIQUIDADA` - Settled
-        * `FALHADA` - Failed
-        * `EXPIRADA` - Expired
-        * `REVERTIDA` - Reversed
-        * `EM_DISPUTA` - Disputed
+        * `AGUARDA_PAGAMENTO` - A aguardar pagamento
+        * `SUBMETIDO` - Submetido à instituição
+        * `EM_ANALISE` - Em análise
+        * `PENDENTE_INFO` - Falta informação
+        * `APROVADO` - Aprovado
+        * `PRONTO` - Pronto para levantamento
+        * `CONCLUIDO` - Concluído
+        * `REJEITADO` - Rejeitado
+        * `CANCELADO` - Cancelado
+    StatusChange:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/StatusC51Enum'
+        note:
+          type: string
+          default: ''
+          maxLength: 500
+      required:
+      - status
     TypeEnum:
       enum:
       - text

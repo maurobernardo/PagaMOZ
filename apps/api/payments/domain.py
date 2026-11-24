@@ -63,10 +63,7 @@ def resolve_amount(service, requested: int | None) -> int:
         if service.max_amount and requested > service.max_amount:
             raise PaymentError("Valor acima do máximo.")
         return requested
-    # ponytail: "consulta" usa o valor cotado pelo conector (Fase 3); até lá aceita o valor enviado.
-    if not requested or requested <= 0:
-        raise PaymentError("Valor por consultar.")
-    return requested
+    raise PaymentError("Este serviço exige consulta prévia do valor (quote).")
 
 
 def validate_fields(service, payload: dict) -> dict:
@@ -135,6 +132,50 @@ def transition(txn_id: int, new: str, *, reason: str = "", provider_ref: str = "
             setattr(txn, k, v)
         txn.save()
         _ledger(txn, new, old)
+        if new == S.CONFIRMED and old != S.DISPUTED:
+            if txn.service_request_id:
+                from servicerequests.domain import mark_paid
+
+                mark_paid(txn.service_request_id)
+            from .tasks import notify_institution
+
+            db.on_commit(lambda: notify_institution.delay(txn.pk))
+        if new == S.REVERSED:
+            from .tasks import reverse_at_institution
+
+            db.on_commit(lambda: reverse_at_institution.delay(txn.pk))
         record(f"payment.{new.lower()}", actor=actor, institution=txn.institution, target=txn,
                de=old, reason=reason)  # fmt: skip
     return True
+
+
+def resolve_source(service, data: dict) -> dict:
+    """De onde vêm valor e dados do pagamento: pedido (nível 3), cotação (consulta) ou formulário.
+
+    Chamar dentro de transacção: bloqueia a cotação/pedido para não serem usados duas vezes.
+    """
+    from connectors.models import Quote
+    from servicerequests.models import RequestStatus, ServiceRequest
+
+    if service.integration_level == 3:
+        req = ServiceRequest.objects.select_for_update().filter(code=data.get("request", ""), service=service).first()
+        if req is None:
+            raise PaymentError("Crie primeiro o pedido (com anexos) e indique o código.")
+        if req.status != RequestStatus.AWAITING_PAYMENT:
+            raise PaymentError("Este pedido já não aguarda pagamento.")
+        live = [S.CREATED, S.PENDING, S.CONFIRMED, S.SETTLED, S.DISPUTED]
+        if req.payments.filter(status__in=live).exists():
+            raise PaymentError("Já existe um pagamento em curso para este pedido.")
+        return {"amount": resolve_amount(service, data.get("amount")), "payload": req.form,
+                "description": service.name, "service_request": req}  # fmt: skip
+
+    if service.pricing == "consulta":
+        q = Quote.objects.select_for_update().filter(pk=data.get("quote", ""), service=service).first()
+        if q is None or not q.is_valid:
+            raise PaymentError("Consulta expirada ou inválida. Consulte o valor novamente.")
+        q.used_at = timezone.now()
+        q.save(update_fields=["used_at"])
+        return {"amount": q.amount, "payload": q.payload, "description": q.description, "quote": q}
+
+    return {"amount": resolve_amount(service, data.get("amount")), "payload": validate_fields(service, data["fields"]),
+            "description": service.name}  # fmt: skip
