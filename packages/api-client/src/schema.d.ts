@@ -373,7 +373,7 @@ export interface components {
          */
         CommissionPayerEnum: "cidadao" | "instituicao";
         Event: {
-            status: components["schemas"]["StatusC51Enum"];
+            status: components["schemas"]["RequestStatusEnum"];
             note?: string;
             /** Format: date-time */
             readonly created_at: string;
@@ -611,7 +611,7 @@ export interface components {
         };
         RequestPortal: {
             readonly code: string;
-            status?: components["schemas"]["StatusC51Enum"];
+            status?: components["schemas"]["RequestStatusEnum"];
             service: number;
             service_name: string;
             institution_name: string;
@@ -627,7 +627,7 @@ export interface components {
         };
         RequestPublic: {
             readonly code: string;
-            status?: components["schemas"]["StatusC51Enum"];
+            status?: components["schemas"]["RequestStatusEnum"];
             service: number;
             service_name: string;
             institution_name: string;
@@ -638,6 +638,19 @@ export interface components {
             readonly updated_at: string;
             events: components["schemas"]["Event"][];
         };
+        /**
+         * @description * `AGUARDA_PAGAMENTO` - A aguardar pagamento
+         *     * `SUBMETIDO` - Submetido à instituição
+         *     * `EM_ANALISE` - Em análise
+         *     * `PENDENTE_INFO` - Falta informação
+         *     * `APROVADO` - Aprovado
+         *     * `PRONTO` - Pronto para levantamento
+         *     * `CONCLUIDO` - Concluído
+         *     * `REJEITADO` - Rejeitado
+         *     * `CANCELADO` - Cancelado
+         * @enum {string}
+         */
+        RequestStatusEnum: "AGUARDA_PAGAMENTO" | "SUBMETIDO" | "EM_ANALISE" | "PENDENTE_INFO" | "APROVADO" | "PRONTO" | "CONCLUIDO" | "REJEITADO" | "CANCELADO";
         /**
          * @description * `admin` - Administrador
          *     * `financeiro` - Financeiro
@@ -748,21 +761,8 @@ export interface components {
             /** Format: date-time */
             readonly created_at: string;
         };
-        /**
-         * @description * `AGUARDA_PAGAMENTO` - A aguardar pagamento
-         *     * `SUBMETIDO` - Submetido à instituição
-         *     * `EM_ANALISE` - Em análise
-         *     * `PENDENTE_INFO` - Falta informação
-         *     * `APROVADO` - Aprovado
-         *     * `PRONTO` - Pronto para levantamento
-         *     * `CONCLUIDO` - Concluído
-         *     * `REJEITADO` - Rejeitado
-         *     * `CANCELADO` - Cancelado
-         * @enum {string}
-         */
-        StatusC51Enum: "AGUARDA_PAGAMENTO" | "SUBMETIDO" | "EM_ANALISE" | "PENDENTE_INFO" | "APROVADO" | "PRONTO" | "CONCLUIDO" | "REJEITADO" | "CANCELADO";
         StatusChange: {
-            status: components["schemas"]["StatusC51Enum"];
+            status: components["schemas"]["RequestStatusEnum"];
             /** @default  */
             note: string;
         };

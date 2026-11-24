@@ -702,7 +702,7 @@ components:
       type: object
       properties:
         status:
-          $ref: '#/components/schemas/StatusC51Enum'
+          $ref: '#/components/schemas/RequestStatusEnum'
         note:
           type: string
           maxLength: 500
@@ -1180,7 +1180,7 @@ components:
           type: string
           readOnly: true
         status:
-          $ref: '#/components/schemas/StatusC51Enum'
+          $ref: '#/components/schemas/RequestStatusEnum'
         service:
           type: integer
         service_name:
@@ -1226,7 +1226,7 @@ components:
           type: string
           readOnly: true
         status:
-          $ref: '#/components/schemas/StatusC51Enum'
+          $ref: '#/components/schemas/RequestStatusEnum'
         service:
           type: integer
         service_name:
@@ -1256,6 +1256,28 @@ components:
       - service
       - service_name
       - updated_at
+    RequestStatusEnum:
+      enum:
+      - AGUARDA_PAGAMENTO
+      - SUBMETIDO
+      - EM_ANALISE
+      - PENDENTE_INFO
+      - APROVADO
+      - PRONTO
+      - CONCLUIDO
+      - REJEITADO
+      - CANCELADO
+      type: string
+      description: |-
+        * `AGUARDA_PAGAMENTO` - A aguardar pagamento
+        * `SUBMETIDO` - Submetido à instituição
+        * `EM_ANALISE` - Em análise
+        * `PENDENTE_INFO` - Falta informação
+        * `APROVADO` - Aprovado
+        * `PRONTO` - Pronto para levantamento
+        * `CONCLUIDO` - Concluído
+        * `REJEITADO` - Rejeitado
+        * `CANCELADO` - Cancelado
     RoleEnum:
       enum:
       - admin
@@ -1505,33 +1527,11 @@ components:
       - gross
       - id
       - net
-    StatusC51Enum:
-      enum:
-      - AGUARDA_PAGAMENTO
-      - SUBMETIDO
-      - EM_ANALISE
-      - PENDENTE_INFO
-      - APROVADO
-      - PRONTO
-      - CONCLUIDO
-      - REJEITADO
-      - CANCELADO
-      type: string
-      description: |-
-        * `AGUARDA_PAGAMENTO` - A aguardar pagamento
-        * `SUBMETIDO` - Submetido à instituição
-        * `EM_ANALISE` - Em análise
-        * `PENDENTE_INFO` - Falta informação
-        * `APROVADO` - Aprovado
-        * `PRONTO` - Pronto para levantamento
-        * `CONCLUIDO` - Concluído
-        * `REJEITADO` - Rejeitado
-        * `CANCELADO` - Cancelado
     StatusChange:
       type: object
       properties:
         status:
-          $ref: '#/components/schemas/StatusC51Enum'
+          $ref: '#/components/schemas/RequestStatusEnum'
         note:
           type: string
           default: ''

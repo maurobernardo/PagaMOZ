@@ -113,6 +113,10 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Plataforma de pagamentos de serviços — protótipo de demonstração.",
     "VERSION": "0.1.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "ENUM_NAME_OVERRIDES": {
+        "PaymentStatusEnum": "payments.models.Status",
+        "RequestStatusEnum": "servicerequests.models.RequestStatus",
+    },
 }
 
 SECURE_CONTENT_TYPE_NOSNIFF = True
