@@ -1,7 +1,7 @@
 # Linux/macOS/CI. No Windows usar .\tasks.ps1
 API := cd apps/api &&
 
-.PHONY: setup up up-docker test lint migrate gen-client
+.PHONY: setup up up-docker test lint migrate gen-client seed-demo
 setup:
 	python3 -m venv apps/api/.venv
 	$(API) .venv/bin/pip install -r requirements-dev.txt && .venv/bin/python manage.py migrate
@@ -21,3 +21,5 @@ migrate:
 gen-client:
 	$(API) .venv/bin/python manage.py spectacular --file ../../packages/api-client/openapi.yaml
 	npm run gen:client
+seed-demo:
+	$(API) .venv/bin/python manage.py seed_demo

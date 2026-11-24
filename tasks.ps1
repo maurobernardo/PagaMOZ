@@ -33,6 +33,6 @@ switch ($Cmd) {
   "format"     { Invoke-Api -m ruff format .; Invoke-Api -m ruff check --fix . }
   "migrate"    { Invoke-Api manage.py migrate }
   "gen-client" { Invoke-Api manage.py spectacular --file ..\..\packages\api-client\openapi.yaml; Invoke-Npm run gen:client }
-  "seed-demo"  { Write-Host "seed-demo chega na Fase 1." }
+  "seed-demo"  { Invoke-Api manage.py seed_demo }
   default      { Write-Host "Comandos: setup, up, test, lint, format, migrate, gen-client, seed-demo" }
 }

@@ -22,6 +22,10 @@ INSTALLED_APPS = [
     "rest_framework",
     "drf_spectacular",
     "core",
+    "accounts",
+    "institutions",
+    "catalog",
+    "audit",
 ]
 
 MIDDLEWARE = [
@@ -54,6 +58,7 @@ TEMPLATES = [
 # ponytail: SQLite por omissão para dev sem Docker; Postgres via DATABASE_URL (CI/produção).
 DATABASES = {"default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")}
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+AUTH_USER_MODEL = "accounts.User"
 
 # Sem REDIS_URL, as tarefas Celery correm em linha (eager) — suficiente para dev local.
 REDIS_URL = env("REDIS_URL", default="")
@@ -72,7 +77,18 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:3000"])
 
-REST_FRAMEWORK = {"DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema"}
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 50,
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {"anon": "120/min", "user": "600/min"},
+}
 SPECTACULAR_SETTINGS = {
     "TITLE": "PagaMOZ API",
     "DESCRIPTION": "Plataforma de pagamentos de serviços — protótipo de demonstração.",

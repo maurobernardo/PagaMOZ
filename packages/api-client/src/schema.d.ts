@@ -4,6 +4,54 @@
  */
 
 export interface paths {
+    "/api/catalog/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["catalog_categories_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["catalog_services_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/services/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["catalog_services_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -20,16 +68,269 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["me_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/{institution_slug}/services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Serviços da instituição do URL. Nunca devolve serviços de outra instituição. */
+        get: operations["portal_services_list"];
+        put?: never;
+        /** @description Serviços da instituição do URL. Nunca devolve serviços de outra instituição. */
+        post: operations["portal_services_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/{institution_slug}/services/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Serviços da instituição do URL. Nunca devolve serviços de outra instituição. */
+        get: operations["portal_services_retrieve"];
+        /** @description Serviços da instituição do URL. Nunca devolve serviços de outra instituição. */
+        put: operations["portal_services_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Serviços da instituição do URL. Nunca devolve serviços de outra instituição. */
+        patch: operations["portal_services_partial_update"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @enum {unknown} */
+        BlankEnum: "";
+        Category: {
+            readonly id: number;
+            name: string;
+            slug: string;
+            description?: string;
+            icon?: string;
+            /** Format: int64 */
+            order?: number;
+            readonly service_count: number;
+        };
+        /**
+         * @description * `cidadao` - Cidadão
+         *     * `instituicao` - Instituição
+         * @enum {string}
+         */
+        CommissionPayerEnum: "cidadao" | "instituicao";
         Health: {
             status: string;
             database: string;
             queue: string;
             demo_mode: boolean;
         };
+        InstitutionPublic: {
+            readonly id: number;
+            /** Nome */
+            name: string;
+            slug: string;
+            is_demo?: boolean;
+        };
+        /**
+         * @description * `1` - Consulta + pagamento em tempo real
+         *     * `2` - Referência de pagamento
+         *     * `3` - Pedido assistido
+         * @enum {integer}
+         */
+        IntegrationLevelEnum: 1 | 2 | 3;
+        Me: {
+            phone: string;
+            name: string;
+            memberships: components["schemas"]["Membership"][];
+        };
+        Membership: {
+            readonly institution: components["schemas"]["InstitutionPublic"];
+            role: components["schemas"]["RoleEnum"];
+        };
+        PaginatedServicePortalList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["ServicePortal"][];
+        };
+        PaginatedServicePublicList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["ServicePublic"][];
+        };
+        PatchedServicePortal: {
+            readonly id?: number;
+            name?: string;
+            slug?: string;
+            description?: string;
+            category?: string;
+            integration_level?: components["schemas"]["IntegrationLevelEnum"];
+            pricing?: components["schemas"]["PricingEnum"];
+            /**
+             * Valor fixo (centavos)
+             * Format: int64
+             */
+            amount?: number | null;
+            /**
+             * Mínimo (centavos)
+             * Format: int64
+             */
+            min_amount?: number | null;
+            /**
+             * Máximo (centavos)
+             * Format: int64
+             */
+            max_amount?: number | null;
+            fields?: components["schemas"]["ServiceField"][];
+            is_active?: boolean;
+            /** Comissão (pontos base) */
+            commission_bps?: number | null;
+            /**
+             * Comissão fixa (centavos)
+             * Format: int64
+             */
+            commission_fixed?: number | null;
+            commission_payer?: components["schemas"]["CommissionPayerEnum"] | components["schemas"]["BlankEnum"];
+            /** Format: date-time */
+            readonly updated_at?: string;
+        };
+        /**
+         * @description * `fixo` - Valor fixo
+         *     * `consulta` - Valor obtido por consulta
+         *     * `aberto` - Valor introduzido pelo cidadão
+         * @enum {string}
+         */
+        PricingEnum: "fixo" | "consulta" | "aberto";
+        /**
+         * @description * `admin` - Administrador
+         *     * `financeiro` - Financeiro
+         *     * `operador` - Operador
+         * @enum {string}
+         */
+        RoleEnum: "admin" | "financeiro" | "operador";
+        ServiceField: {
+            name: string;
+            label: string;
+            type: components["schemas"]["TypeEnum"];
+            /** @default true */
+            required: boolean;
+            pattern?: string;
+        };
+        ServicePortal: {
+            readonly id: number;
+            name: string;
+            slug: string;
+            description?: string;
+            category: string;
+            integration_level: components["schemas"]["IntegrationLevelEnum"];
+            pricing: components["schemas"]["PricingEnum"];
+            /**
+             * Valor fixo (centavos)
+             * Format: int64
+             */
+            amount?: number | null;
+            /**
+             * Mínimo (centavos)
+             * Format: int64
+             */
+            min_amount?: number | null;
+            /**
+             * Máximo (centavos)
+             * Format: int64
+             */
+            max_amount?: number | null;
+            fields?: components["schemas"]["ServiceField"][];
+            is_active?: boolean;
+            /** Comissão (pontos base) */
+            commission_bps?: number | null;
+            /**
+             * Comissão fixa (centavos)
+             * Format: int64
+             */
+            commission_fixed?: number | null;
+            commission_payer?: components["schemas"]["CommissionPayerEnum"] | components["schemas"]["BlankEnum"];
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        ServicePublic: {
+            readonly id: number;
+            name: string;
+            slug: string;
+            description?: string;
+            readonly institution: components["schemas"]["InstitutionPublic"];
+            readonly category: string;
+            integration_level: components["schemas"]["IntegrationLevelEnum"];
+            pricing: components["schemas"]["PricingEnum"];
+            /**
+             * Valor fixo (centavos)
+             * Format: int64
+             */
+            amount?: number | null;
+            /**
+             * Mínimo (centavos)
+             * Format: int64
+             */
+            min_amount?: number | null;
+            /**
+             * Máximo (centavos)
+             * Format: int64
+             */
+            max_amount?: number | null;
+            readonly fields: components["schemas"]["ServiceField"][];
+        };
+        /**
+         * @description * `text` - text
+         *     * `number` - number
+         *     * `date` - date
+         *     * `phone` - phone
+         *     * `file` - file
+         * @enum {string}
+         */
+        TypeEnum: "text" | "number" | "date" | "phone" | "file";
     };
     responses: never;
     parameters: never;
@@ -39,6 +340,69 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    catalog_categories_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Category"][];
+                };
+            };
+        };
+    };
+    catalog_services_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedServicePublicList"];
+                };
+            };
+        };
+    };
+    catalog_services_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this service. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServicePublic"];
+                };
+            };
+        };
+    };
     health_retrieve: {
         parameters: {
             query?: never;
@@ -54,6 +418,157 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Health"];
+                };
+            };
+        };
+    };
+    me_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+        };
+    };
+    portal_services_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+            };
+            header?: never;
+            path: {
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedServicePortalList"];
+                };
+            };
+        };
+    };
+    portal_services_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServicePortal"];
+                "application/x-www-form-urlencoded": components["schemas"]["ServicePortal"];
+                "multipart/form-data": components["schemas"]["ServicePortal"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServicePortal"];
+                };
+            };
+        };
+    };
+    portal_services_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this service. */
+                id: number;
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServicePortal"];
+                };
+            };
+        };
+    };
+    portal_services_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this service. */
+                id: number;
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServicePortal"];
+                "application/x-www-form-urlencoded": components["schemas"]["ServicePortal"];
+                "multipart/form-data": components["schemas"]["ServicePortal"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServicePortal"];
+                };
+            };
+        };
+    };
+    portal_services_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this service. */
+                id: number;
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedServicePortal"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedServicePortal"];
+                "multipart/form-data": components["schemas"]["PatchedServicePortal"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServicePortal"];
                 };
             };
         };

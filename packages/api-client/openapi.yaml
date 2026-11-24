@@ -4,6 +4,67 @@ info:
   version: 0.1.0
   description: Plataforma de pagamentos de serviços — protótipo de demonstração.
 paths:
+  /api/catalog/categories:
+    get:
+      operationId: catalog_categories_list
+      tags:
+      - catalog
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+          description: ''
+  /api/catalog/services:
+    get:
+      operationId: catalog_services_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - catalog
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedServicePublicList'
+          description: ''
+  /api/catalog/services/{id}:
+    get:
+      operationId: catalog_services_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this service.
+        required: true
+      tags:
+      - catalog
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServicePublic'
+          description: ''
   /api/health:
     get:
       operationId: health_retrieve
@@ -11,7 +72,6 @@ paths:
       - health
       security:
       - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -20,8 +80,231 @@ paths:
               schema:
                 $ref: '#/components/schemas/Health'
           description: ''
+  /api/me:
+    get:
+      operationId: me_retrieve
+      tags:
+      - me
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+          description: ''
+  /api/portal/{institution_slug}/services:
+    get:
+      operationId: portal_services_list
+      description: Serviços da instituição do URL. Nunca devolve serviços de outra
+        instituição.
+      parameters:
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - portal
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedServicePortalList'
+          description: ''
+    post:
+      operationId: portal_services_create
+      description: Serviços da instituição do URL. Nunca devolve serviços de outra
+        instituição.
+      parameters:
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServicePortal'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ServicePortal'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ServicePortal'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServicePortal'
+          description: ''
+  /api/portal/{institution_slug}/services/{id}:
+    get:
+      operationId: portal_services_retrieve
+      description: Serviços da instituição do URL. Nunca devolve serviços de outra
+        instituição.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this service.
+        required: true
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServicePortal'
+          description: ''
+    put:
+      operationId: portal_services_update
+      description: Serviços da instituição do URL. Nunca devolve serviços de outra
+        instituição.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this service.
+        required: true
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServicePortal'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ServicePortal'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ServicePortal'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServicePortal'
+          description: ''
+    patch:
+      operationId: portal_services_partial_update
+      description: Serviços da instituição do URL. Nunca devolve serviços de outra
+        instituição.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this service.
+        required: true
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedServicePortal'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedServicePortal'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedServicePortal'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServicePortal'
+          description: ''
 components:
   schemas:
+    BlankEnum:
+      enum:
+      - ''
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 80
+        slug:
+          type: string
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+          maxLength: 200
+        icon:
+          type: string
+          maxLength: 40
+        order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        service_count:
+          type: integer
+          readOnly: true
+      required:
+      - id
+      - name
+      - service_count
+      - slug
+    CommissionPayerEnum:
+      enum:
+      - cidadao
+      - instituicao
+      type: string
+      description: |-
+        * `cidadao` - Cidadão
+        * `instituicao` - Instituição
     Health:
       type: object
       properties:
@@ -38,10 +321,380 @@ components:
       - demo_mode
       - queue
       - status
+    InstitutionPublic:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Nome
+          maxLength: 160
+        slug:
+          type: string
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        is_demo:
+          type: boolean
+      required:
+      - id
+      - name
+      - slug
+    IntegrationLevelEnum:
+      enum:
+      - 1
+      - 2
+      - 3
+      type: integer
+      description: |-
+        * `1` - Consulta + pagamento em tempo real
+        * `2` - Referência de pagamento
+        * `3` - Pedido assistido
+    Me:
+      type: object
+      properties:
+        phone:
+          type: string
+        name:
+          type: string
+        memberships:
+          type: array
+          items:
+            $ref: '#/components/schemas/Membership'
+      required:
+      - memberships
+      - name
+      - phone
+    Membership:
+      type: object
+      properties:
+        institution:
+          allOf:
+          - $ref: '#/components/schemas/InstitutionPublic'
+          readOnly: true
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+      required:
+      - institution
+      - role
+    PaginatedServicePortalList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServicePortal'
+    PaginatedServicePublicList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServicePublic'
+    PatchedServicePortal:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 160
+        slug:
+          type: string
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+        category:
+          type: string
+        integration_level:
+          allOf:
+          - $ref: '#/components/schemas/IntegrationLevelEnum'
+          minimum: 0
+          maximum: 9223372036854775807
+        pricing:
+          $ref: '#/components/schemas/PricingEnum'
+        amount:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          title: Valor fixo (centavos)
+        min_amount:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          title: Mínimo (centavos)
+        max_amount:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          title: Máximo (centavos)
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceField'
+        is_active:
+          type: boolean
+        commission_bps:
+          type: integer
+          maximum: 10000
+          minimum: 0
+          nullable: true
+          title: Comissão (pontos base)
+        commission_fixed:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          title: Comissão fixa (centavos)
+        commission_payer:
+          oneOf:
+          - $ref: '#/components/schemas/CommissionPayerEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PricingEnum:
+      enum:
+      - fixo
+      - consulta
+      - aberto
+      type: string
+      description: |-
+        * `fixo` - Valor fixo
+        * `consulta` - Valor obtido por consulta
+        * `aberto` - Valor introduzido pelo cidadão
+    RoleEnum:
+      enum:
+      - admin
+      - financeiro
+      - operador
+      type: string
+      description: |-
+        * `admin` - Administrador
+        * `financeiro` - Financeiro
+        * `operador` - Operador
+    ServiceField:
+      type: object
+      properties:
+        name:
+          type: string
+          pattern: ^[-a-zA-Z0-9_]+$
+        label:
+          type: string
+          maxLength: 80
+        type:
+          $ref: '#/components/schemas/TypeEnum'
+        required:
+          type: boolean
+          default: true
+        pattern:
+          type: string
+      required:
+      - label
+      - name
+      - type
+    ServicePortal:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 160
+        slug:
+          type: string
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+        category:
+          type: string
+        integration_level:
+          allOf:
+          - $ref: '#/components/schemas/IntegrationLevelEnum'
+          minimum: 0
+          maximum: 9223372036854775807
+        pricing:
+          $ref: '#/components/schemas/PricingEnum'
+        amount:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          title: Valor fixo (centavos)
+        min_amount:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          title: Mínimo (centavos)
+        max_amount:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          title: Máximo (centavos)
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceField'
+        is_active:
+          type: boolean
+        commission_bps:
+          type: integer
+          maximum: 10000
+          minimum: 0
+          nullable: true
+          title: Comissão (pontos base)
+        commission_fixed:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          title: Comissão fixa (centavos)
+        commission_payer:
+          oneOf:
+          - $ref: '#/components/schemas/CommissionPayerEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - category
+      - id
+      - integration_level
+      - name
+      - pricing
+      - slug
+      - updated_at
+    ServicePublic:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 160
+        slug:
+          type: string
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+        institution:
+          allOf:
+          - $ref: '#/components/schemas/InstitutionPublic'
+          readOnly: true
+        category:
+          type: string
+          readOnly: true
+        integration_level:
+          allOf:
+          - $ref: '#/components/schemas/IntegrationLevelEnum'
+          minimum: 0
+          maximum: 9223372036854775807
+        pricing:
+          $ref: '#/components/schemas/PricingEnum'
+        amount:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          title: Valor fixo (centavos)
+        min_amount:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          title: Mínimo (centavos)
+        max_amount:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          title: Máximo (centavos)
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceField'
+          readOnly: true
+      required:
+      - category
+      - fields
+      - id
+      - institution
+      - integration_level
+      - name
+      - pricing
+      - slug
+    TypeEnum:
+      enum:
+      - text
+      - number
+      - date
+      - phone
+      - file
+      type: string
+      description: |-
+        * `text` - text
+        * `number` - number
+        * `date` - date
+        * `phone` - phone
+        * `file` - file
   securitySchemes:
-    basicAuth:
-      type: http
-      scheme: basic
     cookieAuth:
       type: apiKey
       in: cookie

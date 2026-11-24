@@ -2,7 +2,8 @@ from django.conf import settings
 from django.db import connection
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from .tasks import ping
@@ -28,6 +29,7 @@ def _check(fn) -> str:
     )
 )
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def health(request):
     db = _check(lambda: connection.cursor().execute("SELECT 1"))
     queue = _check(lambda: ping.apply_async().get(timeout=5))
