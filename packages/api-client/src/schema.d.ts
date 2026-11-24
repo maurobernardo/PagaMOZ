@@ -84,6 +84,72 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["payments_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payments/{reference}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description A referência (~50 bits aleatórios) funciona como capacidade de leitura do estado. */
+        get: operations["payments_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payments/scenarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["payments_scenarios_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/{institution_slug}/balances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description O dinheiro da instituição: a liquidar (confirmado, ainda no parceiro) e já liquidado na conta. */
+        get: operations["portal_balances_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/portal/{institution_slug}/services": {
         parameters: {
             query?: never;
@@ -121,10 +187,47 @@ export interface paths {
         patch: operations["portal_services_partial_update"];
         trace?: never;
     };
+    "/api/portal/{institution_slug}/settlements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["portal_settlements_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/webhooks/{method}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["webhooks_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        Balances: {
+            a_liquidar: number;
+            liquidado: number;
+            conta_destino: string;
+        };
         /** @enum {unknown} */
         BlankEnum: "";
         Category: {
@@ -172,6 +275,16 @@ export interface components {
             readonly institution: components["schemas"]["InstitutionPublic"];
             role: components["schemas"]["RoleEnum"];
         };
+        /**
+         * @description * `mpesa` - M-Pesa
+         *     * `emola` - e-Mola
+         *     * `mkesh` - mKesh
+         *     * `cartao` - Cartão Visa/Mastercard
+         *     * `referencia_bancaria` - Referência bancária
+         *     * `qr` - QR Code
+         * @enum {string}
+         */
+        MethodEnum: "mpesa" | "emola" | "mkesh" | "cartao" | "referencia_bancaria" | "qr";
         PaginatedServicePortalList: {
             /** @example 123 */
             count: number;
@@ -201,6 +314,21 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["ServicePublic"][];
+        };
+        PaginatedSettlementList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Settlement"][];
         };
         PatchedServicePortal: {
             readonly id?: number;
@@ -238,6 +366,56 @@ export interface components {
             /** Format: date-time */
             readonly updated_at?: string;
         };
+        Payment: {
+            readonly reference: string;
+            status?: components["schemas"]["StatusEnum"];
+            service: number;
+            service_name: string;
+            institution_name: string;
+            description?: string;
+            /** Format: int64 */
+            amount: number;
+            /** Format: int64 */
+            commission: number;
+            commission_payer: string;
+            /** Format: int64 */
+            total: number;
+            /** Format: int64 */
+            institution_net: number;
+            currency?: string;
+            method: components["schemas"]["MethodEnum"];
+            readonly instructions: string;
+            failure_reason?: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            expires_at?: string;
+            /** Format: date-time */
+            confirmed_at?: string | null;
+            /** Format: date-time */
+            settled_at?: string | null;
+        };
+        PaymentCreate: {
+            service: number;
+            fields?: {
+                [key: string]: string;
+            };
+            /** @description Centavos (serviços de valor aberto). */
+            amount?: number;
+            method: components["schemas"]["MethodEnum"];
+            payer_phone?: string;
+            /**
+             * @description Só em ambiente de demonstração.
+             *
+             *     * `sucesso` - sucesso
+             *     * `falha` - falha
+             *     * `atraso` - atraso
+             *     * `timeout` - timeout
+             *     * `duplicado` - duplicado
+             *     * `webhook_repetido` - webhook_repetido
+             */
+            scenario?: components["schemas"]["ScenarioEnum"];
+        };
         /**
          * @description * `fixo` - Valor fixo
          *     * `consulta` - Valor obtido por consulta
@@ -252,6 +430,22 @@ export interface components {
          * @enum {string}
          */
         RoleEnum: "admin" | "financeiro" | "operador";
+        /**
+         * @description * `sucesso` - sucesso
+         *     * `falha` - falha
+         *     * `atraso` - atraso
+         *     * `timeout` - timeout
+         *     * `duplicado` - duplicado
+         *     * `webhook_repetido` - webhook_repetido
+         * @enum {string}
+         */
+        ScenarioEnum: "sucesso" | "falha" | "atraso" | "timeout" | "duplicado" | "webhook_repetido";
+        Scenarios: {
+            demo_mode: boolean;
+            scenarios: {
+                [key: string]: unknown;
+            };
+        };
         ServiceField: {
             name: string;
             label: string;
@@ -322,6 +516,35 @@ export interface components {
             max_amount?: number | null;
             readonly fields: components["schemas"]["ServiceField"][];
         };
+        Settlement: {
+            readonly id: number;
+            /** Format: date */
+            business_date: string;
+            /** Format: int64 */
+            count: number;
+            /** Format: int64 */
+            gross: number;
+            /** Format: int64 */
+            commission: number;
+            /** Format: int64 */
+            net: number;
+            destination: string;
+            provider?: string;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        /**
+         * @description * `CRIADA` - Created
+         *     * `PENDENTE` - Pending
+         *     * `CONFIRMADA` - Confirmed
+         *     * `LIQUIDADA` - Settled
+         *     * `FALHADA` - Failed
+         *     * `EXPIRADA` - Expired
+         *     * `REVERTIDA` - Reversed
+         *     * `EM_DISPUTA` - Disputed
+         * @enum {string}
+         */
+        StatusEnum: "CRIADA" | "PENDENTE" | "CONFIRMADA" | "LIQUIDADA" | "FALHADA" | "EXPIRADA" | "REVERTIDA" | "EM_DISPUTA";
         /**
          * @description * `text` - text
          *     * `number` - number
@@ -331,6 +554,9 @@ export interface components {
          * @enum {string}
          */
         TypeEnum: "text" | "number" | "date" | "phone" | "file";
+        WebhookAck: {
+            outcome: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -437,6 +663,102 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Me"];
+                };
+            };
+        };
+    };
+    payments_create: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentCreate"];
+                "application/x-www-form-urlencoded": components["schemas"]["PaymentCreate"];
+                "multipart/form-data": components["schemas"]["PaymentCreate"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Payment"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Payment"];
+                };
+            };
+        };
+    };
+    payments_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Payment"];
+                };
+            };
+        };
+    };
+    payments_scenarios_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Scenarios"];
+                };
+            };
+        };
+    };
+    portal_balances_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Balances"];
                 };
             };
         };
@@ -569,6 +891,51 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ServicePortal"];
+                };
+            };
+        };
+    };
+    portal_settlements_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+            };
+            header?: never;
+            path: {
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedSettlementList"];
+                };
+            };
+        };
+    };
+    webhooks_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                method: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookAck"];
                 };
             };
         };

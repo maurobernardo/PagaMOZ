@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import environ
+from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
@@ -10,6 +11,8 @@ DEBUG = env.bool("DEBUG", default=False)
 SECRET_KEY = env("SECRET_KEY", default="dev-insecure-change-me" if DEBUG else environ.Env.NOTSET)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 DEMO_MODE = env.bool("DEMO_MODE", default=True)
+WEBHOOK_SECRET = env("WEBHOOK_SECRET", default="dev-webhook-secret" if DEBUG else environ.Env.NOTSET)
+PAYMENT_EXPIRY_MINUTES = env.int("PAYMENT_EXPIRY_MINUTES", default=15)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -26,6 +29,9 @@ INSTALLED_APPS = [
     "institutions",
     "catalog",
     "audit",
+    "ledger",
+    "payments",
+    "settlement",
 ]
 
 MIDDLEWARE = [
@@ -66,7 +72,14 @@ CELERY_BROKER_URL = REDIS_URL or "memory://"
 CELERY_RESULT_BACKEND = REDIS_URL or None
 CELERY_TASK_ALWAYS_EAGER = not REDIS_URL
 CELERY_TIMEZONE = "Africa/Maputo"
-CELERY_BEAT_SCHEDULE = {"ping": {"task": "core.tasks.ping", "schedule": 300.0}}
+CELERY_BEAT_SCHEDULE = {
+    "ping": {"task": "core.tasks.ping", "schedule": 300.0},
+    "expirar-pagamentos": {"task": "payments.tasks.expire_stale_payments", "schedule": 60.0},
+    "liquidacao-diaria": {
+        "task": "settlement.services.run_daily_settlement",
+        "schedule": crontab(hour=18, minute=0),
+    },
+}
 
 LANGUAGE_CODE = "pt-pt"
 TIME_ZONE = "Africa/Maputo"

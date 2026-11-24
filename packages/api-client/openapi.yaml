@@ -94,6 +94,105 @@ paths:
               schema:
                 $ref: '#/components/schemas/Me'
           description: ''
+  /api/payments:
+    post:
+      operationId: payments_create
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        required: true
+      tags:
+      - payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PaymentCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PaymentCreate'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+  /api/payments/{reference}:
+    get:
+      operationId: payments_retrieve
+      description: A referência (~50 bits aleatórios) funciona como capacidade de
+        leitura do estado.
+      parameters:
+      - in: path
+        name: reference
+        schema:
+          type: string
+        required: true
+      tags:
+      - payments
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+  /api/payments/scenarios:
+    get:
+      operationId: payments_scenarios_retrieve
+      tags:
+      - payments
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scenarios'
+          description: ''
+  /api/portal/{institution_slug}/balances:
+    get:
+      operationId: portal_balances_retrieve
+      description: 'O dinheiro da instituição: a liquidar (confirmado, ainda no parceiro)
+        e já liquidado na conta.'
+      parameters:
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balances'
+          description: ''
   /api/portal/{institution_slug}/services:
     get:
       operationId: portal_services_list
@@ -260,8 +359,67 @@ paths:
               schema:
                 $ref: '#/components/schemas/ServicePortal'
           description: ''
+  /api/portal/{institution_slug}/settlements:
+    get:
+      operationId: portal_settlements_list
+      parameters:
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - portal
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSettlementList'
+          description: ''
+  /api/webhooks/{method}:
+    post:
+      operationId: webhooks_create
+      parameters:
+      - in: path
+        name: method
+        schema:
+          type: string
+        required: true
+      tags:
+      - webhooks
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookAck'
+          description: ''
 components:
   schemas:
+    Balances:
+      type: object
+      properties:
+        a_liquidar:
+          type: integer
+        liquidado:
+          type: integer
+        conta_destino:
+          type: string
+      required:
+      - a_liquidar
+      - conta_destino
+      - liquidado
     BlankEnum:
       enum:
       - ''
@@ -378,6 +536,22 @@ components:
       required:
       - institution
       - role
+    MethodEnum:
+      enum:
+      - mpesa
+      - emola
+      - mkesh
+      - cartao
+      - referencia_bancaria
+      - qr
+      type: string
+      description: |-
+        * `mpesa` - M-Pesa
+        * `emola` - e-Mola
+        * `mkesh` - mKesh
+        * `cartao` - Cartão Visa/Mastercard
+        * `referencia_bancaria` - Referência bancária
+        * `qr` - QR Code
     PaginatedServicePortalList:
       type: object
       required:
@@ -424,6 +598,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ServicePublic'
+    PaginatedSettlementList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Settlement'
     PatchedServicePortal:
       type: object
       properties:
@@ -496,6 +693,121 @@ components:
           type: string
           format: date-time
           readOnly: true
+    Payment:
+      type: object
+      properties:
+        reference:
+          type: string
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        service:
+          type: integer
+        service_name:
+          type: string
+        institution_name:
+          type: string
+        description:
+          type: string
+          maxLength: 200
+        amount:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        commission:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        commission_payer:
+          type: string
+          maxLength: 12
+        total:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        institution_net:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        currency:
+          type: string
+          maxLength: 3
+        method:
+          $ref: '#/components/schemas/MethodEnum'
+        instructions:
+          type: string
+          readOnly: true
+        failure_reason:
+          type: string
+          maxLength: 200
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+        confirmed_at:
+          type: string
+          format: date-time
+          nullable: true
+        settled_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - amount
+      - commission
+      - commission_payer
+      - created_at
+      - institution_name
+      - institution_net
+      - instructions
+      - method
+      - reference
+      - service
+      - service_name
+      - total
+    PaymentCreate:
+      type: object
+      properties:
+        service:
+          type: integer
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        amount:
+          type: integer
+          minimum: 1
+          description: Centavos (serviços de valor aberto).
+        method:
+          $ref: '#/components/schemas/MethodEnum'
+        payer_phone:
+          oneOf:
+          - type: string
+            pattern: ^\+258[28]\d{8}$
+          - type: string
+            maxLength: 0
+        scenario:
+          allOf:
+          - $ref: '#/components/schemas/ScenarioEnum'
+          description: |-
+            Só em ambiente de demonstração.
+
+            * `sucesso` - sucesso
+            * `falha` - falha
+            * `atraso` - atraso
+            * `timeout` - timeout
+            * `duplicado` - duplicado
+            * `webhook_repetido` - webhook_repetido
+      required:
+      - method
+      - service
     PricingEnum:
       enum:
       - fixo
@@ -516,6 +828,33 @@ components:
         * `admin` - Administrador
         * `financeiro` - Financeiro
         * `operador` - Operador
+    ScenarioEnum:
+      enum:
+      - sucesso
+      - falha
+      - atraso
+      - timeout
+      - duplicado
+      - webhook_repetido
+      type: string
+      description: |-
+        * `sucesso` - sucesso
+        * `falha` - falha
+        * `atraso` - atraso
+        * `timeout` - timeout
+        * `duplicado` - duplicado
+        * `webhook_repetido` - webhook_repetido
+    Scenarios:
+      type: object
+      properties:
+        demo_mode:
+          type: boolean
+        scenarios:
+          type: object
+          additionalProperties: {}
+      required:
+      - demo_mode
+      - scenarios
     ServiceField:
       type: object
       properties:
@@ -680,6 +1019,74 @@ components:
       - name
       - pricing
       - slug
+    Settlement:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        business_date:
+          type: string
+          format: date
+        count:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        gross:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        commission:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        net:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        destination:
+          type: string
+          maxLength: 120
+        provider:
+          type: string
+          maxLength: 40
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - business_date
+      - commission
+      - count
+      - created_at
+      - destination
+      - gross
+      - id
+      - net
+    StatusEnum:
+      enum:
+      - CRIADA
+      - PENDENTE
+      - CONFIRMADA
+      - LIQUIDADA
+      - FALHADA
+      - EXPIRADA
+      - REVERTIDA
+      - EM_DISPUTA
+      type: string
+      description: |-
+        * `CRIADA` - Created
+        * `PENDENTE` - Pending
+        * `CONFIRMADA` - Confirmed
+        * `LIQUIDADA` - Settled
+        * `FALHADA` - Failed
+        * `EXPIRADA` - Expired
+        * `REVERTIDA` - Reversed
+        * `EM_DISPUTA` - Disputed
     TypeEnum:
       enum:
       - text
@@ -694,6 +1101,13 @@ components:
         * `date` - date
         * `phone` - phone
         * `file` - file
+    WebhookAck:
+      type: object
+      properties:
+        outcome:
+          type: string
+      required:
+      - outcome
   securitySchemes:
     cookieAuth:
       type: apiKey
