@@ -17,6 +17,8 @@ ADMIN_ENABLED = env.bool("ADMIN_ENABLED", default=DEBUG)
 WEBHOOK_SECRET = env("WEBHOOK_SECRET", default="dev-webhook-secret" if DEBUG else environ.Env.NOTSET)
 PAYMENT_EXPIRY_MINUTES = env.int("PAYMENT_EXPIRY_MINUTES", default=15)
 RECEIPT_SIGNING_KEY = env("RECEIPT_SIGNING_KEY", default="dev-receipt-key" if DEBUG else environ.Env.NOTSET)
+GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="")
+GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET", default="")
 PORTAL_REQUIRE_MFA = env.bool("PORTAL_REQUIRE_MFA", default=True)
 PUBLIC_WEB_URL = env("PUBLIC_WEB_URL", default="http://localhost:3000")  # vai no QR do comprovativo
 

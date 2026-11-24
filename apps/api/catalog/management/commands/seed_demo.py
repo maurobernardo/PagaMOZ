@@ -9,6 +9,24 @@ from catalog.models import Category, Service
 from institutions.models import Institution, Membership
 
 DEMO_PASSWORD_ENV = "DEMO_PASSWORD"
+# Pessoas fictícias para as equipas das instituições demo.
+PEOPLE = [
+    "Ana Machava",
+    "João Cossa",
+    "Fátima Sitoe",
+    "Carlos Nhantumbo",
+    "Graça Langa",
+    "Hélder Muianga",
+    "Celeste Bila",
+    "Tomás Mondlane",
+    "Alberto Chissano",
+    "Maria Cumbe",
+    "Lurdes Matsinhe",
+    "Paulo Zandamela",
+    "Rosa Tembe",
+    "Nelson Mabunda",
+    "Inês Macuácua",
+]
 
 
 class Command(BaseCommand):
@@ -52,7 +70,7 @@ class Command(BaseCommand):
                 )
                 n_services += 1
             # Um admin por instituição: +2588400000NN (números fictícios de demo).
-            admin = self._user(f"+25884000{i:04d}", f"Admin {name[:20]}", password)
+            admin = self._user(f"+25884000{i:04d}", PEOPLE[(i - 1) % len(PEOPLE)], password)
             Membership.objects.get_or_create(user=admin, institution=inst, defaults={"role": Membership.Role.ADMIN})
 
         self._user("+258840009999", "Cidadão Demo", password)
@@ -64,7 +82,8 @@ class Command(BaseCommand):
             self.stdout.write(f"Aviso: defina {DEMO_PASSWORD_ENV} para os utilizadores demo poderem entrar.")
 
     def _user(self, phone, name, password):
-        user, created = User.objects.get_or_create(phone=phone, defaults={"first_name": name})
+        first, _, last = name.partition(" ")
+        user, created = User.objects.update_or_create(phone=phone, defaults={"first_name": first, "last_name": last})
         if password and (created or not user.has_usable_password()):
             user.set_password(password)
             user.save(update_fields=["password"])

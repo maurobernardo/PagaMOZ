@@ -41,7 +41,7 @@ INSTITUTIONS = [
     (
         "documentos",
         "registo-civil-demo",
-        "Conservatória Central de Registos (Demo)",
+        "Conservatória Central de Registos",
         "Banco Horizonte",
         [
             ("certidao-nascimento", "Certidão de nascimento", L3, FIXO, 25_000, [NOME, DATA_NASC, ANEXO_BI]),
@@ -53,7 +53,7 @@ INSTITUTIONS = [
     (
         "documentos",
         "identificacao-demo",
-        "Serviço Nacional de Identificação (Demo)",
+        "Serviço Nacional de Identificação",
         "Banco Horizonte",
         [
             ("bi-renovacao", "Renovação do BI", L3, FIXO, 35_000, [NOME, DATA_NASC, ANEXO_BI]),
@@ -63,7 +63,7 @@ INSTITUTIONS = [
     (
         "transportes",
         "transito-demo",
-        "Instituto de Trânsito Austral (Demo)",
+        "Instituto de Trânsito Austral",
         "Banco Maré",
         [
             ("carta-renovacao", "Renovação de carta de condução", L3, FIXO, 120_000, [NOME, ANEXO_BI]),
@@ -75,7 +75,7 @@ INSTITUTIONS = [
     (
         "servicos-basicos",
         "energia-austral",
-        "Energia Austral (Demo)",
+        "Energia Austral",
         "Banco Índico Comercial",
         [
             ("recarga", "Recarga de energia pré-paga", L1, ABERTO, None, [CONTADOR]),
@@ -85,7 +85,7 @@ INSTITUTIONS = [
     (
         "servicos-basicos",
         "aguas-do-indico",
-        "Águas do Índico (Demo)",
+        "Águas do Índico",
         "Banco Maré",
         [
             ("fatura", "Fatura de água", L1, CONSULTA, None, [CONTRATO]),
@@ -95,7 +95,7 @@ INSTITUTIONS = [
     (
         "servicos-basicos",
         "rede-acacia",
-        "Rede Acácia Telecom (Demo)",
+        "Rede Acácia Telecom",
         "Banco Horizonte",
         [
             ("internet", "Mensalidade de internet", L1, CONSULTA, None, [CONTRATO]),
@@ -106,7 +106,7 @@ INSTITUTIONS = [
     (
         "impostos",
         "autoridade-fiscal-demo",
-        "Autoridade Fiscal (Demo)",
+        "Autoridade Fiscal",
         "Banco Central (conta demo)",
         [
             ("iva", "IVA", L2, CONSULTA, None, [NUIT, REFERENCIA]),
@@ -118,7 +118,7 @@ INSTITUTIONS = [
     (
         "impostos",
         "licenciamento-demo",
-        "Balcão de Licenciamento Comercial (Demo)",
+        "Balcão de Licenciamento Comercial",
         "Banco Horizonte",
         [
             ("alvara", "Alvará comercial", L3, FIXO, 250_000, [NUIT, ANEXO_BI]),
@@ -128,7 +128,7 @@ INSTITUTIONS = [
     (
         "educacao",
         "universidade-baobab",
-        "Universidade Baobá (Demo)",
+        "Universidade Baobá",
         "Banco Maré",
         [
             ("propina", "Propina mensal", L1, CONSULTA, None, [ESTUDANTE]),
@@ -140,7 +140,7 @@ INSTITUTIONS = [
     (
         "educacao",
         "escola-tecnica-limpopo",
-        "Escola Técnica do Vale (Demo)",
+        "Escola Técnica do Vale",
         "Banco Índico Comercial",
         [
             ("propina", "Propina trimestral", L1, CONSULTA, None, [ESTUDANTE]),
@@ -150,7 +150,7 @@ INSTITUTIONS = [
     (
         "saude",
         "hospital-central-demo",
-        "Hospital Central do Sol (Demo)",
+        "Hospital Central do Sol",
         "Banco Horizonte",
         [
             ("consulta", "Consulta externa", L2, FIXO, 20_000, [NOME]),
@@ -161,7 +161,7 @@ INSTITUTIONS = [
     (
         "saude",
         "clinica-marula",
-        "Clínica Marula (Demo)",
+        "Clínica Marula",
         "Banco Maré",
         [
             ("consulta", "Consulta de especialidade", L2, FIXO, 250_000, [NOME]),
@@ -171,7 +171,7 @@ INSTITUTIONS = [
     (
         "municipios",
         "municipio-cidade-sol",
-        "Município da Cidade do Sol (Demo)",
+        "Município da Cidade do Sol",
         "Banco Índico Comercial",
         [
             ("taxa-mercado", "Taxa diária de mercado", L2, FIXO, 1_000, [f("banca", "N.º da banca")]),
@@ -184,7 +184,7 @@ INSTITUTIONS = [
     (
         "outros",
         "seguros-tchova",
-        "Seguros Tchova (Demo)",
+        "Seguros Tchova",
         "Banco Maré",
         [
             ("auto", "Seguro automóvel", L1, CONSULTA, None, [f("apolice", "N.º de apólice")]),
@@ -194,7 +194,7 @@ INSTITUTIONS = [
     (
         "outros",
         "bilheteira-xigubo",
-        "Bilheteira Xigubo (Demo)",
+        "Bilheteira Xigubo",
         "Banco Horizonte",
         [
             ("concerto", "Bilhete de concerto", L2, FIXO, 100_000, [NOME]),

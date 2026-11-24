@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -12,7 +13,6 @@ export function TrackForm() {
   useEffect(() => setReady(true), []);
   return (
     <form
-      className="flex flex-col gap-2 sm:flex-row"
       onSubmit={(e) => {
         e.preventDefault();
         const c = code.trim().toUpperCase().replace(/\s/g, "");
@@ -21,30 +21,16 @@ export function TrackForm() {
         else setError("Código inválido. Começa por PMZ (pagamento) ou PED (pedido).");
       }}
     >
-      <label htmlFor="track" className="sr-only">
-        Código do pagamento ou pedido
-      </label>
-      <input
-        id="track"
-        value={code}
-        onChange={(e) => {
-          setCode(e.target.value);
-          setError("");
-        }}
-        placeholder="PMZ… ou PED…"
-        autoCapitalize="characters"
-        aria-invalid={!!error}
-        aria-describedby={error ? "track-err" : undefined}
-        className="min-h-12 flex-1 rounded-xl border border-slate-300 bg-white px-3 text-base uppercase focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30"
-      />
-      <button disabled={!ready} className="min-h-12 rounded-xl disabled:opacity-60 bg-white px-5 font-semibold text-brand-800 ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
-        Acompanhar
-      </button>
-      {error ? (
-        <p id="track-err" role="alert" className="text-sm text-red-700 sm:basis-full">
-          {error}
-        </p>
-      ) : null}
+      <div className="flex items-center gap-2 rounded-full border border-line bg-canvas p-2 focus-within:border-ink">
+        <label htmlFor="track" className="sr-only">Código do pagamento ou pedido</label>
+        <input id="track" value={code} onChange={(e) => { setCode(e.target.value); setError(""); }}
+          placeholder="PMZ… ou PED…" autoCapitalize="characters" aria-invalid={!!error} aria-describedby={error ? "track-err" : undefined}
+          className="min-h-12 min-w-0 flex-1 bg-transparent px-4 font-mono text-base uppercase tracking-wider placeholder:normal-case placeholder:tracking-normal placeholder:text-muted focus:outline-none" />
+        <button disabled={!ready} className="inline-flex min-h-12 items-center gap-2 rounded-full bg-ink px-6 font-semibold text-white transition hover:bg-ink/85 disabled:opacity-50">
+          Acompanhar <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
+      {error ? <p id="track-err" role="alert" className="mt-2 px-4 text-sm font-medium text-accent">{error}</p> : null}
     </form>
   );
 }

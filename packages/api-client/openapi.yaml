@@ -142,6 +142,22 @@ paths:
               schema:
                 $ref: '#/components/schemas/PortalSession'
           description: ''
+  /api/auth/portal/pending:
+    get:
+      operationId: auth_portal_pending_retrieve
+      description: 'Depois de "Entrar com Google" no portal: falta o passo MFA.'
+      tags:
+      - auth
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalPending'
+          description: ''
   /api/backoffice/audit:
     get:
       operationId: backoffice_audit_list
@@ -2958,6 +2974,15 @@ components:
       - password
       - phone
     PortalLoginStep:
+      type: object
+      properties:
+        mfa_enrolled:
+          type: boolean
+        demo_code:
+          type: string
+      required:
+      - mfa_enrolled
+    PortalPending:
       type: object
       properties:
         mfa_enrolled:

@@ -1,13 +1,43 @@
 @import "tailwindcss";
 
+/*
+  Identidade PagaMOZ — preto e branco, um só acento vermelho.
+  "brand-*" foi remapeado para a escala de tinta: todo o site herda o P&B sem tocar em cada página.
+*/
 @theme {
-  --color-brand-50: #eef7f2;
-  --color-brand-100: #d5ecdf;
-  --color-brand-600: #1c7a52;
-  --color-brand-700: #13603f;
-  --color-brand-800: #0d4a30;
-  --color-brand-900: #0b3d2e;
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --color-ink: #0b0b0c;
+  --color-paper: #ffffff;
+  --color-canvas: #f4f4f1;
+  --color-line: #e7e6e1;
+  --color-muted: #6e6e6a;
+  --color-accent: #e0262f;
+  --color-accent-soft: #fdecec;
+
+  --color-brand-50: #f4f4f1;
+  --color-brand-100: #e7e6e1;
+  --color-brand-600: #2a2a2c;
+  --color-brand-700: #0b0b0c;
+  --color-brand-800: #0b0b0c;
+  --color-brand-900: #0b0b0c;
+
+  --font-sans: var(--font-body), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-display-face), var(--font-body), system-ui, sans-serif;
+  --font-mono: var(--font-mono-face), ui-monospace, "Cascadia Mono", monospace;
+
+  --radius-card: 1.5rem;
+  --shadow-soft: 0 1px 2px rgb(11 11 12 / 0.04), 0 8px 24px -12px rgb(11 11 12 / 0.12);
+
+  --animate-cell: cell 6s ease-in-out infinite;
+  --animate-rise: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+
+  @keyframes cell {
+    0%, 100% { opacity: 0.04; }
+    50% { opacity: 0.22; }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
 }
 
 html {
@@ -16,13 +46,47 @@ html {
 
 body {
   font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+
+/* Cartão "vidro": contorno fino e fundo translúcido. Usado em títulos-chip e barras de acções. */
+.glass {
+  background: rgb(255 255 255 / 0.6);
+  border: 1px solid rgb(11 11 12 / 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.glass-dark {
+  background: rgb(255 255 255 / 0.06);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+dialog::backdrop {
+  background: rgb(11 11 12 / 0.45);
+  backdrop-filter: blur(2px);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }

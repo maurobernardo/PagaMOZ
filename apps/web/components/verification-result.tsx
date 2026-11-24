@@ -6,10 +6,10 @@ import { formatMZN } from "@/lib/i18n";
 export type Verification = Schemas["Verification"];
 
 const LOOK = {
-  valido: { title: "Comprovativo autêntico", cls: "bg-emerald-100 text-emerald-700", icon: "check" },
-  anulado: { title: "Comprovativo anulado", cls: "bg-red-100 text-red-700", icon: "x" },
-  em_analise: { title: "Pagamento em análise", cls: "bg-amber-100 text-amber-800", icon: "clock" },
-  adulterado: { title: "Registo não confere", cls: "bg-red-100 text-red-700", icon: "x" },
+  valido: { title: "Comprovativo autêntico", cls: "bg-ink text-white", icon: "check" },
+  anulado: { title: "Comprovativo anulado", cls: "bg-accent-soft text-accent", icon: "x" },
+  em_analise: { title: "Pagamento em análise", cls: "bg-white text-ink", icon: "clock" },
+  adulterado: { title: "Registo não confere", cls: "bg-accent-soft text-accent", icon: "x" },
 } as const;
 
 export function VerificationResult({ v }: { v: Verification }) {
@@ -21,15 +21,15 @@ export function VerificationResult({ v }: { v: Verification }) {
           <Icon name={look.icon} className="h-8 w-8" />
         </span>
         <h2 className="mt-3 text-2xl font-bold">{look.title}</h2>
-        <p className="mt-1 text-slate-600">{v.mensagem}</p>
+        <p className="mt-1 text-muted">{v.mensagem}</p>
         {v.demonstracao ? (
-          <p className="mx-auto mt-3 max-w-sm rounded-lg bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-950">
+          <p className="mx-auto mt-3 max-w-sm rounded-lg bg-white px-3 py-2 text-sm font-semibold text-ink">
             Emitido em ambiente de demonstração: não é um documento oficial.
           </p>
         ) : null}
       </div>
       <Card className="mt-5">
-        <dl className="divide-y divide-slate-100 text-sm">
+        <dl className="divide-y divide-line text-sm">
           <Row label="Código">{v.codigo}</Row>
           <Row label="Referência">{v.referencia}</Row>
           <Row label="Instituição">{v.instituicao}</Row>
@@ -37,9 +37,9 @@ export function VerificationResult({ v }: { v: Verification }) {
           <Row label="Data e hora">{v.data_hora}</Row>
           <Row label="Total" strong>{formatMZN(v.total)}</Row>
         </dl>
-        <p className="mt-3 break-all text-xs text-slate-500">Hash: {v.hash_conteudo}</p>
+        <p className="mt-3 break-all text-xs text-muted">Hash: {v.hash_conteudo}</p>
       </Card>
-      <p className="mt-3 text-center text-xs text-slate-500">
+      <p className="mt-3 text-center text-xs text-muted">
         Compare estes dados com o papel ou PDF que lhe mostraram. Se forem diferentes, o documento foi alterado.
       </p>
     </div>

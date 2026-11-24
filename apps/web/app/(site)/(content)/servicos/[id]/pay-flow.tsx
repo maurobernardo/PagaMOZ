@@ -169,7 +169,7 @@ export function PayFlow({
       <ol className="mb-5 flex gap-2" aria-label="Passos">
         {STEPS.map(([k, label], i) => (
           <li key={k} aria-current={k === step ? "step" : undefined}
-            className={`flex-1 border-t-4 pt-2 text-sm font-medium ${i <= idx ? "border-brand-600 text-brand-800" : "border-slate-200 text-slate-500"}`}>
+            className={`flex-1 border-t-4 pt-2 text-sm font-medium ${i <= idx ? "border-brand-600 text-brand-800" : "border-line text-muted"}`}>
             {i + 1}. {label}
           </li>
         ))}
@@ -193,12 +193,12 @@ export function PayFlow({
             )}
             {fileFields.map((f) => (
               <div key={f.name}>
-                <label htmlFor={f.name} className="block text-sm font-medium text-slate-800">{f.label}</label>
+                <label htmlFor={f.name} className="block text-sm font-medium text-ink/80">{f.label}</label>
                 <input id={f.name} type="file" accept="application/pdf,image/jpeg,image/png"
                   aria-describedby={`${f.name}-hint`}
                   className="mt-1 block w-full text-sm file:mr-3 file:min-h-11 file:rounded-xl file:border-0 file:bg-brand-50 file:px-4 file:font-semibold file:text-brand-800"
                   onChange={(e) => e.target.files?.[0] && setFiles({ ...files, [f.name]: e.target.files[0] })} />
-                <p id={`${f.name}-hint`} className={`mt-1 text-sm ${errors[f.name] ? "text-red-700" : "text-slate-600"}`}>
+                <p id={`${f.name}-hint`} className={`mt-1 text-sm ${errors[f.name] ? "text-accent" : "text-muted"}`}>
                   {errors[f.name] ?? "PDF, JPG ou PNG até 5 MB."}
                 </p>
               </div>
@@ -213,9 +213,9 @@ export function PayFlow({
       {step === "confirmar" && confirmed && (
         <Card>
           <h2 className="text-lg font-bold">Confirme o valor</h2>
-          {confirmed.description ? <p className="mt-1 text-slate-600">{confirmed.description}</p> : null}
-          {confirmed.holder ? <p className="mt-1 text-sm text-slate-600">Titular: <strong>{confirmed.holder}</strong></p> : null}
-          <dl className="mt-4 divide-y divide-slate-100">
+          {confirmed.description ? <p className="mt-1 text-muted">{confirmed.description}</p> : null}
+          {confirmed.holder ? <p className="mt-1 text-sm text-muted">Titular: <strong>{confirmed.holder}</strong></p> : null}
+          <dl className="mt-4 divide-y divide-line">
             <Row label="Valor do serviço">{formatMZN(confirmed.amount)}</Row>
             {confirmed.commission_payer === "cidadao" ? (
               <Row label="Taxa de serviço">{formatMZN(confirmed.commission)}</Row>
@@ -223,7 +223,7 @@ export function PayFlow({
             <Row label="Total a pagar" strong>{formatMZN(confirmed.total)}</Row>
           </dl>
           {confirmed.commission_payer !== "cidadao" ? (
-            <p className="mt-2 text-sm text-slate-600">Sem taxas para si: a comissão é suportada pela instituição.</p>
+            <p className="mt-2 text-sm text-muted">Sem taxas para si: a comissão é suportada pela instituição.</p>
           ) : null}
           <div className="mt-5 grid gap-2">
             <Button onClick={() => setStep("metodo")}>Continuar para pagamento</Button>
@@ -234,7 +234,7 @@ export function PayFlow({
               ) : <span />}
             </div>
             {!existingRequest && !confirmed.request ? (
-              <button className="min-h-11 text-sm font-medium text-slate-600 underline-offset-2 hover:underline" onClick={() => setStep("dados")}>
+              <button className="min-h-11 text-sm font-medium text-muted underline-offset-2 hover:underline" onClick={() => setStep("dados")}>
                 Alterar dados
               </button>
             ) : null}
@@ -250,7 +250,7 @@ export function PayFlow({
               <legend className="text-lg font-bold">Como quer pagar?</legend>
               <div className="mt-3 grid gap-2">
                 {Object.entries(METHOD_LABEL).map(([k, label]) => (
-                  <label key={k} className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-xl px-4 ring-1 ring-inset ${method === k ? "bg-brand-50 ring-2 ring-brand-600" : "ring-slate-300"}`}>
+                  <label key={k} className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-xl px-4 ring-1 ring-inset ${method === k ? "bg-brand-50 ring-2 ring-brand-600" : "ring-line"}`}>
                     <input type="radio" name="method" value={k} checked={method === k} onChange={() => setMethod(k)} className="h-5 w-5 accent-brand-700" />
                     <span className="font-medium">{label}</span>
                   </label>
@@ -262,10 +262,10 @@ export function PayFlow({
                 placeholder="84 123 4567" value={phone} error={errors.phone} onChange={(e) => setPhone(e.target.value)} />
             )}
             {Object.keys(scenarios).length > 0 && (
-              <div className="rounded-xl bg-amber-50 p-3 ring-1 ring-inset ring-amber-600/25">
-                <label htmlFor="scenario" className="block text-sm font-semibold text-amber-950">Cenário de demonstração</label>
+              <div className="rounded-xl bg-white p-3 ring-1 ring-inset ring-line">
+                <label htmlFor="scenario" className="block text-sm font-semibold text-ink">Cenário de demonstração</label>
                 <select id="scenario" value={scenario} onChange={(e) => setScenario(e.target.value)}
-                  className="mt-1 block min-h-11 w-full rounded-lg border border-amber-300 bg-white px-2">
+                  className="mt-1 block min-h-11 w-full rounded-lg border border-line bg-white px-2">
                   {Object.entries(scenarios).map(([k, d]) => <option key={k} value={k}>{k} — {d}</option>)}
                 </select>
               </div>
@@ -273,7 +273,7 @@ export function PayFlow({
             <Button type="submit" disabled={busy || !ready} className="w-full">
               {busy ? "A enviar…" : `Pagar ${formatMZN(confirmed.total)}`}
             </Button>
-            <button type="button" className="min-h-11 w-full text-sm font-medium text-slate-600 hover:underline" onClick={() => setStep("confirmar")}>
+            <button type="button" className="min-h-11 w-full text-sm font-medium text-muted hover:underline" onClick={() => setStep("confirmar")}>
               Voltar
             </button>
           </form>

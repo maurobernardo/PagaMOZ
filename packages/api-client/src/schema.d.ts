@@ -103,6 +103,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/portal/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Depois de "Entrar com Google" no portal: falta o passo MFA. */
+        get: operations["auth_portal_pending_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/backoffice/audit": {
         parameters: {
             query?: never;
@@ -1445,6 +1462,10 @@ export interface components {
             mfa_enrolled: boolean;
             demo_code?: string;
         };
+        PortalPending: {
+            mfa_enrolled: boolean;
+            demo_code?: string;
+        };
         PortalSession: {
             phone: string;
             is_staff: boolean;
@@ -1943,6 +1964,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PortalSession"];
+                };
+            };
+        };
+    };
+    auth_portal_pending_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalPending"];
                 };
             };
         };

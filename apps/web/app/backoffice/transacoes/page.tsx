@@ -6,7 +6,7 @@ import { api } from "@/lib/api";
 import { formatDateTime, formatMZN, PAYMENT_STATUS } from "@/lib/i18n";
 import { useLoad } from "@/lib/use-load";
 
-const inputCls = "min-h-11 rounded-lg border border-slate-300 bg-white px-2 text-sm";
+const inputCls = "min-h-11 rounded-lg border border-line bg-white px-2 text-sm";
 
 export default function Transacoes() {
   const [f, setF] = useState({ q: "", status: "", institution: "" });
@@ -22,16 +22,16 @@ export default function Transacoes() {
   return (
     <div className="space-y-4">
       <form className="flex flex-wrap items-end gap-2" onSubmit={(e) => { e.preventDefault(); setPage(1); setApplied(f); }}>
-        <label className="grid text-xs font-medium text-slate-700">Referência
+        <label className="grid text-xs font-medium text-ink/80">Referência
           <input className={inputCls} value={f.q} onChange={(e) => setF({ ...f, q: e.target.value })} placeholder="PMZ…" />
         </label>
-        <label className="grid text-xs font-medium text-slate-700">Instituição
+        <label className="grid text-xs font-medium text-ink/80">Instituição
           <select className={inputCls} value={f.institution} onChange={(e) => setF({ ...f, institution: e.target.value })}>
             <option value="">Todas</option>
             {(insts ?? []).map((i) => <option key={i.slug} value={i.slug}>{i.name}</option>)}
           </select>
         </label>
-        <label className="grid text-xs font-medium text-slate-700">Estado
+        <label className="grid text-xs font-medium text-ink/80">Estado
           <select className={inputCls} value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}>
             <option value="">Todos</option>
             {Object.entries(PAYMENT_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
@@ -39,17 +39,17 @@ export default function Transacoes() {
         </label>
         <Button type="submit" className="min-h-11">Filtrar</Button>
       </form>
-      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-2xl border border-line bg-white">
         <table className="w-full min-w-[860px] text-sm">
           <caption className="sr-only">Transacções de todas as instituições</caption>
-          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-600">
+          <thead className="bg-canvas text-left text-xs uppercase tracking-wide text-muted">
             <tr>
               <th className="px-3 py-2">Referência</th><th className="px-3 py-2">Instituição</th><th className="px-3 py-2">Serviço</th>
               <th className="px-3 py-2">Método</th><th className="px-3 py-2">Data</th><th className="px-3 py-2 text-right">Total</th>
               <th className="px-3 py-2 text-right">Comissão</th><th className="px-3 py-2">Estado</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-line">
             {(data?.results ?? []).map((t) => {
               const st = PAYMENT_STATUS[t.status];
               return (
@@ -69,7 +69,7 @@ export default function Transacoes() {
         </table>
       </div>
       {data ? (
-        <div className="flex items-center justify-between text-sm text-slate-600">
+        <div className="flex items-center justify-between text-sm text-muted">
           <span>{data.count} transacções</span>
           <span className="flex gap-2">
             <Button variant="secondary" className="min-h-10" disabled={!data.previous} onClick={() => setPage(page - 1)}>Anterior</Button>

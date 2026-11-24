@@ -1,60 +1,54 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { ArrowLeftRight, Building2, LayoutDashboard, PlugZap, Scale, ScrollText, TriangleAlert } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
-
-const NAV = [
-  ["", "Visão geral"],
-  ["/instituicoes", "Instituições"],
-  ["/transacoes", "Transacções"],
-  ["/reconciliacao", "Reconciliação"],
-  ["/falhas", "Falhas"],
-  ["/provedores", "Provedores"],
-  ["/auditoria", "Auditoria"],
-] as const;
+import { AppShell, type Alert } from "@/components/app-shell";
+import { Skeleton } from "@/components/ui";
+import { api, type Schemas } from "@/lib/api";
 
 export default function BackofficeLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const path = usePathname();
-  const [ok, setOk] = useState(false);
+  const [me, setMe] = useState<Schemas["Me"] | null>(null);
+  const [o, setO] = useState<{ d: number; dl: number; stuck: number } | null>(null);
 
   useEffect(() => {
-    api.GET("/api/backoffice/parameters").then((r) => (r.response.ok ? setOk(true) : router.replace("/portal")));
+    Promise.all([api.GET("/api/me"), api.GET("/api/backoffice/overview")]).then(([m, ov]) => {
+      if (!ov.response.ok || !m.data) return router.replace("/portal");
+      setMe(m.data);
+      setO({ d: ov.data!.open_discrepancies, dl: ov.data!.dead_letters, stuck: ov.data!.stuck_pending });
+    });
   }, [router]);
 
-  if (!ok) return <p role="status" className="text-slate-600">A carregar backoffice…</p>;
+  if (!me || !o)
+    return <div className="grid min-h-dvh place-items-center" role="status" aria-label="A carregar backoffice"><Skeleton className="h-10 w-48" /></div>;
+
+  const alerts: Alert[] = [
+    ...(o.d ? [{ label: `${o.d} divergências de reconciliação`, href: "/backoffice/reconciliacao" }] : []),
+    ...(o.dl ? [{ label: `${o.dl} entregas falhadas por rever`, href: "/backoffice/falhas" }] : []),
+    ...(o.stuck ? [{ label: `${o.stuck} pagamentos pendentes fora do prazo`, href: "/backoffice/transacoes" }] : []),
+  ];
+
   return (
-    <>
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Equipa da plataforma</p>
-          <h1 className="text-2xl font-bold tracking-tight">Backoffice PagaMOZ</h1>
-        </div>
-        <button
-          onClick={async () => { await api.POST("/api/auth/logout"); router.replace("/portal"); }}
-          className="min-h-10 rounded-lg px-3 text-sm font-medium text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-white">
-          Sair
-        </button>
-      </div>
-      <nav aria-label="Backoffice" className="-mx-4 mb-6 overflow-x-auto border-b border-slate-200 px-4">
-        <ul className="flex gap-1 whitespace-nowrap">
-          {NAV.map(([href, label]) => {
-            const full = `/backoffice${href}`;
-            const active = href ? path.startsWith(full) : path === "/backoffice";
-            return (
-              <li key={href}>
-                <Link href={full} aria-current={active ? "page" : undefined}
-                  className={`inline-flex min-h-11 items-center border-b-2 px-3 text-sm font-medium ${active ? "border-brand-700 text-brand-800" : "border-transparent text-slate-600 hover:text-slate-900"}`}>
-                  {label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
+    <AppShell
+      eyebrow="Backoffice da plataforma · Equipa PagaMOZ"
+      org="PagaMOZ"
+      orgSub="Equipa da plataforma"
+      userName={me.name || me.phone}
+      greeting={<>Olá, {(me.name || "equipa").split(" ")[0]}.</>}
+      alerts={alerts}
+      onLogout={async () => { await api.POST("/api/auth/logout"); router.replace("/portal"); }}
+      nav={[
+        { href: "/backoffice", label: "Visão geral", icon: LayoutDashboard, exact: true },
+        { href: "/backoffice/instituicoes", label: "Instituições", icon: Building2 },
+        { href: "/backoffice/transacoes", label: "Transacções", icon: ArrowLeftRight },
+        { href: "/backoffice/reconciliacao", label: "Reconciliação", icon: Scale, count: o.d },
+        { href: "/backoffice/falhas", label: "Falhas", icon: TriangleAlert, count: o.dl },
+        { href: "/backoffice/provedores", label: "Provedores", icon: PlugZap },
+        { href: "/backoffice/auditoria", label: "Auditoria", icon: ScrollText },
+      ]}
+    >
       {children}
-    </>
+    </AppShell>
   );
 }

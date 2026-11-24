@@ -37,7 +37,7 @@ export default function Conta() {
     router.refresh();
   }
 
-  if (!me) return <p role="status" className="text-slate-600">A carregar…</p>;
+  if (!me) return <p role="status" className="text-muted">A carregar…</p>;
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
@@ -48,7 +48,7 @@ export default function Conta() {
 
       <section aria-labelledby="w">
         <h2 id="w" className="text-lg font-bold">Carteira de obrigações</h2>
-        <p className="text-sm text-slate-600">Contratos e referências que paga com frequência.</p>
+        <p className="text-sm text-muted">Contratos e referências que paga com frequência.</p>
         {wallet.length === 0 ? (
           <Empty>Ainda não guardou nenhuma. No passo “Valor” de um pagamento, toque em “Guardar”.</Empty>
         ) : (
@@ -57,7 +57,7 @@ export default function Conta() {
               <li key={o.id}>
                 <Card className="flex h-full flex-col gap-2 p-4">
                   <p className="font-semibold">{o.label}</p>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-muted">
                     {o.service_detail.institution.name} · {Object.values(o.fields as Record<string, string>).join(" · ")}
                   </p>
                   <div className="mt-auto flex gap-2">
@@ -78,13 +78,13 @@ export default function Conta() {
         {requests.length === 0 ? (
           <Empty>Sem pedidos de documentos ou licenças.</Empty>
         ) : (
-          <ul className="mt-3 divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
+          <ul className="mt-3 divide-y divide-line rounded-2xl border border-line bg-white">
             {requests.map((r) => (
               <li key={r.code}>
-                <Link href={`/pedido/${r.code}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50">
+                <Link href={`/pedido/${r.code}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-canvas">
                   <span>
                     <span className="block font-medium">{r.service_name}</span>
-                    <span className="text-sm text-slate-600">{r.code} · {formatDateTime(r.created_at)}</span>
+                    <span className="text-sm text-muted">{r.code} · {formatDateTime(r.created_at)}</span>
                   </span>
                   <Badge tone={r.status === "REJEITADO" ? "bad" : r.status === "CONCLUIDO" ? "ok" : "info"}>
                     {REQUEST_STATUS[r.status]}
@@ -103,15 +103,15 @@ export default function Conta() {
             Ainda não fez pagamentos. <Link href="/servicos" className="font-semibold text-brand-800 underline">Ver serviços</Link>
           </Empty>
         ) : (
-          <ul className="mt-3 divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
+          <ul className="mt-3 divide-y divide-line rounded-2xl border border-line bg-white">
             {payments.map((p) => {
               const st = PAYMENT_STATUS[p.status];
               return (
                 <li key={p.reference}>
-                  <Link href={`/pagamento/${p.reference}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50">
+                  <Link href={`/pagamento/${p.reference}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-canvas">
                     <span className="min-w-0">
                       <span className="block truncate font-medium">{p.service_name}</span>
-                      <span className="text-sm text-slate-600">{p.institution_name} · {formatDateTime(p.created_at)}</span>
+                      <span className="text-sm text-muted">{p.institution_name} · {formatDateTime(p.created_at)}</span>
                     </span>
                     <span className="shrink-0 text-right">
                       <span className="block font-semibold tabular-nums">{formatMZN(p.total)}</span>
@@ -129,5 +129,5 @@ export default function Conta() {
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
-  return <p className="mt-3 rounded-2xl border border-dashed border-slate-300 bg-white p-5 text-sm text-slate-600">{children}</p>;
+  return <p className="mt-3 rounded-2xl border border-dashed border-line bg-white p-5 text-sm text-muted">{children}</p>;
 }

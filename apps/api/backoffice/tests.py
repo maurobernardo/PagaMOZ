@@ -73,7 +73,7 @@ def test_overview_consistent(demo):
 
 def test_create_and_suspend_institution_audited(demo):
     c = staff()
-    r = c.post("/api/backoffice/institutions", {"name": "Nova Instituição (Demo)", "slug": "nova-demo",
+    r = c.post("/api/backoffice/institutions", {"name": "Nova Instituição", "slug": "nova-demo",
                "nuit": "400123456", "settlement_bank": "Banco X", "settlement_account_masked": "0001 2345 6789",
                "commission_bps": 120, "commission_payer": "instituicao"}, format="json")  # fmt: skip
     assert r.status_code == 201, r.json()
@@ -96,7 +96,7 @@ def test_cross_institution_transactions_and_filter(demo):
     one = c.get("/api/backoffice/transactions?institution=energia-austral").json()
     assert all_ == Transaction.objects.count()
     assert one["count"] == Transaction.objects.filter(institution__slug="energia-austral").count() < all_
-    assert {t["institution_name"] for t in one["results"]} == {"Energia Austral (Demo)"}
+    assert {t["institution_name"] for t in one["results"]} == {"Energia Austral"}
 
 
 def test_dead_letter_retry_and_resolve(demo):

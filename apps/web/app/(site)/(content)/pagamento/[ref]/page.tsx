@@ -41,7 +41,7 @@ export default function PaymentStatus({ params }: { params: Promise<{ ref: strin
     );
   if (!p)
     return (
-      <p role="status" className="mx-auto max-w-xl text-slate-600">
+      <p role="status" className="mx-auto max-w-xl text-muted">
         A carregar pagamento…
       </p>
     );
@@ -53,13 +53,13 @@ export default function PaymentStatus({ params }: { params: Promise<{ ref: strin
   return (
     <div className="mx-auto max-w-xl">
       <div aria-live="polite" className="text-center">
-        <span className={`mx-auto grid h-16 w-16 place-items-center rounded-full ${ok ? "bg-emerald-100 text-emerald-700" : waiting ? "bg-amber-100 text-amber-800" : "bg-red-100 text-red-700"}`}>
+        <span className={`mx-auto grid h-16 w-16 place-items-center rounded-full ${ok ? "bg-ink text-white" : waiting ? "bg-white text-ink" : "bg-accent-soft text-accent"}`}>
           <Icon name={ok ? "check" : waiting ? "clock" : "x"} className={`h-8 w-8 ${waiting ? "motion-safe:animate-pulse" : ""}`} />
         </span>
         <h1 className="mt-3 text-2xl font-bold">
           {ok ? "Pagamento confirmado" : waiting ? "A aguardar confirmação" : st.label}
         </h1>
-        <p className="mt-1 text-slate-600">
+        <p className="mt-1 text-muted">
           {ok ? `${p.institution_name} recebeu o seu pagamento.` : waiting ? p.instructions : p.failure_reason || "O pagamento não foi concluído. Não foi cobrado."}
         </p>
       </div>
@@ -67,12 +67,12 @@ export default function PaymentStatus({ params }: { params: Promise<{ ref: strin
       <Card className="mt-6">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Referência</p>
+            <p className="text-xs uppercase tracking-wide text-muted">Referência</p>
             <p className="font-mono text-lg font-bold tracking-wider">{p.reference}</p>
           </div>
           <Badge tone={st.tone}>{st.label}</Badge>
         </div>
-        <dl className="mt-4 divide-y divide-slate-100 text-sm">
+        <dl className="mt-4 divide-y divide-line text-sm">
           <Row label="Serviço">{p.service_name}</Row>
           <Row label="Instituição">{p.institution_name}</Row>
           {p.description && p.description !== p.service_name ? <Row label="Detalhe">{p.description}</Row> : null}
@@ -94,7 +94,7 @@ export default function PaymentStatus({ params }: { params: Promise<{ ref: strin
             <Icon name="arrow" className="h-5 w-5 rotate-90" />
             Descarregar comprovativo (PDF)
           </a>
-          <p className="text-center text-sm text-slate-600">
+          <p className="text-center text-sm text-muted">
             {p.receipt_code ? (
               <>
                 Código de verificação{" "}
@@ -118,7 +118,7 @@ export default function PaymentStatus({ params }: { params: Promise<{ ref: strin
         <ButtonLink href="/servicos" variant={!waiting && !ok ? "secondary" : "primary"}>Pagar outro serviço</ButtonLink>
         <ButtonLink href="/conta" variant="secondary">Os meus pagamentos</ButtonLink>
       </div>
-      <p className="mt-6 text-center text-xs text-slate-500">
+      <p className="mt-6 text-center text-xs text-muted">
         <Link href="/" className="hover:underline">Início</Link>
       </p>
     </div>

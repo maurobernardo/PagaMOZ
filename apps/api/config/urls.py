@@ -4,6 +4,7 @@ from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.routers import SimpleRouter
 
+from accounts import google
 from accounts.api import (
     LogoutView,
     MfaSetupView,
@@ -14,6 +15,7 @@ from accounts.api import (
     OtpRequestView,
     OtpVerifyView,
     PortalLoginView,
+    PortalPendingView,
 )
 from backoffice import api as bo
 from catalog.api import CategoryList, Me, PortalServiceViewSet, PublicServiceViewSet
@@ -76,6 +78,10 @@ urlpatterns = [
     path("api/auth/otp/verify", OtpVerifyView.as_view(), name="otp-verify"),
     path("api/auth/logout", LogoutView.as_view(), name="logout"),
     path("api/auth/portal/login", PortalLoginView.as_view(), name="portal-login"),
+    path("api/auth/portal/pending", PortalPendingView.as_view(), name="portal-pending"),
+    path("api/auth/google/status", google.status, name="google-status"),
+    path("api/auth/google/start", google.start, name="google-start"),
+    path("api/auth/google/callback", google.callback, name="google-callback"),
     path("api/auth/portal/mfa/setup", MfaSetupView.as_view(), name="mfa-setup"),
     path("api/auth/portal/mfa/verify", MfaVerifyView.as_view(), name="mfa-verify"),
     path("api/catalog/categories", CategoryList.as_view(), name="categories"),

@@ -10,7 +10,7 @@ type Sum = { count: number; gross: number; net: number };
 
 export default function Overview() {
   const { data: d } = useLoad(() => api.GET("/api/backoffice/overview"), []);
-  if (!d) return <p role="status" className="text-slate-600">A carregar…</p>;
+  if (!d) return <p role="status" className="text-muted">A carregar…</p>;
   const today = d.today as Sum;
   const month = d.month as Sum;
   const alerts: [number, string, string][] = [
@@ -33,7 +33,7 @@ export default function Overview() {
       <div className="grid gap-3 sm:grid-cols-3">
         {alerts.map(([n, label, href]) => (
           <Link key={label} href={href}
-            className={`rounded-2xl p-4 ring-1 ring-inset ${n ? "bg-red-50 text-red-900 ring-red-600/20" : "bg-emerald-50 text-emerald-900 ring-emerald-600/20"}`}>
+            className={`rounded-2xl p-4 ring-1 ring-inset ${n ? "bg-accent-soft text-accent ring-accent/20" : "bg-ink text-white ring-ink"}`}>
             <span className="text-2xl font-bold">{n}</span> <span className="text-sm">{label}</span>
           </Link>
         ))}
@@ -42,10 +42,10 @@ export default function Overview() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <h2 className="font-bold">Maiores instituições (30 dias)</h2>
-          <ul className="mt-3 divide-y divide-slate-100 text-sm">
+          <ul className="mt-3 divide-y divide-line text-sm">
             {(d.top_institutions as { institution__name: string; institution__slug: string; count: number; gross: number }[]).map((i) => (
               <li key={i.institution__slug} className="flex justify-between gap-3 py-2">
-                <span>{i.institution__name} <span className="text-slate-500">· {i.count}</span></span>
+                <span>{i.institution__name} <span className="text-muted">· {i.count}</span></span>
                 <span className="font-semibold tabular-nums">{formatMZN(i.gross)}</span>
               </li>
             ))}
@@ -53,12 +53,12 @@ export default function Overview() {
         </Card>
         <Card>
           <h2 className="font-bold">Pagamentos nas últimas 24h por estado</h2>
-          <ul className="mt-3 divide-y divide-slate-100 text-sm">
+          <ul className="mt-3 divide-y divide-line text-sm">
             {Object.entries(d.by_status_24h as Record<string, number>).map(([s, n]) => (
               <li key={s} className="flex justify-between py-2"><span>{PAYMENT_STATUS[s]?.label ?? s}</span><span className="font-semibold">{n}</span></li>
             ))}
           </ul>
-          <p className="mt-3 text-sm text-slate-600">
+          <p className="mt-3 text-sm text-muted">
             Instituições: {Object.entries(d.institutions as Record<string, number>).map(([k, v]) => `${v} ${k}`).join(" · ")}
           </p>
         </Card>
@@ -70,9 +70,9 @@ export default function Overview() {
 function Kpi({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
     <Card className="p-4">
-      <p className="text-sm text-slate-600">{label}</p>
+      <p className="text-sm text-muted">{label}</p>
       <p className="mt-1 text-2xl font-bold tabular-nums">{value}</p>
-      <p className="text-sm text-slate-600">{sub}</p>
+      <p className="text-sm text-muted">{sub}</p>
     </Card>
   );
 }

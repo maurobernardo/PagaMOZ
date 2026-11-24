@@ -28,13 +28,13 @@ export default function RequestPage({ params }: { params: Promise<{ code: string
   }, [code]);
 
   if (missing) return <div className="mx-auto max-w-xl"><Alert>Não encontrámos o pedido {code}.</Alert></div>;
-  if (!r) return <p role="status" className="mx-auto max-w-xl text-slate-600">A carregar pedido…</p>;
+  if (!r) return <p role="status" className="mx-auto max-w-xl text-muted">A carregar pedido…</p>;
 
   const tone = r.status === "REJEITADO" ? "bad" : r.status === "CONCLUIDO" ? "ok" : r.status === "AGUARDA_PAGAMENTO" ? "wait" : "info";
 
   return (
     <div className="mx-auto max-w-xl">
-      <p className="text-sm font-medium uppercase tracking-wide text-slate-500">{r.institution_name}</p>
+      <p className="text-sm font-medium uppercase tracking-wide text-muted">{r.institution_name}</p>
       <h1 className="mt-1 text-2xl font-bold">{r.service_name}</h1>
       <div className="mt-2 flex items-center gap-3">
         <span className="font-mono font-bold tracking-wider">{r.code}</span>
@@ -52,13 +52,13 @@ export default function RequestPage({ params }: { params: Promise<{ code: string
 
       <Card className="mt-5">
         <h2 className="font-bold">Histórico</h2>
-        <ol className="mt-3 space-y-4 border-l-2 border-slate-200 pl-4">
+        <ol className="mt-3 space-y-4 border-l-2 border-line pl-4">
           {r.events.map((e, i) => (
             <li key={i} className="relative">
               <span aria-hidden className={`absolute -left-[23px] top-1 h-3 w-3 rounded-full ${i === r.events.length - 1 ? "bg-brand-600" : "bg-slate-300"}`} />
               <p className="font-semibold">{REQUEST_STATUS[e.status] ?? e.status}</p>
-              {e.note ? <p className="text-sm text-slate-700">{e.note}</p> : null}
-              <p className="text-xs text-slate-500">{formatDateTime(e.created_at)}</p>
+              {e.note ? <p className="text-sm text-ink/80">{e.note}</p> : null}
+              <p className="text-xs text-muted">{formatDateTime(e.created_at)}</p>
             </li>
           ))}
         </ol>

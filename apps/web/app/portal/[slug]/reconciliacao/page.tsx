@@ -1,81 +1,90 @@
 "use client";
 
+import { CalendarDays, CheckCircle2, CircleAlert, ListChecks } from "lucide-react";
 import { useState } from "react";
-import { Alert, Badge, Card } from "@/components/ui";
+import { filterInput } from "@/components/table";
+import { useToast } from "@/components/toast";
+import { Badge, Button, Card, Empty, Skeleton, Toolbar, useDialog } from "@/components/ui";
 import { api, errorMessage } from "@/lib/api";
 import { formatDateTime, formatMZN } from "@/lib/i18n";
 import { useLoad, usePortal } from "../portal-context";
 
 export default function Reconciliacao() {
-  const { slug, canWrite } = usePortal();
+  const { slug, canWrite, refreshAlerts } = usePortal();
+  const toast = useToast();
+  const dialog = useDialog();
   const [day, setDay] = useState<string>("");
-  const [msg, setMsg] = useState("");
   const { data, reload } = useLoad(
-    () => api.GET("/api/portal/{institution_slug}/reconciliation", {
-      params: { path: { institution_slug: slug }, query: day ? { date: day } : {} },
-    }),
+    () => api.GET("/api/portal/{institution_slug}/reconciliation", { params: { path: { institution_slug: slug }, query: day ? { date: day } : {} } }),
     [slug, day],
   );
 
-  async function resolve(id: number) {
-    const note = prompt("Como foi resolvida esta divergência?");
-    if (!note) return;
-    const r = await api.POST("/api/portal/{institution_slug}/reconciliation/{id}/resolve", {
-      params: { path: { institution_slug: slug, id } },
-      body: { note },
+  async function resolve(id: number, ref: string) {
+    const note = await dialog.prompt({
+      title: "Resolver divergência",
+      body: `Explique como ficou resolvida a diferença em ${ref}. A nota fica na auditoria.`,
+      input: { label: "Nota", placeholder: "Ex.: confirmado com o banco, valor correcto é o da plataforma", multiline: true },
+      confirm: "Marcar resolvida",
     });
-    setMsg(r.data ? "Divergência marcada como resolvida." : errorMessage(r.error));
+    if (!note) return;
+    const r = await api.POST("/api/portal/{institution_slug}/reconciliation/{id}/resolve", { params: { path: { institution_slug: slug, id } }, body: { note } });
+    if (r.data) toast("Divergência resolvida.");
+    else toast(errorMessage(r.error), "bad");
     reload();
+    refreshAlerts();
   }
 
-  if (!data) return <p role="status" className="text-slate-600">A carregar…</p>;
-  if (!data.date) return <Card><p>Ainda não correu nenhuma reconciliação. Corre todos os dias às 23:30.</p></Card>;
+  if (!data) return <div className="grid gap-6 sm:grid-cols-3"><Skeleton className="h-28" /><Skeleton className="h-28" /><Skeleton className="h-28" /></div>;
+  if (!data.date) return <Empty icon={<CalendarDays className="h-5 w-5" />} title="Ainda não correu nenhuma reconciliação.">Corre automaticamente todos os dias às 23:30.</Empty>;
 
   const open = data.items.filter((i) => !i.resolved).length;
   const runs = data.runs as { date: string; discrepancies: number }[];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {dialog.ui}
       <div className="flex flex-wrap items-center gap-3">
-        <label className="text-sm font-medium">Dia&nbsp;
-          <select className="min-h-11 rounded-lg border border-slate-300 bg-white px-2" value={day || data.date}
-            onChange={(e) => setDay(e.target.value)}>
+        <Toolbar>
+          <CalendarDays className="ml-3 h-4 w-4 text-muted" />
+          <select aria-label="Dia" className={filterInput} value={day || data.date} onChange={(e) => setDay(e.target.value)}>
             {runs.map((r) => <option key={r.date} value={r.date}>{r.date}{r.discrepancies ? ` · ${r.discrepancies} divergências` : ""}</option>)}
           </select>
-        </label>
-        {data.ran_at ? <span className="text-sm text-slate-600">Executada {formatDateTime(data.ran_at)}</span> : null}
+        </Toolbar>
+        {data.ran_at ? <span className="text-sm text-muted">Executada {formatDateTime(data.ran_at)}</span> : null}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Card className="p-4"><p className="text-sm text-slate-600">Transacções do dia</p><p className="text-2xl font-bold">{data.platform_count}</p></Card>
-        <Card className="p-4"><p className="text-sm text-slate-600">Conferem com o provedor</p><p className="text-2xl font-bold text-emerald-700">{data.matched}</p></Card>
-        <Card className="p-4"><p className="text-sm text-slate-600">Divergências abertas</p><p className={`text-2xl font-bold ${open ? "text-red-700" : ""}`}>{open}</p></Card>
+      <div className="grid gap-6 sm:grid-cols-3">
+        <Kpi icon={<ListChecks className="h-6 w-6" />} label="Transacções do dia" value={data.platform_count} />
+        <Kpi icon={<CheckCircle2 className="h-6 w-6" />} label="Conferem com o provedor" value={data.matched} />
+        <Kpi icon={<CircleAlert className="h-6 w-6" />} label="Divergências abertas" value={open} alert={open > 0} />
       </div>
-
-      {msg ? <Alert tone="info">{msg}</Alert> : null}
 
       {data.items.length === 0 ? (
-        <Alert tone="ok">Tudo confere: extracto do provedor e plataforma coincidem.</Alert>
+        <Empty icon={<CheckCircle2 className="h-5 w-5" />} title="Tudo confere.">O extracto do provedor e a plataforma coincidem neste dia.</Empty>
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {data.items.map((i) => (
             <li key={i.id}>
-              <Card className="flex flex-wrap items-start justify-between gap-3 p-4">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge tone={i.resolved ? "ok" : "bad"}>{i.resolved ? "Resolvida" : i.kind_label}</Badge>
-                    <span className="font-mono text-xs">{i.reference || i.provider_ref}</span>
+              <Card className="flex flex-wrap items-center justify-between gap-4 !p-5">
+                <div className="flex min-w-0 items-start gap-4">
+                  <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${i.resolved ? "bg-canvas" : "bg-accent-soft text-accent"}`}>
+                    {i.resolved ? <CheckCircle2 className="h-5 w-5" /> : <CircleAlert className="h-5 w-5" />}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-semibold">{i.kind_label}</p>
+                      {i.resolved ? <Badge tone="ok">Resolvida</Badge> : null}
+                    </div>
+                    <p className="font-mono text-xs text-muted">{i.reference || i.provider_ref}</p>
+                    <p className="mt-1 text-sm">{i.detail}</p>
+                    <p className="text-sm text-muted">
+                      Plataforma {i.platform_amount != null ? formatMZN(i.platform_amount) : "—"} · Provedor {i.provider_amount != null ? formatMZN(i.provider_amount) : "—"}
+                    </p>
+                    {i.resolution_note ? <p className="mt-1 text-sm italic text-muted">“{i.resolution_note}”</p> : null}
                   </div>
-                  <p className="mt-1 text-sm text-slate-700">{i.detail}</p>
-                  <p className="text-sm text-slate-600">
-                    Plataforma: {i.platform_amount != null ? formatMZN(i.platform_amount) : "—"} · Provedor: {i.provider_amount != null ? formatMZN(i.provider_amount) : "—"}
-                  </p>
-                  {i.resolution_note ? <p className="mt-1 text-sm italic text-slate-600">{i.resolution_note}</p> : null}
                 </div>
                 {!i.resolved && canWrite(["admin", "financeiro"]) ? (
-                  <button onClick={() => resolve(i.id)} className="min-h-10 rounded-lg px-3 text-sm font-semibold text-brand-800 ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
-                    Marcar resolvida
-                  </button>
+                  <Button variant="secondary" onClick={() => resolve(i.id, i.reference || i.provider_ref)}>Marcar resolvida</Button>
                 ) : null}
               </Card>
             </li>
@@ -83,5 +92,17 @@ export default function Reconciliacao() {
         </ul>
       )}
     </div>
+  );
+}
+
+function Kpi({ icon, label, value, alert }: { icon: React.ReactNode; label: string; value: number; alert?: boolean }) {
+  return (
+    <Card className="flex items-center gap-4 !p-5">
+      <span className={`grid h-12 w-12 place-items-center rounded-2xl ${alert ? "bg-accent text-white" : "bg-canvas"}`}>{icon}</span>
+      <div>
+        <p className="text-sm text-muted">{label}</p>
+        <p className="font-display text-3xl font-bold tabular-nums">{value}</p>
+      </div>
+    </Card>
   );
 }

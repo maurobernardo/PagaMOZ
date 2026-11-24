@@ -1,74 +1,79 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { ArrowLeftRight, Banknote, FileCheck2, LayoutDashboard, Scale, Store, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
+import { AppShell, type Alert } from "@/components/app-shell";
+import { Skeleton } from "@/components/ui";
 import { api, type Schemas } from "@/lib/api";
 
-type Ctx = { slug: string; name: string; role: string; canWrite: (roles: string[]) => boolean };
+type Ctx = { slug: string; name: string; role: string; canWrite: (roles: string[]) => boolean; refreshAlerts: () => void };
 const PortalCtx = createContext<Ctx | null>(null);
 export const usePortal = () => useContext(PortalCtx)!;
 
-const NAV = [
-  ["", "Painel"],
-  ["/transacoes", "Transacções"],
-  ["/liquidacoes", "Liquidações"],
-  ["/reconciliacao", "Reconciliação"],
-  ["/pedidos", "Pedidos"],
-  ["/servicos", "Serviços"],
-  ["/equipa", "Equipa"],
-] as const;
+const ROLE = { admin: "Administrador", financeiro: "Financeiro", operador: "Operador" } as Record<string, string>;
 
 export function PortalShell({ slug, children }: { slug: string; children: React.ReactNode }) {
   const router = useRouter();
-  const path = usePathname();
+  const [me, setMe] = useState<Schemas["Me"] | null>(null);
   const [m, setM] = useState<Schemas["Membership"] | null>(null);
+  const [counts, setCounts] = useState({ requests: 0, discrepancies: 0 });
+  const [tick, setTick] = useState(0);
+  const p = { params: { path: { institution_slug: slug } } };
 
   useEffect(() => {
-    // O dashboard também prova que a sessão tem MFA; sem isso volta ao login.
-    Promise.all([api.GET("/api/me"), api.GET("/api/portal/{institution_slug}/balances", { params: { path: { institution_slug: slug } } })]).then(
-      ([me, probe]) => {
-        const mine = me.data?.memberships.find((x) => x.institution.slug === slug);
-        if (!mine || !probe.response.ok) return router.replace("/portal");
-        setM(mine);
-      },
+    // O painel também prova que a sessão tem MFA; sem isso volta ao login.
+    Promise.all([api.GET("/api/me"), api.GET("/api/portal/{institution_slug}/dashboard", p)]).then(([meR, dash]) => {
+      const mine = meR.data?.memberships.find((x) => x.institution.slug === slug);
+      if (!mine || !dash.response.ok) return router.replace("/portal");
+      setMe(meR.data!);
+      setM(mine);
+      setCounts({ requests: dash.data!.pending_requests, discrepancies: dash.data!.open_discrepancies });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug, router, tick]);
+
+  if (!m || !me)
+    return (
+      <div className="grid min-h-dvh place-items-center" role="status" aria-label="A carregar portal">
+        <Skeleton className="h-10 w-48" />
+      </div>
     );
-  }, [slug, router]);
+
+  const base = `/portal/${slug}`;
+  const alerts: Alert[] = [
+    ...(counts.requests ? [{ label: `${counts.requests} pedidos por tratar`, href: `${base}/pedidos` }] : []),
+    ...(counts.discrepancies ? [{ label: `${counts.discrepancies} divergências na reconciliação`, href: `${base}/reconciliacao` }] : []),
+  ];
+  const first = (me.name || "").split(" ")[0] || "equipa";
 
   async function logout() {
     await api.POST("/api/auth/logout");
     router.replace("/portal");
   }
 
-  if (!m) return <p role="status" className="text-slate-600">A carregar portal…</p>;
-  const base = `/portal/${slug}`;
   return (
-    <PortalCtx.Provider value={{ slug, name: m.institution.name, role: m.role, canWrite: (r) => r.includes(m.role) }}>
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Portal da instituição · {m.role}</p>
-          <h1 className="text-2xl font-bold tracking-tight">{m.institution.name}</h1>
-        </div>
-        <button onClick={logout} className="min-h-10 rounded-lg px-3 text-sm font-medium text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-white">
-          Sair
-        </button>
-      </div>
-      <nav aria-label="Portal" className="-mx-4 mb-6 overflow-x-auto border-b border-slate-200 px-4">
-        <ul className="flex gap-1 whitespace-nowrap">
-          {NAV.map(([href, label]) => {
-            const active = href ? path.startsWith(base + href) : path === base;
-            return (
-              <li key={href}>
-                <Link href={base + href} aria-current={active ? "page" : undefined}
-                  className={`inline-flex min-h-11 items-center border-b-2 px-3 text-sm font-medium ${active ? "border-brand-700 text-brand-800" : "border-transparent text-slate-600 hover:text-slate-900"}`}>
-                  {label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-      {children}
+    <PortalCtx.Provider value={{ slug, name: m.institution.name, role: m.role, canWrite: (r) => r.includes(m.role), refreshAlerts: () => setTick((t) => t + 1) }}>
+      <AppShell
+        eyebrow={`Portal da instituição · ${ROLE[m.role] ?? m.role}`}
+        org={m.institution.name}
+        orgSub={ROLE[m.role] ?? m.role}
+        userName={me.name || me.phone}
+        greeting={<>Bem-vindo, {first}.</>}
+        alerts={alerts}
+        onLogout={logout}
+        nav={[
+          { href: base, label: "Painel", icon: LayoutDashboard, exact: true },
+          { href: `${base}/transacoes`, label: "Transacções", icon: ArrowLeftRight },
+          { href: `${base}/liquidacoes`, label: "Liquidações", icon: Banknote },
+          { href: `${base}/reconciliacao`, label: "Reconciliação", icon: Scale, count: counts.discrepancies },
+          { href: `${base}/pedidos`, label: "Pedidos", icon: FileCheck2, count: counts.requests },
+          { href: `${base}/servicos`, label: "Serviços", icon: Store },
+          { href: `${base}/equipa`, label: "Equipa", icon: Users },
+        ]}
+      >
+        {children}
+      </AppShell>
     </PortalCtx.Provider>
   );
 }

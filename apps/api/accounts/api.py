@@ -263,3 +263,17 @@ class MfaVerifyView(APIView):
         get_token(request)
         memberships = MembershipSerializer(user.memberships.select_related("institution"), many=True).data
         return Response({"phone": user.phone, "is_staff": user.is_staff, "memberships": memberships})
+
+
+class PortalPendingView(APIView):
+    """Depois de "Entrar com Google" no portal: falta o passo MFA."""
+
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(responses=inline_serializer("PortalPending", {
+        "mfa_enrolled": serializers.BooleanField(), "demo_code": serializers.CharField(required=False)}))  # fmt: skip
+    def get(self, request):
+        user = _pre_mfa_user(request)
+        if user is None:
+            return Response({"detail": "Sessão expirada. Entre de novo."}, status=401)
+        return Response({"mfa_enrolled": user.mfa_enabled, **_demo_code(user)})

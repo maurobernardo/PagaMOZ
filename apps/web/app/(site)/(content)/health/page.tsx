@@ -13,12 +13,12 @@ export default async function Health() {
   return (
     <main className="mx-auto max-w-xl px-4 py-12">
       <h1 className="text-2xl font-bold">Estado do sistema</h1>
-      <p className="mt-1 text-sm text-slate-600">API: {API_URL}</p>
+      <p className="mt-1 text-sm text-muted">API: {API_URL}</p>
       <dl className="mt-6 divide-y rounded border">
         {rows.map(([k, v]) => (
           <div key={k} className="flex justify-between px-4 py-3">
             <dt>{k}</dt>
-            <dd className={v === "ok" ? "font-semibold text-green-700" : "font-semibold text-red-700"}>{v}</dd>
+            <dd className={v === "ok" ? "font-semibold text-green-700" : "font-semibold text-accent"}>{v}</dd>
           </div>
         ))}
       </dl>

@@ -54,22 +54,22 @@ export default function Verificar() {
           <Button type="submit" disabled={!ready} className="w-full">Verificar código</Button>
         </form>
 
-        <div className="my-5 flex items-center gap-3 text-sm text-slate-500">
-          <span className="h-px flex-1 bg-slate-200" /> ou <span className="h-px flex-1 bg-slate-200" />
+        <div className="my-5 flex items-center gap-3 text-sm text-muted">
+          <span className="h-px flex-1 bg-line" /> ou <span className="h-px flex-1 bg-line" />
         </div>
 
-        <label htmlFor="pdf" className="block text-sm font-medium text-slate-800">Carregar o PDF recebido</label>
+        <label htmlFor="pdf" className="block text-sm font-medium text-ink/80">Carregar o PDF recebido</label>
         <input id="pdf" type="file" accept="application/pdf" disabled={!ready || busy}
           aria-describedby="pdf-hint"
           onChange={(e) => e.target.files?.[0] && checkFile(e.target.files[0])}
           className="mt-1 block w-full text-sm file:mr-3 file:min-h-11 file:rounded-xl file:border-0 file:bg-brand-50 file:px-4 file:font-semibold file:text-brand-800" />
-        <p id="pdf-hint" className="mt-1 text-sm text-slate-600">
+        <p id="pdf-hint" className="mt-1 text-sm text-muted">
           Detecta qualquer alteração ao ficheiro, mesmo de um só carácter.
         </p>
       </Card>
 
       <div className="mt-6">
-        {busy ? <p role="status" className="text-slate-600">A verificar…</p> : null}
+        {busy ? <p role="status" className="text-muted">A verificar…</p> : null}
         {error ? <Alert>{error}</Alert> : null}
         {result ? <VerificationResult v={result} /> : null}
       </div>

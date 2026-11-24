@@ -21,7 +21,7 @@ def media(settings, tmp_path):
 @pytest.fixture
 def paid(django_capture_on_commit_callbacks):
     cat = Category.objects.create(name="Água", slug="agua")
-    inst = Institution.objects.create(name="Águas do Índico (Demo)", slug="aguas", commission_bps=150)
+    inst = Institution.objects.create(name="Águas do Índico", slug="aguas", commission_bps=150)
     s = Service.objects.create(institution=inst, category=cat, name="Inspecção", slug="i", integration_level=2,
                                pricing="fixo", amount=80_000)  # fmt: skip
     with django_capture_on_commit_callbacks(execute=True):
