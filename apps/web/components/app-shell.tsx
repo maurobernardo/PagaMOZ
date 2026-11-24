@@ -1,11 +1,11 @@
 "use client";
 
-import { Bell, LifeBuoy, LogOut, Menu, X, type LucideIcon } from "lucide-react";
+import { Bell, CircleAlert, LayoutGrid, LifeBuoy, LogOut, Menu, X, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Logo } from "./logo";
-import { Eyebrow } from "./ui";
+import { Eyebrow } from "./eyebrow";
 
 export type NavItem = { href: string; label: string; icon: LucideIcon; exact?: boolean; count?: number };
 export type Alert = { label: string; href: string };
@@ -86,8 +86,8 @@ export function AppShell({ nav, eyebrow, org, orgSub, userName, greeting, alerts
   );
 
   return (
-    <div className="lg:grid lg:min-h-[calc(100dvh-28px)] lg:grid-cols-[272px_1fr]">
-      <aside className="sticky top-0 hidden h-[calc(100dvh-28px)] overflow-y-auto border-r border-line bg-white lg:block">{sidebar}</aside>
+    <div className="lg:grid lg:min-h-[100dvh] lg:grid-cols-[272px_1fr]">
+      <aside className="sticky top-0 hidden h-[100dvh] overflow-y-auto border-r border-line bg-white lg:block">{sidebar}</aside>
 
       {open ? (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
@@ -101,7 +101,7 @@ export function AppShell({ nav, eyebrow, org, orgSub, userName, greeting, alerts
           <button onClick={() => setOpen(true)} aria-label="Abrir menu" className="glass grid h-11 w-11 place-items-center rounded-full lg:hidden">
             <Menu className="h-5 w-5" />
           </button>
-          <div className="hidden sm:block"><Eyebrow>{eyebrow}</Eyebrow></div>
+          <div className="hidden sm:block"><Eyebrow icon={LayoutGrid}>{eyebrow}</Eyebrow></div>
           <div className="ml-auto flex items-center gap-2">
             <Notifications alerts={alerts} />
             <span title={userName} className="grid h-11 w-11 place-items-center rounded-full bg-ink font-display text-sm font-bold text-white">
@@ -112,7 +112,7 @@ export function AppShell({ nav, eyebrow, org, orgSub, userName, greeting, alerts
 
         <main id="conteudo" className="px-5 pb-16 sm:px-10">
           <div className="pb-10 pt-10 sm:pb-12 sm:pt-14">
-            <div className="mb-3 sm:hidden"><Eyebrow>{eyebrow}</Eyebrow></div>
+            <div className="mb-3 sm:hidden"><Eyebrow icon={LayoutGrid}>{eyebrow}</Eyebrow></div>
             <h1 className="text-3xl font-bold tracking-tight sm:text-[2.6rem] sm:leading-[1.1]">{isHome || !current ? greeting : current.label}</h1>
             <p className="mt-2 text-muted first-letter:uppercase">{isHome || !current ? `${today()} · Maputo` : org}</p>
           </div>
@@ -137,7 +137,7 @@ function Notifications({ alerts }: { alerts: Alert[] }) {
       <button onClick={() => setOpen(!open)} aria-expanded={open} aria-label={`Notificações (${alerts.length})`}
         className="glass relative grid h-11 w-11 place-items-center rounded-full transition hover:bg-white">
         <Bell className="h-5 w-5" strokeWidth={1.8} />
-        {alerts.length ? <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-accent ring-2 ring-white" /> : null}
+        {alerts.length ? <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[11px] font-bold text-white">{alerts.length}</span> : null}
       </button>
       {open ? (
         <div className="absolute right-0 z-30 mt-2 w-72 animate-rise rounded-3xl border border-line bg-white p-2 shadow-2xl">
@@ -151,7 +151,7 @@ function Notifications({ alerts }: { alerts: Alert[] }) {
             alerts.map((a) => (
               <Link key={a.href + a.label} href={a.href} onClick={() => setOpen(false)}
                 className="flex items-center gap-2 rounded-2xl px-3 py-2.5 text-sm hover:bg-canvas">
-                <span className="h-2 w-2 shrink-0 rounded-full bg-accent" /> {a.label}
+                <CircleAlert className="h-4 w-4 shrink-0 text-accent" /> {a.label}
               </Link>
             ))
           )}

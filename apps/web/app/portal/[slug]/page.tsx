@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Download, FileCheck2, MoreHorizontal, Scale } from "lucide-react";
+import { ArrowUpRight, CalendarDays, Download, FileCheck2, MoreHorizontal, Scale } from "lucide-react";
 import Link from "next/link";
 import { LogoMark } from "@/components/logo";
 import { MethodIcon } from "@/components/method-icon";
@@ -191,7 +191,7 @@ function DailyBars({ daily }: { daily: Day[] }) {
       </div>
       <figcaption className="mt-2 flex justify-between text-xs text-muted">
         <span>{new Date(daily[0]?.date).toLocaleDateString("pt-PT", { day: "numeric", month: "short" })}</span>
-        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-accent" /> hoje</span>
+        <span className="flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5 text-accent" /> hoje</span>
       </figcaption>
     </figure>
   );

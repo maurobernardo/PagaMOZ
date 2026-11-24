@@ -38,7 +38,7 @@ export function GoogleButton({ flow, next, dark = false }: { flow: "portal" | "c
   }
   return (
     <button type="button" onClick={go} disabled={busy}
-      className={`inline-flex min-h-12 w-full items-center justify-center gap-3 rounded-full text-[15px] font-semibold transition active:scale-[0.98] disabled:opacity-60 ${dark ? "glass-dark text-white hover:bg-white/10" : "bg-white text-ink ring-1 ring-inset ring-line hover:ring-ink/40"}`}>
+      className={`frame inline-flex min-h-12 w-full items-center justify-center gap-3 rounded-full text-[15px] font-semibold transition active:scale-[0.98] disabled:opacity-60 ${dark ? "glass-dark text-white hover:bg-white/10" : "border border-line bg-white text-ink hover:border-ink/40"}`}>
       <GoogleG /> {busy ? "A abrir a Google…" : "Continuar com Google"}
     </button>
   );

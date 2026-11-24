@@ -22,10 +22,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <a href="#conteudo" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[60] focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-white">
           Saltar para o conteúdo
         </a>
-        <div role="note" className="relative z-50 bg-ink px-4 py-1.5 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">
-          <span className="mr-2 inline-block h-1.5 w-1.5 -translate-y-px rounded-full bg-accent align-middle" />
-          Ambiente de demonstração — pagamentos simulados, sem valor real
-        </div>
         <Toaster>{children}</Toaster>
       </body>
     </html>

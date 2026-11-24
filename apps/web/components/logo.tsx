@@ -1,6 +1,6 @@
 /**
- * Logótipo PagaMOZ: um "P" branco num quadrado preto, com um ponto vermelho na barriga —
- * lê-se como letra e como carimbo de "pago". O ponto é o único vermelho fixo da marca.
+ * Logótipo PagaMOZ: um "P" branco num quadrado preto, com um visto vermelho na barriga —
+ * lê-se como letra e como carimbo de "pago". O visto vermelho é o único vermelho fixo da marca.
  */
 export function LogoMark({ className = "h-9 w-9", inverted = false }: { className?: string; inverted?: boolean }) {
   const bg = inverted ? "#ffffff" : "#0b0b0c";
@@ -9,7 +9,7 @@ export function LogoMark({ className = "h-9 w-9", inverted = false }: { classNam
     <svg viewBox="0 0 40 40" className={className} aria-hidden="true">
       <rect width="40" height="40" rx="11" fill={bg} />
       <path d="M13 31V9h8.5a7.5 7.5 0 0 1 0 15H17" fill="none" stroke={fg} strokeWidth="4.2" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="21.2" cy="16.5" r="2.6" fill="#e0262f" />
+      <path d="M18.3 16.7l2.1 2.1 3.6-3.8" fill="none" stroke="#e0262f" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

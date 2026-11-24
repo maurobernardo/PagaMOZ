@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Inbox, Paperclip } from "lucide-react";
+import { CheckCircle2, Clock3, FileText, Inbox, Paperclip } from "lucide-react";
 import { useState } from "react";
 import { filterInput } from "@/components/table";
 import { useToast } from "@/components/toast";
@@ -133,7 +133,7 @@ function RequestDetail({ slug, code, canAct, onChange }: { slug: string; code: s
       <ol className="mt-3 space-y-3 border-l-2 border-line pl-5">
         {r.events.map((e, i) => (
           <li key={i} className="relative text-sm">
-            <span aria-hidden className={`absolute -left-[27px] top-1 h-3 w-3 rounded-full ring-4 ring-white ${i === r.events.length - 1 ? "bg-accent" : "bg-ink/30"}`} />
+            <span aria-hidden className="absolute -left-[31px] top-0 grid h-5 w-5 place-items-center rounded-full bg-white">{i === r.events.length - 1 ? <Clock3 className="h-4 w-4 text-accent" /> : <CheckCircle2 className="h-4 w-4 text-ink/40" />}</span>
             <p className="font-semibold">{REQUEST_STATUS[e.status]}</p>
             {e.note ? <p className="text-muted">{e.note}</p> : null}
             <p className="text-xs text-muted">{formatDateTime(e.created_at)}</p>

@@ -26,7 +26,7 @@ export function TrackForm() {
         <input id="track" value={code} onChange={(e) => { setCode(e.target.value); setError(""); }}
           placeholder="PMZ… ou PED…" autoCapitalize="characters" aria-invalid={!!error} aria-describedby={error ? "track-err" : undefined}
           className="min-h-12 min-w-0 flex-1 bg-transparent px-4 font-mono text-base uppercase tracking-wider placeholder:normal-case placeholder:tracking-normal placeholder:text-muted focus:outline-none" />
-        <button disabled={!ready} className="inline-flex min-h-12 items-center gap-2 rounded-full bg-ink px-6 font-semibold text-white transition hover:bg-ink/85 disabled:opacity-50">
+        <button disabled={!ready} className="frame-none inline-flex min-h-12 items-center gap-2 rounded-full bg-ink px-6 font-semibold text-white transition hover:bg-ink/85 disabled:opacity-50">
           Acompanhar <ArrowRight className="h-4 w-4" />
         </button>
       </div>

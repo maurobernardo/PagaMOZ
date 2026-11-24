@@ -98,7 +98,7 @@ export default function Transacoes() {
               <td><Badge tone={st?.tone ?? "info"}>{st?.label ?? t.status}</Badge></td>
               <td className="text-right">
                 {t.status === "CONFIRMADA" && canWrite(["admin", "financeiro"]) ? (
-                  <button onClick={() => reverse(t.reference, t.total)} className="inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-accent hover:bg-accent-soft">
+                  <button onClick={() => reverse(t.reference, t.total)} className="frame inline-flex min-h-9 items-center gap-1.5 rounded-full bg-white px-3 text-sm font-semibold text-accent hover:bg-accent-soft">
                     <Undo2 className="h-4 w-4" /> Devolver
                   </button>
                 ) : null}

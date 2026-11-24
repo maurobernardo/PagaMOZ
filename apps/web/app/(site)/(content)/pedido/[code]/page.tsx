@@ -1,5 +1,6 @@
 "use client";
 
+import { CheckCircle2, Clock3 } from "lucide-react";
 import { use, useEffect, useState } from "react";
 import { Alert, Badge, ButtonLink, Card } from "@/components/ui";
 import { api, type ServiceRequest } from "@/lib/api";
@@ -55,7 +56,7 @@ export default function RequestPage({ params }: { params: Promise<{ code: string
         <ol className="mt-3 space-y-4 border-l-2 border-line pl-4">
           {r.events.map((e, i) => (
             <li key={i} className="relative">
-              <span aria-hidden className={`absolute -left-[23px] top-1 h-3 w-3 rounded-full ${i === r.events.length - 1 ? "bg-brand-600" : "bg-slate-300"}`} />
+              <span aria-hidden className="absolute -left-[27px] top-0 grid h-5 w-5 place-items-center rounded-full bg-white">{i === r.events.length - 1 ? <Clock3 className="h-4 w-4 text-accent" /> : <CheckCircle2 className="h-4 w-4 text-ink/40" />}</span>
               <p className="font-semibold">{REQUEST_STATUS[e.status] ?? e.status}</p>
               {e.note ? <p className="text-sm text-ink/80">{e.note}</p> : null}
               <p className="text-xs text-muted">{formatDateTime(e.created_at)}</p>
