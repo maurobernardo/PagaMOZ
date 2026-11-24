@@ -53,8 +53,11 @@ def test_staff_requires_mfa_session(settings, demo):
     u.set_password("staff-demo-123")
     u.save()
     c = APIClient()
-    c.post("/api/auth/portal/login", {"phone": "840000000", "password": "staff-demo-123"}, format="json")
-    secret = c.post("/api/auth/portal/mfa/setup").json()["secret"]
+    r = c.post("/api/auth/portal/login", {"phone": "840000000", "password": "staff-demo-123"}, format="json")
+    if r.json()["mfa_enrolled"]:  # o seed demo já activa o MFA da equipa
+        secret = User.objects.get(phone="+258840000000").mfa_secret
+    else:
+        secret = c.post("/api/auth/portal/mfa/setup").json()["secret"]
     r = c.post("/api/auth/portal/mfa/verify", {"code": now_code(secret)}, format="json")
     assert r.json()["is_staff"] is True
     assert c.get("/api/backoffice/overview").status_code == 200
