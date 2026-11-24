@@ -153,3 +153,19 @@ def test_metrics_protected_and_prometheus_format(settings, demo):
     body = c.get("/metrics", HTTP_AUTHORIZATION="Bearer t0k3n").content.decode()
     assert 'pagamoz_http_requests_total{method="GET",route="api/catalog/categories",status="2xx"}' in body
     assert "pagamoz_payments_24h{" in body and "pagamoz_dead_letters 0" in body
+
+
+def test_append_only_enforced_in_postgres():
+    from django.db import connection
+
+    if connection.vendor != "postgresql":
+        pytest.skip("triggers só em Postgres (CI)")
+    from django.db import DatabaseError, transaction
+
+    from audit.models import record
+
+    log = record("teste.trigger")
+    with pytest.raises(DatabaseError), transaction.atomic(), connection.cursor() as c:
+        c.execute("UPDATE audit_auditlog SET action='x' WHERE id=%s", [log.pk])
+    with pytest.raises(DatabaseError), transaction.atomic(), connection.cursor() as c:
+        c.execute("DELETE FROM audit_auditlog WHERE id=%s", [log.pk])

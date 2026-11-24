@@ -10,3 +10,5 @@
 - [ ] Protecção de dados pessoais: base legal, consentimento, minimização, retenção, direitos do titular.
 - [ ] Cartões: não armazenar dados de cartão (só tokens do adquirente); avaliar PCI DSS.
 - [ ] Auditoria de segurança independente antes do lançamento.
+
+Detalhe do que falta, por área (regulação, parceiros, homologação, técnico): ver `docs/proximos-passos-producao.md`.

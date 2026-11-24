@@ -34,5 +34,12 @@ switch ($Cmd) {
   "migrate"    { Invoke-Api manage.py migrate }
   "gen-client" { Invoke-Api manage.py spectacular --file ..\..\packages\api-client\openapi.yaml; Invoke-Npm run gen:client }
   "seed-demo"  { Invoke-Api manage.py seed_demo }
-  default      { Write-Host "Comandos: setup, up, test, lint, format, migrate, gen-client, seed-demo" }
+  "demo" {
+    # Base nova só em dev (SQLite): o ledger é append-only e não se "limpa".
+    $db = Join-Path $Root "apps\api\db.sqlite3"
+    if (Test-Path $db) { Remove-Item $db }
+    Invoke-Api manage.py migrate
+    Invoke-Api manage.py prepare_demo
+  }
+  default      { Write-Host "Comandos: setup, up, demo, test, lint, format, migrate, gen-client, seed-demo" }
 }

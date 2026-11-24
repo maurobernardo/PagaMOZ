@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
@@ -53,7 +54,6 @@ portal = SimpleRouter(trailing_slash=False)
 portal.register("services", PortalServiceViewSet, basename="portal-service")
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
     path("api/health", health, name="health"),
     path("metrics", metrics, name="metrics"),
     path("api/backoffice/overview", bo.Overview.as_view()),
@@ -109,3 +109,6 @@ urlpatterns = [
     path("api/", include(public.urls)),
     path("api/portal/<slug:institution_slug>/", include(portal.urls)),
 ]
+
+if settings.ADMIN_ENABLED:
+    urlpatterns.append(path("admin/", admin.site.urls))

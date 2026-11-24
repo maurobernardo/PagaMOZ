@@ -19,7 +19,6 @@ MAX_PDF = 2 * 1024 * 1024
 
 class VerifyThrottle(AnonRateThrottle):
     scope = "verify"
-    rate = "60/min"
 
 
 STATE = {

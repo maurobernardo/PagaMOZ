@@ -14,6 +14,7 @@ from catalog.models import Service
 from institutions.models import Institution
 from payments.domain import price, transition
 from payments.models import Method, Status, Transaction
+from receipts import services as receipts
 from settlement.services import SETTLEMENT_PROVIDER
 
 MAPUTO = ZoneInfo("Africa/Maputo")
@@ -38,6 +39,15 @@ class Command(BaseCommand):
         if Transaction.objects.filter(idempotency_key__startswith="demo-").exists():
             self.stdout.write("Actividade demo já existe.")
             return
+        receipts.ISSUE_ON_CONFIRM = False  # PDFs ficam para o primeiro download (milhares de pagamentos)
+        try:
+            # Uma só transacção: em SQLite/Windows cada commit força escrita em disco (milhares de pagamentos).
+            with db.atomic():
+                self._generate(dias, seed)
+        finally:
+            receipts.ISSUE_ON_CONFIRM = True
+
+    def _generate(self, dias, seed):
         rng = random.Random(seed)
         today = timezone.localdate()
         n = 0
@@ -63,7 +73,12 @@ class Command(BaseCommand):
                             transition(t.pk, Status.FAILED, reason="Saldo insuficiente.")
                         else:
                             transition(t.pk, Status.CONFIRMED, confirmed_at=at)
-                        Transaction.objects.filter(pk=t.pk).update(created_at=at - timedelta(seconds=40))
+                        # Já "notificada" à instituição (simulador): evita milhares de escritas pós-commit.
+                        Transaction.objects.filter(pk=t.pk).update(
+                            created_at=at - timedelta(seconds=40),
+                            institution_notified_at=at,
+                            institution_ref=f"SIM-ACK-{t.reference}",
+                        )
                     n += 1
                 if back > 0:  # liquidação diária até ontem; hoje fica "a liquidar"
                     SETTLEMENT_PROVIDER.settle(inst, day)

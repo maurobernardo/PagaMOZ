@@ -16,8 +16,7 @@ from .models import Quote
 
 
 class LookupThrottle(AnonRateThrottle):
-    scope = "lookup"  # contador próprio (ver OtpThrottle)
-    rate = "30/min"  # consulta revela dados da instituição: limitar enumeração
+    scope = "lookup"  # contador próprio (ver OtpThrottle); consulta revela dados: limitar enumeração
 
 
 class QuoteRequest(serializers.Serializer):

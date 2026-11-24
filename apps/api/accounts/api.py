@@ -24,7 +24,6 @@ MAX_OTP_PER_HOUR = 5
 
 class OtpThrottle(AnonRateThrottle):
     scope = "otp"  # contador próprio; com o scope "anon" herdado partilharia o histórico do limite geral
-    rate = "10/min"
 
 
 def normalize_phone(raw: str) -> str:

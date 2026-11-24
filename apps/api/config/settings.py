@@ -10,7 +10,10 @@ environ.Env.read_env(BASE_DIR / ".env")
 DEBUG = env.bool("DEBUG", default=False)
 SECRET_KEY = env("SECRET_KEY", default="dev-insecure-change-me" if DEBUG else environ.Env.NOTSET)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
-DEMO_MODE = env.bool("DEMO_MODE", default=True)
+# Desligado por omissão fora de DEBUG: em demo os códigos OTP/MFA aparecem na resposta.
+DEMO_MODE = env.bool("DEMO_MODE", default=DEBUG)
+# O /admin do Django não passa pelo MFA do portal: só ligado em dev ou explicitamente.
+ADMIN_ENABLED = env.bool("ADMIN_ENABLED", default=DEBUG)
 WEBHOOK_SECRET = env("WEBHOOK_SECRET", default="dev-webhook-secret" if DEBUG else environ.Env.NOTSET)
 PAYMENT_EXPIRY_MINUTES = env.int("PAYMENT_EXPIRY_MINUTES", default=15)
 RECEIPT_SIGNING_KEY = env("RECEIPT_SIGNING_KEY", default="dev-receipt-key" if DEBUG else environ.Env.NOTSET)
@@ -73,8 +76,24 @@ TEMPLATES = [
 
 # ponytail: SQLite por omissão para dev sem Docker; Postgres via DATABASE_URL (CI/produção).
 DATABASES = {"default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")}
+if DATABASES["default"]["ENGINE"].endswith("sqlite3"):
+    # Concorrência em dev/demo: WAL (leitores não bloqueiam), esperar em vez de "database is locked",
+    # e IMMEDIATE para evitar o impasse de duas transacções a tentar escrever ao mesmo tempo.
+    DATABASES["default"].setdefault("OPTIONS", {}).update(
+        {
+            "timeout": 20,
+            "transaction_mode": "IMMEDIATE",
+            "init_command": "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;",
+        }
+    )
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "accounts.User"
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 12}},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
 
 # Sem REDIS_URL, as tarefas Celery correm em linha (eager) — suficiente para dev local.
 REDIS_URL = env("REDIS_URL", default="")
@@ -112,6 +131,12 @@ CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=["http://localho
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 14
 SESSION_COOKIE_SAMESITE = CSRF_COOKIE_SAMESITE = "Lax"
 
+THROTTLE_RATES = {"anon": "120/min", "user": "600/min", "otp": "10/min", "lookup": "30/min", "verify": "60/min"}
+if env.bool("LOAD_TEST", default=False):  # só para medir capacidade; nunca em produção
+    if not DEBUG:
+        raise RuntimeError("LOAD_TEST só com DEBUG=true.")
+    THROTTLE_RATES = dict.fromkeys(THROTTLE_RATES, "1000000/min")
+
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
@@ -122,7 +147,7 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
     ],
-    "DEFAULT_THROTTLE_RATES": {"anon": "120/min", "user": "600/min"},
+    "DEFAULT_THROTTLE_RATES": THROTTLE_RATES,
 }
 SPECTACULAR_SETTINGS = {
     "TITLE": "PagaMOZ API",
@@ -141,6 +166,19 @@ X_FRAME_OPTIONS = "DENY"
 if not DEBUG:
     SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)
+    # Começa curto; subir para 1 ano (31536000) só depois de confirmar HTTPS em todos os subdomínios.
+    SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=3600)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool("SECURE_HSTS_INCLUDE_SUBDOMAINS", default=False)
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
+# Chave para cifrar campos sensíveis em repouso (Fernet). Gerar: python -c "from cryptography.fernet import Fernet;
+# print(Fernet.generate_key().decode())". Várias chaves separadas por vírgula = rotação (a primeira cifra).
+FIELD_ENCRYPTION_KEYS = env.list(
+    "FIELD_ENCRYPTION_KEYS", default=[] if not DEBUG else ["MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="]
+)
+if not FIELD_ENCRYPTION_KEYS:
+    raise RuntimeError("Defina FIELD_ENCRYPTION_KEYS em produção.")
 
 # ---------- Observabilidade ----------
 METRICS_TOKEN = env("METRICS_TOKEN", default="")  # vazio = /metrics desligado
@@ -164,5 +202,6 @@ LOGGING = {
     "loggers": {
         "django.server": {"level": "WARNING"},  # já temos o access log próprio
         "pagamoz.access": {"level": "INFO"},
+        "celery.app.trace": {"level": "WARNING"},  # uma linha por tarefa é ruído; falhas vão para pagamoz.tasks
     },
 }

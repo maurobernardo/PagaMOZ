@@ -13,6 +13,8 @@ from .models import Receipt, canonical, sign
 from .pdf import render
 
 PAYER = {"cidadao": "cidadão", "instituicao": "instituição"}
+# Desligado só por geração em massa de dados demo; o PDF é emitido no primeiro download (ReceiptPdf).
+ISSUE_ON_CONFIRM = True
 
 
 def verify_url(code: str) -> str:
