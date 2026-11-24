@@ -94,3 +94,30 @@ test("entrar com OTP, guardar na carteira e ver histórico", async ({ page }) =>
   await expect(page.getByText("7654321")).toBeVisible();
   await expect(page.getByRole("link", { name: /Fatura de água/ }).first()).toBeVisible();
 });
+
+test("comprovativo: descarregar PDF, verificar por código e detectar adulteração", async ({ page, request }) => {
+  await openService(page, "inspecção", /Inspecção de veículo/);
+  await page.getByLabel("Matrícula do veículo").fill("ABC-123-MP");
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await payWithMpesa(page);
+  await expect(page.getByRole("heading", { name: "Pagamento confirmado" })).toBeVisible({ timeout: 20_000 });
+
+  const link = page.getByRole("link", { name: "Descarregar comprovativo (PDF)" });
+  const pdf = await (await request.get((await link.getAttribute("href"))!)).body();
+  expect(pdf.subarray(0, 5).toString()).toBe("%PDF-");
+
+  // Por código (link na página de confirmação)
+  await page.getByRole("link", { name: /^[2-9A-Z]{5}-[2-9A-Z]{5}$/ }).click();
+  await expect(page.getByRole("heading", { name: "Comprovativo autêntico" })).toBeVisible();
+
+  // Por ficheiro: original válido, adulterado recusado
+  await page.goto("/verificar");
+  await page.getByLabel("Carregar o PDF recebido").setInputFiles({ name: "c.pdf", mimeType: "application/pdf", buffer: pdf });
+  await expect(page.getByRole("heading", { name: "Comprovativo autêntico" })).toBeVisible();
+
+  const tampered = Buffer.from(pdf);
+  tampered[Math.floor(tampered.length / 2)] ^= 0x01;
+  await page.goto("/verificar");
+  await page.getByLabel("Carregar o PDF recebido").setInputFiles({ name: "c.pdf", mimeType: "application/pdf", buffer: tampered });
+  await expect(page.getByText(/não corresponde a nenhum comprovativo/)).toBeVisible();
+});

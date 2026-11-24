@@ -38,15 +38,21 @@ class PaymentSerializer(serializers.ModelSerializer):
     service_name = serializers.CharField(source="service.name")
     institution_name = serializers.CharField(source="institution.name")
     instructions = serializers.SerializerMethodField()
+    receipt_code = serializers.SerializerMethodField()
 
     class Meta:
         model = Transaction
         fields = [
             "reference", "status", "service", "service_name", "institution_name", "description",
             "amount", "commission", "commission_payer", "total", "institution_net", "currency",
-            "method", "instructions", "failure_reason", "created_at", "expires_at", "confirmed_at", "settled_at",
+            "method", "instructions", "receipt_code", "failure_reason",
+            "created_at", "expires_at", "confirmed_at", "settled_at",
         ]  # fmt: skip
         read_only_fields = fields
+
+    def get_receipt_code(self, obj) -> str | None:
+        r = getattr(obj, "receipt", None)  # OneToOne inverso: ausente -> None
+        return r.display_code if r else None
 
     def get_instructions(self, obj) -> str:
         return INSTRUCTIONS[obj.method] if obj.status in (Status.CREATED, Status.PENDING) else ""

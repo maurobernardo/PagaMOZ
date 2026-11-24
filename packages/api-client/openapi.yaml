@@ -488,6 +488,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/Payment'
           description: ''
+  /api/payments/{reference}/receipt.pdf:
+    get:
+      operationId: payments_receipt.pdf_retrieve
+      description: PDF pela referência do pagamento (a referência é a capacidade de
+        acesso, como no estado).
+      parameters:
+      - in: path
+        name: reference
+        schema:
+          type: string
+        required: true
+      tags:
+      - payments
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          description: ''
   /api/payments/scenarios:
     get:
       operationId: payments_scenarios_retrieve
@@ -836,6 +860,55 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedSettlementList'
           description: ''
+  /api/receipts/{code}:
+    get:
+      operationId: receipts_retrieve
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        required: true
+      tags:
+      - receipts
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Verification'
+          description: ''
+  /api/receipts/verify:
+    post:
+      operationId: receipts_verify_create
+      description: 'Carregar o PDF: válido só se for byte a byte o ficheiro emitido.'
+      tags:
+      - receipts
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/VerifyFileRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Verification'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotIssued'
+          description: ''
   /api/requests:
     post:
       operationId: requests_create
@@ -1103,6 +1176,16 @@ components:
         * `cartao` - Cartão Visa/Mastercard
         * `referencia_bancaria` - Referência bancária
         * `qr` - QR Code
+    NotIssued:
+      type: object
+      properties:
+        resultado:
+          type: string
+        mensagem:
+          type: string
+      required:
+      - mensagem
+      - resultado
     Obligation:
       type: object
       properties:
@@ -1413,6 +1496,10 @@ components:
         instructions:
           type: string
           readOnly: true
+        receipt_code:
+          type: string
+          nullable: true
+          readOnly: true
         failure_reason:
           type: string
           readOnly: true
@@ -1448,6 +1535,7 @@ components:
       - institution_net
       - instructions
       - method
+      - receipt_code
       - reference
       - service
       - service_name
@@ -1724,6 +1812,18 @@ components:
         * `CONCLUIDO` - Concluído
         * `REJEITADO` - Rejeitado
         * `CANCELADO` - Cancelado
+    ResultadoEnum:
+      enum:
+      - valido
+      - anulado
+      - em_analise
+      - adulterado
+      type: string
+      description: |-
+        * `valido` - valido
+        * `anulado` - anulado
+        * `em_analise` - em_analise
+        * `adulterado` - adulterado
     RoleEnum:
       enum:
       - admin
@@ -2096,6 +2196,52 @@ components:
         * `date` - date
         * `phone` - phone
         * `file` - file
+    Verification:
+      type: object
+      properties:
+        resultado:
+          $ref: '#/components/schemas/ResultadoEnum'
+        mensagem:
+          type: string
+        codigo:
+          type: string
+        referencia:
+          type: string
+        instituicao:
+          type: string
+        servico:
+          type: string
+        total:
+          type: integer
+        data_hora:
+          type: string
+        emitido_em:
+          type: string
+          format: date-time
+        hash_conteudo:
+          type: string
+        demonstracao:
+          type: boolean
+      required:
+      - codigo
+      - data_hora
+      - demonstracao
+      - emitido_em
+      - hash_conteudo
+      - instituicao
+      - mensagem
+      - referencia
+      - resultado
+      - servico
+      - total
+    VerifyFileRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+      required:
+      - file
     WebhookAck:
       type: object
       properties:

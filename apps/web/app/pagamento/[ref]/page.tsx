@@ -85,9 +85,32 @@ export default function PaymentStatus({ params }: { params: Promise<{ ref: strin
       </Card>
 
       {ok ? (
-        <p className="mt-4 text-center text-sm text-slate-600">
-          Guarde a referência <strong className="font-mono">{p.reference}</strong>. O comprovativo com QR de verificação fica disponível em breve.
-        </p>
+        <div className="mt-4 grid gap-2">
+          {/* Link simples (não JS): funciona em qualquer browser e abre o visualizador de PDF do telemóvel. */}
+          <a
+            href={`/api/payments/${p.reference}/receipt.pdf`}
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand-700 px-5 font-semibold text-white hover:bg-brand-800"
+          >
+            <Icon name="arrow" className="h-5 w-5 rotate-90" />
+            Descarregar comprovativo (PDF)
+          </a>
+          <p className="text-center text-sm text-slate-600">
+            {p.receipt_code ? (
+              <>
+                Código de verificação{" "}
+                <Link href={`/verificar/${p.receipt_code.replace("-", "")}`} className="font-mono font-semibold text-brand-800 underline">
+                  {p.receipt_code}
+                </Link>
+                . Qualquer pessoa pode confirmar a autenticidade.
+              </>
+            ) : (
+              <>
+                Qualquer pessoa pode confirmar a autenticidade em{" "}
+                <Link href="/verificar" className="font-semibold text-brand-800 underline">/verificar</Link>.
+              </>
+            )}
+          </p>
+        </div>
       ) : null}
 
       <div className="mt-6 grid gap-2 sm:grid-cols-2">

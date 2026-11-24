@@ -263,6 +263,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/payments/{reference}/receipt.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description PDF pela referência do pagamento (a referência é a capacidade de acesso, como no estado). */
+        get: operations["payments_receipt.pdf_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/payments/scenarios": {
         parameters: {
             query?: never;
@@ -413,6 +430,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/receipts/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["receipts_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/receipts/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Carregar o PDF: válido só se for byte a byte o ficheiro emitido. */
+        post: operations["receipts_verify_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/requests": {
         parameters: {
             query?: never;
@@ -544,6 +594,10 @@ export interface components {
          * @enum {string}
          */
         MethodEnum: "mpesa" | "emola" | "mkesh" | "cartao" | "referencia_bancaria" | "qr";
+        NotIssued: {
+            resultado: string;
+            mensagem: string;
+        };
         Obligation: {
             readonly id: number;
             label: string;
@@ -698,6 +752,7 @@ export interface components {
             readonly currency: string;
             readonly method: components["schemas"]["MethodEnum"];
             readonly instructions: string;
+            readonly receipt_code: string | null;
             readonly failure_reason: string;
             /** Format: date-time */
             readonly created_at: string;
@@ -827,6 +882,14 @@ export interface components {
          * @enum {string}
          */
         RequestStatusEnum: "AGUARDA_PAGAMENTO" | "SUBMETIDO" | "EM_ANALISE" | "PENDENTE_INFO" | "APROVADO" | "PRONTO" | "CONCLUIDO" | "REJEITADO" | "CANCELADO";
+        /**
+         * @description * `valido` - valido
+         *     * `anulado` - anulado
+         *     * `em_analise` - em_analise
+         *     * `adulterado` - adulterado
+         * @enum {string}
+         */
+        ResultadoEnum: "valido" | "anulado" | "em_analise" | "adulterado";
         /**
          * @description * `admin` - Administrador
          *     * `financeiro` - Financeiro
@@ -982,6 +1045,24 @@ export interface components {
          * @enum {string}
          */
         TypeEnum: "text" | "number" | "date" | "phone" | "file";
+        Verification: {
+            resultado: components["schemas"]["ResultadoEnum"];
+            mensagem: string;
+            codigo: string;
+            referencia: string;
+            instituicao: string;
+            servico: string;
+            total: number;
+            data_hora: string;
+            /** Format: date-time */
+            emitido_em: string;
+            hash_conteudo: string;
+            demonstracao: boolean;
+        };
+        VerifyFileRequest: {
+            /** Format: binary */
+            file: string;
+        };
         WebhookAck: {
             outcome: string;
         };
@@ -1466,6 +1547,27 @@ export interface operations {
             };
         };
     };
+    "payments_receipt.pdf_retrieve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+        };
+    };
     payments_scenarios_retrieve: {
         parameters: {
             query?: never;
@@ -1755,6 +1857,58 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaginatedSettlementList"];
+                };
+            };
+        };
+    };
+    receipts_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Verification"];
+                };
+            };
+        };
+    };
+    receipts_verify_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["VerifyFileRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Verification"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotIssued"];
                 };
             };
         };

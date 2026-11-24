@@ -137,9 +137,12 @@ def transition(txn_id: int, new: str, *, reason: str = "", provider_ref: str = "
                 from servicerequests.domain import mark_paid
 
                 mark_paid(txn.service_request_id)
+            from receipts.services import issue_receipt
+
             from .tasks import notify_institution
 
             db.on_commit(lambda: notify_institution.delay(txn.pk))
+            db.on_commit(lambda: issue_receipt.delay(txn.pk))
         if new == S.REVERSED:
             from .tasks import reverse_at_institution
 

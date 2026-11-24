@@ -22,6 +22,7 @@ from payments.api import (
     Scenarios,
     Webhook,
 )
+from receipts.api import ReceiptPdf, VerifyByCode, VerifyByFile
 from servicerequests.api import (
     PortalAttachmentDownload,
     PortalRequestDetail,
@@ -52,6 +53,9 @@ urlpatterns = [
     path("api/payments", PaymentCreate.as_view(), name="payment-create"),
     path("api/payments/scenarios", Scenarios.as_view(), name="payment-scenarios"),
     path("api/payments/<str:reference>", PaymentDetail.as_view(), name="payment-detail"),
+    path("api/payments/<str:reference>/receipt.pdf", ReceiptPdf.as_view(), name="receipt-pdf"),
+    path("api/receipts/verify", VerifyByFile.as_view(), name="receipt-verify-file"),
+    path("api/receipts/<str:code>", VerifyByCode.as_view(), name="receipt-verify"),
     path("api/webhooks/<str:method>", Webhook.as_view(), name="webhook"),
     path("api/portal/<slug:institution_slug>/settlements", PortalSettlements.as_view()),
     path("api/portal/<slug:institution_slug>/balances", PortalBalances.as_view()),

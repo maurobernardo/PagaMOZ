@@ -13,6 +13,8 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 DEMO_MODE = env.bool("DEMO_MODE", default=True)
 WEBHOOK_SECRET = env("WEBHOOK_SECRET", default="dev-webhook-secret" if DEBUG else environ.Env.NOTSET)
 PAYMENT_EXPIRY_MINUTES = env.int("PAYMENT_EXPIRY_MINUTES", default=15)
+RECEIPT_SIGNING_KEY = env("RECEIPT_SIGNING_KEY", default="dev-receipt-key" if DEBUG else environ.Env.NOTSET)
+PUBLIC_WEB_URL = env("PUBLIC_WEB_URL", default="http://localhost:3000")  # vai no QR do comprovativo
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -34,6 +36,7 @@ INSTALLED_APPS = [
     "settlement",
     "connectors",
     "servicerequests",
+    "receipts",
 ]
 
 MIDDLEWARE = [
