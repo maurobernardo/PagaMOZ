@@ -40,7 +40,7 @@ export default function Servicos() {
                 <p className="text-sm text-slate-600">{LEVEL_LABEL[s.integration_level]} · {s.category}</p>
                 <p className="text-sm">
                   {s.pricing === "fixo" ? `Tarifa: ${formatMZN(s.amount)}` : s.pricing === "consulta" ? "Valor consultado ao sistema da instituição" : "Valor definido pelo cidadão"}
-                  {s.commission_bps != null ? ` · comissão ${(s.commission_bps / 100).toFixed(2)}%` : ""}
+                  {s.commission_bps != null ? ` · comissão ${(s.commission_bps / 100).toFixed(2).replace(".", ",")}%` : ""}
                 </p>
                 {admin ? (
                   <div className="mt-auto flex flex-wrap gap-2 pt-2">

@@ -17,6 +17,7 @@ export default function PortalLogin() {
   const [secret, setSecret] = useState("");
   const [demoCode, setDemoCode] = useState("");
   const [memberships, setMemberships] = useState<Schemas["Membership"][]>([]);
+  const [staff, setStaff] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
@@ -50,9 +51,11 @@ export default function PortalLogin() {
     setBusy(false);
     if (!r.data) return setError(errorMessage(r.error));
     const ms = r.data.memberships;
-    if (ms.length === 1) router.replace(`/portal/${ms[0].institution.slug}`);
+    if (r.data.is_staff && ms.length === 0) router.replace("/backoffice");
+    else if (ms.length === 1 && !r.data.is_staff) router.replace(`/portal/${ms[0].institution.slug}`);
     else {
       setMemberships(ms);
+      setStaff(r.data.is_staff);
       setStep("choose");
     }
   }
@@ -94,6 +97,9 @@ export default function PortalLogin() {
         {step === "choose" && (
           <div className="space-y-2">
             <p className="text-sm text-slate-700">Escolha a instituição:</p>
+            {staff ? (
+              <Button className="w-full" onClick={() => router.replace("/backoffice")}>Backoffice da plataforma</Button>
+            ) : null}
             {memberships.map((m) => (
               <Button key={m.institution.slug} variant="secondary" className="w-full"
                 onClick={() => router.replace(`/portal/${m.institution.slug}`)}>

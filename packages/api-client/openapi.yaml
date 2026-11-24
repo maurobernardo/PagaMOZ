@@ -142,6 +142,326 @@ paths:
               schema:
                 $ref: '#/components/schemas/PortalSession'
           description: ''
+  /api/backoffice/audit:
+    get:
+      operationId: backoffice_audit_list
+      parameters:
+      - in: query
+        name: action
+        schema:
+          type: string
+        description: prefixo, ex. payment.
+      - in: query
+        name: actor
+        schema:
+          type: string
+      - in: query
+        name: institution
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - backoffice
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAuditList'
+          description: ''
+  /api/backoffice/dead-letters:
+    get:
+      operationId: backoffice_dead_letters_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - backoffice
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDeadLetterList'
+          description: ''
+  /api/backoffice/dead-letters/{id}:
+    post:
+      operationId: backoffice_dead_letters_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - backoffice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DLActionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DLActionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DLActionRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeadLetter'
+          description: ''
+  /api/backoffice/discrepancies:
+    get:
+      operationId: backoffice_discrepancies_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - backoffice
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDiscrepancyStaffList'
+          description: ''
+  /api/backoffice/institutions:
+    get:
+      operationId: backoffice_institutions_list
+      tags:
+      - backoffice
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InstitutionAdmin'
+          description: ''
+    post:
+      operationId: backoffice_institutions_create
+      tags:
+      - backoffice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstitutionAdminRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InstitutionAdminRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InstitutionAdminRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstitutionAdmin'
+          description: ''
+  /api/backoffice/institutions/{slug}:
+    get:
+      operationId: backoffice_institutions_retrieve
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - backoffice
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstitutionAdmin'
+          description: ''
+    patch:
+      operationId: backoffice_institutions_partial_update
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - backoffice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedInstitutionAdminRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedInstitutionAdminRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedInstitutionAdminRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstitutionAdmin'
+          description: ''
+  /api/backoffice/overview:
+    get:
+      operationId: backoffice_overview_retrieve
+      tags:
+      - backoffice
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Overview'
+          description: ''
+  /api/backoffice/parameters:
+    get:
+      operationId: backoffice_parameters_retrieve
+      tags:
+      - backoffice
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Parameters'
+          description: ''
+  /api/backoffice/providers:
+    get:
+      operationId: backoffice_providers_list
+      tags:
+      - backoffice
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProviderHealth'
+          description: ''
+  /api/backoffice/reconciliation/run:
+    post:
+      operationId: backoffice_reconciliation_run_create
+      tags:
+      - backoffice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunReconRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RunReconRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RunReconRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunReconResult'
+          description: ''
+  /api/backoffice/transactions:
+    get:
+      operationId: backoffice_transactions_list
+      parameters:
+      - in: query
+        name: date_from
+        schema:
+          type: string
+        description: AAAA-MM-DD
+      - in: query
+        name: date_to
+        schema:
+          type: string
+      - in: query
+        name: institution
+        schema:
+          type: string
+      - in: query
+        name: method
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: referência
+      - in: query
+        name: service
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+      tags:
+      - backoffice
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStaffTransactionList'
+          description: ''
   /api/catalog/categories:
     get:
       operationId: catalog_categories_list
@@ -1338,6 +1658,14 @@ paths:
           description: ''
 components:
   schemas:
+    ActionEnum:
+      enum:
+      - retry
+      - resolve
+      type: string
+      description: |-
+        * `retry` - retry
+        * `resolve` - resolve
     Attachment:
       type: object
       properties:
@@ -1371,6 +1699,45 @@ components:
       - original_name
       - sha256
       - size
+    Audit:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        action:
+          type: string
+          readOnly: true
+        actor_phone:
+          type: string
+          nullable: true
+        institution_name:
+          type: string
+          nullable: true
+        target_type:
+          type: string
+          readOnly: true
+        target_id:
+          type: string
+          readOnly: true
+        data:
+          readOnly: true
+        ip:
+          type: string
+          readOnly: true
+          nullable: true
+      required:
+      - action
+      - created_at
+      - data
+      - id
+      - ip
+      - target_id
+      - target_type
     Balances:
       type: object
       properties:
@@ -1428,6 +1795,13 @@ components:
       description: |-
         * `cidadao` - Cidadão
         * `instituicao` - Instituição
+    DLActionRequest:
+      type: object
+      properties:
+        action:
+          $ref: '#/components/schemas/ActionEnum'
+      required:
+      - action
     Dashboard:
       type: object
       properties:
@@ -1472,6 +1846,34 @@ components:
       - pending_requests
       - today
       - week
+    DeadLetter:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        kind:
+          type: string
+          readOnly: true
+        payload:
+          readOnly: true
+        error:
+          type: string
+          readOnly: true
+        resolved:
+          type: boolean
+          readOnly: true
+      required:
+      - created_at
+      - error
+      - id
+      - kind
+      - payload
+      - resolved
     Discrepancy:
       type: object
       properties:
@@ -1518,6 +1920,60 @@ components:
       - reference
       - resolution_note
       - resolved
+    DiscrepancyStaff:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        business_date:
+          type: string
+          format: date
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/KindEnum'
+          readOnly: true
+        kind_label:
+          type: string
+        institution_name:
+          type: string
+          nullable: true
+        reference:
+          type: string
+          readOnly: true
+        provider_ref:
+          type: string
+          readOnly: true
+        platform_amount:
+          type: integer
+          readOnly: true
+          nullable: true
+        provider_amount:
+          type: integer
+          readOnly: true
+          nullable: true
+        detail:
+          type: string
+          readOnly: true
+        resolved:
+          type: boolean
+          readOnly: true
+        resolution_note:
+          type: string
+          readOnly: true
+      required:
+      - business_date
+      - detail
+      - id
+      - institution_name
+      - kind
+      - kind_label
+      - platform_amount
+      - provider_amount
+      - provider_ref
+      - reference
+      - resolution_note
+      - resolved
     Event:
       type: object
       properties:
@@ -1552,6 +2008,137 @@ components:
       - demo_mode
       - queue
       - status
+    InstitutionAdmin:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Nome
+          maxLength: 160
+        slug:
+          type: string
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        nuit:
+          type: string
+          maxLength: 9
+        status:
+          $ref: '#/components/schemas/InstitutionAdminStatusEnum'
+        settlement_bank:
+          type: string
+          title: Banco de liquidação
+          maxLength: 80
+        settlement_account_masked:
+          type: string
+          title: Conta (mascarada)
+          maxLength: 32
+        commission_bps:
+          type: integer
+          maximum: 10000
+          minimum: 0
+          nullable: true
+          title: Comissão (pontos base)
+        commission_fixed:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          title: Comissão fixa (centavos)
+        commission_payer:
+          oneOf:
+          - $ref: '#/components/schemas/CommissionPayerEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        is_demo:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        volume_30d:
+          type: integer
+          readOnly: true
+          default: 0
+        count_30d:
+          type: integer
+          readOnly: true
+          default: 0
+        services:
+          type: integer
+          readOnly: true
+        members:
+          type: integer
+          readOnly: true
+      required:
+      - count_30d
+      - created_at
+      - id
+      - members
+      - name
+      - services
+      - slug
+      - volume_30d
+    InstitutionAdminRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Nome
+          maxLength: 160
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        nuit:
+          type: string
+          maxLength: 9
+        status:
+          $ref: '#/components/schemas/InstitutionAdminStatusEnum'
+        settlement_bank:
+          type: string
+          title: Banco de liquidação
+          maxLength: 80
+        settlement_account_masked:
+          type: string
+          title: Conta (mascarada)
+          maxLength: 32
+        commission_bps:
+          type: integer
+          maximum: 10000
+          minimum: 0
+          nullable: true
+          title: Comissão (pontos base)
+        commission_fixed:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          title: Comissão fixa (centavos)
+        commission_payer:
+          oneOf:
+          - $ref: '#/components/schemas/CommissionPayerEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        is_demo:
+          type: boolean
+      required:
+      - name
+      - slug
+    InstitutionAdminStatusEnum:
+      enum:
+      - onboarding
+      - activa
+      - suspensa
+      type: string
+      description: |-
+        * `onboarding` - Em adesão
+        * `activa` - Activa
+        * `suspensa` - Suspensa
     InstitutionPublic:
       type: object
       properties:
@@ -1621,7 +2208,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Membership'
+        is_staff:
+          type: boolean
       required:
+      - is_staff
       - memberships
       - name
       - phone
@@ -1784,6 +2374,124 @@ components:
       required:
       - code
       - phone
+    Overview:
+      type: object
+      properties:
+        today:
+          type: object
+          additionalProperties: {}
+        month:
+          type: object
+          additionalProperties: {}
+        commission_30d:
+          type: integer
+        success_rate_24h:
+          type: number
+          format: double
+          nullable: true
+        by_status_24h:
+          type: object
+          additionalProperties: {}
+        institutions:
+          type: object
+          additionalProperties: {}
+        ledger_balanced:
+          type: boolean
+        in_transit:
+          type: integer
+        open_discrepancies:
+          type: integer
+        dead_letters:
+          type: integer
+        stuck_pending:
+          type: integer
+        top_institutions:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+      required:
+      - by_status_24h
+      - commission_30d
+      - dead_letters
+      - in_transit
+      - institutions
+      - ledger_balanced
+      - month
+      - open_discrepancies
+      - stuck_pending
+      - success_rate_24h
+      - today
+      - top_institutions
+    PaginatedAuditList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Audit'
+    PaginatedDeadLetterList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeadLetter'
+    PaginatedDiscrepancyStaffList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DiscrepancyStaff'
     PaginatedPaymentList:
       type: object
       required:
@@ -1922,6 +2630,82 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Settlement'
+    PaginatedStaffTransactionList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/StaffTransaction'
+    Parameters:
+      type: object
+      properties:
+        items:
+          type: object
+          additionalProperties: {}
+      required:
+      - items
+    PatchedInstitutionAdminRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Nome
+          maxLength: 160
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        nuit:
+          type: string
+          maxLength: 9
+        status:
+          $ref: '#/components/schemas/InstitutionAdminStatusEnum'
+        settlement_bank:
+          type: string
+          title: Banco de liquidação
+          maxLength: 80
+        settlement_account_masked:
+          type: string
+          title: Conta (mascarada)
+          maxLength: 32
+        commission_bps:
+          type: integer
+          maximum: 10000
+          minimum: 0
+          nullable: true
+          title: Comissão (pontos base)
+        commission_fixed:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          title: Comissão fixa (centavos)
+        commission_payer:
+          oneOf:
+          - $ref: '#/components/schemas/CommissionPayerEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        is_demo:
+          type: boolean
     PatchedObligationRequest:
       type: object
       properties:
@@ -2187,11 +2971,14 @@ components:
       properties:
         phone:
           type: string
+        is_staff:
+          type: boolean
         memberships:
           type: array
           items:
             $ref: '#/components/schemas/Membership'
       required:
+      - is_staff
       - memberships
       - phone
     PortalTransaction:
@@ -2315,6 +3102,30 @@ components:
         * `fixo` - Valor fixo
         * `consulta` - Valor obtido por consulta
         * `aberto` - Valor introduzido pelo cidadão
+    ProviderHealth:
+      type: object
+      properties:
+        method:
+          type: string
+        label:
+          type: string
+        adapter:
+          type: string
+        total_24h:
+          type: integer
+        success_rate_24h:
+          type: number
+          format: double
+          nullable: true
+        pending:
+          type: integer
+      required:
+      - adapter
+      - label
+      - method
+      - pending
+      - success_rate_24h
+      - total_24h
     QuoteRequestRequest:
       type: object
       properties:
@@ -2557,6 +3368,21 @@ components:
         * `admin` - Administrador
         * `financeiro` - Financeiro
         * `operador` - Operador
+    RunReconRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+      required:
+      - date
+    RunReconResult:
+      type: object
+      properties:
+        discrepancies:
+          type: integer
+      required:
+      - discrepancies
     ScenarioEnum:
       enum:
       - sucesso
@@ -2894,6 +3720,95 @@ components:
       - id
       - net
       - provider
+    StaffTransaction:
+      type: object
+      properties:
+        institution_name:
+          type: string
+        reference:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/PaymentStatusEnum'
+          readOnly: true
+        service:
+          type: integer
+          readOnly: true
+        service_name:
+          type: string
+        description:
+          type: string
+          readOnly: true
+        method:
+          allOf:
+          - $ref: '#/components/schemas/MethodEnum'
+          readOnly: true
+        method_label:
+          type: string
+        amount:
+          type: integer
+          readOnly: true
+        commission:
+          type: integer
+          readOnly: true
+        commission_payer:
+          type: string
+          readOnly: true
+        total:
+          type: integer
+          readOnly: true
+        institution_net:
+          type: integer
+          readOnly: true
+        provider_ref:
+          type: string
+          readOnly: true
+        institution_ref:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        confirmed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        settled_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        settlement_date:
+          type: string
+          format: date
+          nullable: true
+        failure_reason:
+          type: string
+          readOnly: true
+      required:
+      - amount
+      - commission
+      - commission_payer
+      - confirmed_at
+      - created_at
+      - description
+      - failure_reason
+      - institution_name
+      - institution_net
+      - institution_ref
+      - method
+      - method_label
+      - provider_ref
+      - reference
+      - service
+      - service_name
+      - settled_at
+      - settlement_date
+      - status
+      - total
     StatusChangeRequest:
       type: object
       properties:

@@ -85,6 +85,7 @@ class MeSerializer(serializers.Serializer):
     phone = serializers.CharField()
     name = serializers.CharField(source="get_full_name")
     memberships = MembershipSerializer(many=True)
+    is_staff = serializers.BooleanField()
 
 
 # ---------- Público (cidadão) ----------

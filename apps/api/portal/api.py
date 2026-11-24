@@ -167,7 +167,10 @@ FILTERS = [
 
 
 def filtered(inst, p):
-    qs = Transaction.objects.filter(institution=inst).select_related("service", "settlement")
+    """inst=None só no backoffice (todas as instituições); o portal passa sempre a sua."""
+    qs = Transaction.objects.select_related("service", "settlement")
+    if inst is not None:
+        qs = qs.filter(institution=inst)
     if v := p.get("status"):
         qs = qs.filter(status__in=v.split(","))
     if v := p.get("method"):

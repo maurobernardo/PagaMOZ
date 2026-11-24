@@ -242,7 +242,8 @@ class MfaVerifyView(APIView):
     throttle_classes = [OtpThrottle]
 
     @extend_schema(request=MfaCode, responses=inline_serializer("PortalSession", {
-        "phone": serializers.CharField(), "memberships": MembershipSerializer(many=True)}))  # fmt: skip
+        "phone": serializers.CharField(), "is_staff": serializers.BooleanField(),
+        "memberships": MembershipSerializer(many=True)}))  # fmt: skip
     def post(self, request):
         from .totp import verify
 
@@ -261,5 +262,5 @@ class MfaVerifyView(APIView):
         request.session["mfa_ok"] = True
         record("auth.portal_login", actor=user, request=request)
         get_token(request)
-        return Response({"phone": user.phone, "memberships": MembershipSerializer(user.memberships.select_related(
-            "institution"), many=True).data})  # fmt: skip
+        memberships = MembershipSerializer(user.memberships.select_related("institution"), many=True).data
+        return Response({"phone": user.phone, "is_staff": user.is_staff, "memberships": memberships})

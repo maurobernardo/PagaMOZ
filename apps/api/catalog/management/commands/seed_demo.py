@@ -56,6 +56,7 @@ class Command(BaseCommand):
             Membership.objects.get_or_create(user=admin, institution=inst, defaults={"role": Membership.Role.ADMIN})
 
         self._user("+258840009999", "Cidadão Demo", password)
+        User.objects.filter(pk=self._user("+258840000000", "Equipa PagaMOZ", password).pk).update(is_staff=True)
         self.stdout.write(
             self.style.SUCCESS(f"{len(cats)} categorias, {len(INSTITUTIONS)} instituições, {n_services} serviços.")
         )

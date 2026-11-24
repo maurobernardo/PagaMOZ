@@ -29,7 +29,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, dias, seed, **opts):
         # MFA já activo nos admins demo (o código aparece no ecrã de login em DEMO_MODE).
-        for u in User.objects.filter(memberships__isnull=False, mfa_enabled=False).distinct():
+        from django.db.models import Q
+
+        for u in User.objects.filter(Q(memberships__isnull=False) | Q(is_staff=True), mfa_enabled=False).distinct():
             u.mfa_secret, u.mfa_enabled = new_secret(), True
             u.save(update_fields=["mfa_secret", "mfa_enabled"])
 

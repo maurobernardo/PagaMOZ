@@ -40,9 +40,11 @@ INSTALLED_APPS = [
     "receipts",
     "portal",
     "reconciliation",
+    "backoffice",
 ]
 
 MIDDLEWARE = [
+    "core.observability.RequestIdMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -139,3 +141,28 @@ X_FRAME_OPTIONS = "DENY"
 if not DEBUG:
     SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# ---------- Observabilidade ----------
+METRICS_TOKEN = env("METRICS_TOKEN", default="")  # vazio = /metrics desligado
+LOG_JSON = env.bool("LOG_JSON", default=not DEBUG)
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {"request_id": {"()": "core.observability.RequestIdFilter"}},
+    "formatters": {
+        "json": {"()": "core.observability.JsonFormatter"},
+        "text": {"format": "%(asctime)s %(levelname)s [%(request_id)s] %(name)s: %(message)s"},
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "json" if LOG_JSON else "text",
+            "filters": ["request_id"],
+        }
+    },
+    "root": {"handlers": ["console"], "level": env("LOG_LEVEL", default="INFO")},
+    "loggers": {
+        "django.server": {"level": "WARNING"},  # já temos o access log próprio
+        "pagamoz.access": {"level": "INFO"},
+    },
+}

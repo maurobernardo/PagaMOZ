@@ -14,8 +14,10 @@ from accounts.api import (
     OtpVerifyView,
     PortalLoginView,
 )
+from backoffice import api as bo
 from catalog.api import CategoryList, Me, PortalServiceViewSet, PublicServiceViewSet
 from connectors.api import ServicePrice, ServiceQuote
+from core.observability import metrics
 from core.views import health
 from payments.api import (
     PaymentCreate,
@@ -53,6 +55,18 @@ portal.register("services", PortalServiceViewSet, basename="portal-service")
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/health", health, name="health"),
+    path("metrics", metrics, name="metrics"),
+    path("api/backoffice/overview", bo.Overview.as_view()),
+    path("api/backoffice/institutions", bo.InstitutionList.as_view()),
+    path("api/backoffice/institutions/<slug:slug>", bo.InstitutionDetail.as_view()),
+    path("api/backoffice/transactions", bo.Transactions.as_view()),
+    path("api/backoffice/discrepancies", bo.Discrepancies.as_view()),
+    path("api/backoffice/reconciliation/run", bo.RunReconciliation.as_view()),
+    path("api/backoffice/dead-letters", bo.DeadLetters.as_view()),
+    path("api/backoffice/dead-letters/<int:pk>", bo.DeadLetterAction.as_view()),
+    path("api/backoffice/audit", bo.Audit.as_view()),
+    path("api/backoffice/providers", bo.Providers.as_view()),
+    path("api/backoffice/parameters", bo.Parameters.as_view()),
     path("api/schema", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs", SpectacularSwaggerView.as_view(url_name="schema"), name="docs"),
     path("api/me", Me.as_view(), name="me"),

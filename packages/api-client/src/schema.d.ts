@@ -103,6 +103,182 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/backoffice/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["backoffice_audit_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backoffice/dead-letters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["backoffice_dead_letters_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backoffice/dead-letters/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["backoffice_dead_letters_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backoffice/discrepancies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["backoffice_discrepancies_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backoffice/institutions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["backoffice_institutions_list"];
+        put?: never;
+        post: operations["backoffice_institutions_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backoffice/institutions/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["backoffice_institutions_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["backoffice_institutions_partial_update"];
+        trace?: never;
+    };
+    "/api/backoffice/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["backoffice_overview_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backoffice/parameters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["backoffice_parameters_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backoffice/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["backoffice_providers_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backoffice/reconciliation/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["backoffice_reconciliation_run_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backoffice/transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["backoffice_transactions_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/catalog/categories": {
         parameters: {
             query?: never;
@@ -681,6 +857,12 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * @description * `retry` - retry
+         *     * `resolve` - resolve
+         * @enum {string}
+         */
+        ActionEnum: "retry" | "resolve";
         Attachment: {
             readonly id: number;
             readonly field: string;
@@ -690,6 +872,18 @@ export interface components {
             readonly sha256: string;
             /** Format: date-time */
             readonly created_at: string;
+        };
+        Audit: {
+            readonly id: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            readonly action: string;
+            actor_phone?: string | null;
+            institution_name?: string | null;
+            readonly target_type: string;
+            readonly target_id: string;
+            readonly data: unknown;
+            readonly ip: string | null;
         };
         Balances: {
             a_liquidar: number;
@@ -713,6 +907,9 @@ export interface components {
          * @enum {string}
          */
         CommissionPayerEnum: "cidadao" | "instituicao";
+        DLActionRequest: {
+            action: components["schemas"]["ActionEnum"];
+        };
         Dashboard: {
             today: {
                 [key: string]: unknown;
@@ -738,10 +935,34 @@ export interface components {
             pending_requests: number;
             open_discrepancies: number;
         };
+        DeadLetter: {
+            readonly id: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            readonly kind: string;
+            readonly payload: unknown;
+            readonly error: string;
+            readonly resolved: boolean;
+        };
         Discrepancy: {
             readonly id: number;
             readonly kind: components["schemas"]["KindEnum"];
             kind_label: string;
+            readonly reference: string;
+            readonly provider_ref: string;
+            readonly platform_amount: number | null;
+            readonly provider_amount: number | null;
+            readonly detail: string;
+            readonly resolved: boolean;
+            readonly resolution_note: string;
+        };
+        DiscrepancyStaff: {
+            readonly id: number;
+            /** Format: date */
+            business_date: string;
+            readonly kind: components["schemas"]["KindEnum"];
+            kind_label: string;
+            institution_name: string | null;
             readonly reference: string;
             readonly provider_ref: string;
             readonly platform_amount: number | null;
@@ -762,6 +983,62 @@ export interface components {
             queue: string;
             demo_mode: boolean;
         };
+        InstitutionAdmin: {
+            readonly id: number;
+            /** Nome */
+            name: string;
+            slug: string;
+            nuit?: string;
+            status?: components["schemas"]["InstitutionAdminStatusEnum"];
+            /** Banco de liquidação */
+            settlement_bank?: string;
+            /** Conta (mascarada) */
+            settlement_account_masked?: string;
+            /** Comissão (pontos base) */
+            commission_bps?: number | null;
+            /**
+             * Comissão fixa (centavos)
+             * Format: int64
+             */
+            commission_fixed?: number | null;
+            commission_payer?: components["schemas"]["CommissionPayerEnum"] | components["schemas"]["BlankEnum"];
+            is_demo?: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** @default 0 */
+            readonly volume_30d: number;
+            /** @default 0 */
+            readonly count_30d: number;
+            readonly services: number;
+            readonly members: number;
+        };
+        InstitutionAdminRequest: {
+            /** Nome */
+            name: string;
+            slug: string;
+            nuit?: string;
+            status?: components["schemas"]["InstitutionAdminStatusEnum"];
+            /** Banco de liquidação */
+            settlement_bank?: string;
+            /** Conta (mascarada) */
+            settlement_account_masked?: string;
+            /** Comissão (pontos base) */
+            commission_bps?: number | null;
+            /**
+             * Comissão fixa (centavos)
+             * Format: int64
+             */
+            commission_fixed?: number | null;
+            commission_payer?: components["schemas"]["CommissionPayerEnum"] | components["schemas"]["BlankEnum"];
+            is_demo?: boolean;
+        };
+        /**
+         * @description * `onboarding` - Em adesão
+         *     * `activa` - Activa
+         *     * `suspensa` - Suspensa
+         * @enum {string}
+         */
+        InstitutionAdminStatusEnum: "onboarding" | "activa" | "suspensa";
         InstitutionPublic: {
             readonly id: number;
             /** Nome */
@@ -793,6 +1070,7 @@ export interface components {
             phone: string;
             name: string;
             memberships: components["schemas"]["Membership"][];
+            is_staff: boolean;
         };
         Member: {
             readonly id: number;
@@ -854,6 +1132,76 @@ export interface components {
         OtpVerifyRequest: {
             phone: string;
             code: string;
+        };
+        Overview: {
+            today: {
+                [key: string]: unknown;
+            };
+            month: {
+                [key: string]: unknown;
+            };
+            commission_30d: number;
+            /** Format: double */
+            success_rate_24h: number | null;
+            by_status_24h: {
+                [key: string]: unknown;
+            };
+            institutions: {
+                [key: string]: unknown;
+            };
+            ledger_balanced: boolean;
+            in_transit: number;
+            open_discrepancies: number;
+            dead_letters: number;
+            stuck_pending: number;
+            top_institutions: {
+                [key: string]: unknown;
+            }[];
+        };
+        PaginatedAuditList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Audit"][];
+        };
+        PaginatedDeadLetterList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["DeadLetter"][];
+        };
+        PaginatedDiscrepancyStaffList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["DiscrepancyStaff"][];
         };
         PaginatedPaymentList: {
             /** @example 123 */
@@ -944,6 +1292,46 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Settlement"][];
+        };
+        PaginatedStaffTransactionList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["StaffTransaction"][];
+        };
+        Parameters: {
+            items: {
+                [key: string]: unknown;
+            };
+        };
+        PatchedInstitutionAdminRequest: {
+            /** Nome */
+            name?: string;
+            slug?: string;
+            nuit?: string;
+            status?: components["schemas"]["InstitutionAdminStatusEnum"];
+            /** Banco de liquidação */
+            settlement_bank?: string;
+            /** Conta (mascarada) */
+            settlement_account_masked?: string;
+            /** Comissão (pontos base) */
+            commission_bps?: number | null;
+            /**
+             * Comissão fixa (centavos)
+             * Format: int64
+             */
+            commission_fixed?: number | null;
+            commission_payer?: components["schemas"]["CommissionPayerEnum"] | components["schemas"]["BlankEnum"];
+            is_demo?: boolean;
         };
         PatchedObligationRequest: {
             label?: string;
@@ -1059,6 +1447,7 @@ export interface components {
         };
         PortalSession: {
             phone: string;
+            is_staff: boolean;
             memberships: components["schemas"]["Membership"][];
         };
         PortalTransaction: {
@@ -1103,6 +1492,15 @@ export interface components {
          * @enum {string}
          */
         PricingEnum: "fixo" | "consulta" | "aberto";
+        ProviderHealth: {
+            method: string;
+            label: string;
+            adapter: string;
+            total_24h: number;
+            /** Format: double */
+            success_rate_24h: number | null;
+            pending: number;
+        };
         QuoteRequestRequest: {
             fields: {
                 [key: string]: string;
@@ -1201,6 +1599,13 @@ export interface components {
          * @enum {string}
          */
         RoleEnum: "admin" | "financeiro" | "operador";
+        RunReconRequest: {
+            /** Format: date */
+            date: string;
+        };
+        RunReconResult: {
+            discrepancies: number;
+        };
         /**
          * @description * `sucesso` - sucesso
          *     * `falha` - falha
@@ -1334,6 +1739,32 @@ export interface components {
             readonly provider: string;
             /** Format: date-time */
             readonly created_at: string;
+        };
+        StaffTransaction: {
+            institution_name: string;
+            readonly reference: string;
+            readonly status: components["schemas"]["PaymentStatusEnum"];
+            readonly service: number;
+            service_name: string;
+            readonly description: string;
+            readonly method: components["schemas"]["MethodEnum"];
+            method_label: string;
+            readonly amount: number;
+            readonly commission: number;
+            readonly commission_payer: string;
+            readonly total: number;
+            readonly institution_net: number;
+            readonly provider_ref: string;
+            readonly institution_ref: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly confirmed_at: string | null;
+            /** Format: date-time */
+            readonly settled_at: string | null;
+            /** Format: date */
+            settlement_date: string | null;
+            readonly failure_reason: string;
         };
         StatusChangeRequest: {
             status: components["schemas"]["RequestStatusEnum"];
@@ -1512,6 +1943,308 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PortalSession"];
+                };
+            };
+        };
+    };
+    backoffice_audit_list: {
+        parameters: {
+            query?: {
+                /** @description prefixo, ex. payment. */
+                action?: string;
+                actor?: string;
+                institution?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAuditList"];
+                };
+            };
+        };
+    };
+    backoffice_dead_letters_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedDeadLetterList"];
+                };
+            };
+        };
+    };
+    backoffice_dead_letters_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DLActionRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["DLActionRequest"];
+                "multipart/form-data": components["schemas"]["DLActionRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeadLetter"];
+                };
+            };
+        };
+    };
+    backoffice_discrepancies_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedDiscrepancyStaffList"];
+                };
+            };
+        };
+    };
+    backoffice_institutions_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstitutionAdmin"][];
+                };
+            };
+        };
+    };
+    backoffice_institutions_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstitutionAdminRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["InstitutionAdminRequest"];
+                "multipart/form-data": components["schemas"]["InstitutionAdminRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstitutionAdmin"];
+                };
+            };
+        };
+    };
+    backoffice_institutions_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstitutionAdmin"];
+                };
+            };
+        };
+    };
+    backoffice_institutions_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedInstitutionAdminRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedInstitutionAdminRequest"];
+                "multipart/form-data": components["schemas"]["PatchedInstitutionAdminRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstitutionAdmin"];
+                };
+            };
+        };
+    };
+    backoffice_overview_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Overview"];
+                };
+            };
+        };
+    };
+    backoffice_parameters_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Parameters"];
+                };
+            };
+        };
+    };
+    backoffice_providers_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderHealth"][];
+                };
+            };
+        };
+    };
+    backoffice_reconciliation_run_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunReconRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["RunReconRequest"];
+                "multipart/form-data": components["schemas"]["RunReconRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunReconResult"];
+                };
+            };
+        };
+    };
+    backoffice_transactions_list: {
+        parameters: {
+            query?: {
+                /** @description AAAA-MM-DD */
+                date_from?: string;
+                date_to?: string;
+                institution?: string;
+                method?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description referência */
+                q?: string;
+                service?: number;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedStaffTransactionList"];
                 };
             };
         };
