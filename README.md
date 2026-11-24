@@ -18,10 +18,11 @@ Decisões em `docs/adr/`.
 ## Dados e acessos de demonstração
 
 ```powershell
-.\tasks.ps1 seed-demo                                   # catálogo, instituições e utilizadores
-apps\api\.venv\Scripts\python apps\api\manage.py seed_demo_activity     # 30 dias de pagamentos (demora)
-apps\api\.venv\Scripts\python apps\api\manage.py demo_reconciliation --injectar
+.\tasks.ps1 demo
 ```
+
+Cria uma base nova com catálogo, utilizadores, 30 dias de pagamentos e divergências de reconciliação (1 a 2 minutos).
+Guião da apresentação: `docs/guiao-demo.md`. API: `docs/api.md`. Produção: `docs/proximos-passos-producao.md`.
 
 | Quem | Onde | Telefone | Palavra-passe |
 |---|---|---|---|
