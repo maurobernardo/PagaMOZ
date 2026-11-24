@@ -46,6 +46,7 @@ class PaymentSerializer(serializers.ModelSerializer):
             "amount", "commission", "commission_payer", "total", "institution_net", "currency",
             "method", "instructions", "failure_reason", "created_at", "expires_at", "confirmed_at", "settled_at",
         ]  # fmt: skip
+        read_only_fields = fields
 
     def get_instructions(self, obj) -> str:
         return INSTRUCTIONS[obj.method] if obj.status in (Status.CREATED, Status.PENDING) else ""
@@ -55,6 +56,7 @@ class SettlementSerializer(serializers.ModelSerializer):
     class Meta:
         model = SettlementBatch
         fields = ["id", "business_date", "count", "gross", "commission", "net", "destination", "provider", "created_at"]
+        read_only_fields = fields
 
 
 # ---------- Cidadão ----------
@@ -124,8 +126,15 @@ class PaymentDetail(generics.RetrieveAPIView):
 class Scenarios(APIView):
     permission_classes = [permissions.AllowAny]
 
-    @extend_schema(responses=inline_serializer("Scenarios", {"demo_mode": serializers.BooleanField(),
-                                                            "scenarios": serializers.DictField()}))  # fmt: skip
+    @extend_schema(
+        responses=inline_serializer(
+            "Scenarios",
+            {
+                "demo_mode": serializers.BooleanField(),
+                "scenarios": serializers.DictField(child=serializers.CharField()),
+            },
+        )
+    )
     def get(self, request):
         return Response({"demo_mode": settings.DEMO_MODE, "scenarios": SCENARIOS if settings.DEMO_MODE else {}})
 

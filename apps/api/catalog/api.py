@@ -1,4 +1,5 @@
 from django.db.models import Count, Q
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import generics, mixins, permissions, serializers, viewsets
 
 from audit.models import record
@@ -16,12 +17,14 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ["id", "name", "slug", "description", "icon", "order", "service_count"]
+        read_only_fields = fields
 
 
 class InstitutionPublicSerializer(serializers.ModelSerializer):
     class Meta:
         model = Institution
         fields = ["id", "name", "slug", "is_demo"]
+        read_only_fields = fields
 
 
 class ServiceField(serializers.Serializer):
@@ -43,6 +46,7 @@ class ServicePublicSerializer(serializers.ModelSerializer):
             "id", "name", "slug", "description", "institution", "category", "integration_level",
             "pricing", "amount", "min_amount", "max_amount", "fields",
         ]  # fmt: skip
+        read_only_fields = fields
 
 
 class ServicePortalSerializer(serializers.ModelSerializer):
@@ -96,9 +100,19 @@ class CategoryList(generics.ListAPIView):
     pagination_class = None
 
     def get_queryset(self):
-        return Category.objects.annotate(service_count=Count("services", filter=Q(services__in=_public_services())))
+        qs = Category.objects.annotate(service_count=Count("services", filter=Q(services__in=_public_services())))
+        return qs.order_by("order")
 
 
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter("category", str, description="slug da categoria"),
+            OpenApiParameter("institution", str, description="slug da instituição"),
+            OpenApiParameter("q", str, description="pesquisa livre"),
+        ]
+    )
+)
 class PublicServiceViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ServicePublicSerializer
     permission_classes = [permissions.AllowAny]

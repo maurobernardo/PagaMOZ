@@ -21,12 +21,14 @@ class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = RequestEvent
         fields = ["status", "note", "created_at"]
+        read_only_fields = fields
 
 
 class AttachmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attachment
         fields = ["id", "field", "original_name", "content_type", "size", "sha256", "created_at"]
+        read_only_fields = fields
 
 
 class RequestPublicSerializer(serializers.ModelSerializer):
@@ -39,6 +41,7 @@ class RequestPublicSerializer(serializers.ModelSerializer):
         model = ServiceRequest
         fields = ["code", "status", "service", "service_name", "institution_name", "amount", "created_at",
                   "updated_at", "events"]  # fmt: skip
+        read_only_fields = fields
 
 
 class RequestPortalSerializer(RequestPublicSerializer):

@@ -4,6 +4,54 @@
  */
 
 export interface paths {
+    "/api/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth_logout_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/otp/request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth_otp_request_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/otp/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth_otp_verify_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/catalog/categories": {
         parameters: {
             query?: never;
@@ -52,6 +100,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/catalog/services/{id}/price": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Decomposição do valor (comissão, total) antes de pagar — serviços de valor fixo ou aberto. */
+        post: operations["catalog_services_price_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/catalog/services/{id}/quote": {
         parameters: {
             query?: never;
@@ -93,6 +158,70 @@ export interface paths {
             cookie?: never;
         };
         get: operations["me_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/obligations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["me_obligations_list"];
+        put?: never;
+        post: operations["me_obligations_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/obligations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["me_obligations_retrieve"];
+        put: operations["me_obligations_update"];
+        post?: never;
+        delete: operations["me_obligations_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["me_obligations_partial_update"];
+        trace?: never;
+    };
+    "/api/me/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["me_payments_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["me_requests_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -340,12 +469,11 @@ export interface components {
     schemas: {
         Attachment: {
             readonly id: number;
-            field: string;
-            original_name: string;
-            content_type: string;
-            /** Format: int64 */
-            size: number;
-            sha256: string;
+            readonly field: string;
+            readonly original_name: string;
+            readonly content_type: string;
+            readonly size: number;
+            readonly sha256: string;
             /** Format: date-time */
             readonly created_at: string;
         };
@@ -358,12 +486,11 @@ export interface components {
         BlankEnum: "";
         Category: {
             readonly id: number;
-            name: string;
-            slug: string;
-            description?: string;
-            icon?: string;
-            /** Format: int64 */
-            order?: number;
+            readonly name: string;
+            readonly slug: string;
+            readonly description: string;
+            readonly icon: string;
+            readonly order: number;
             readonly service_count: number;
         };
         /**
@@ -373,8 +500,8 @@ export interface components {
          */
         CommissionPayerEnum: "cidadao" | "instituicao";
         Event: {
-            status: components["schemas"]["RequestStatusEnum"];
-            note?: string;
+            readonly status: components["schemas"]["RequestStatusEnum"];
+            readonly note: string;
             /** Format: date-time */
             readonly created_at: string;
         };
@@ -387,9 +514,9 @@ export interface components {
         InstitutionPublic: {
             readonly id: number;
             /** Nome */
-            name: string;
-            slug: string;
-            is_demo?: boolean;
+            readonly name: string;
+            readonly slug: string;
+            readonly is_demo: boolean;
         };
         /**
          * @description * `1` - Consulta + pagamento em tempo real
@@ -417,6 +544,47 @@ export interface components {
          * @enum {string}
          */
         MethodEnum: "mpesa" | "emola" | "mkesh" | "cartao" | "referencia_bancaria" | "qr";
+        Obligation: {
+            readonly id: number;
+            label: string;
+            service: number;
+            readonly service_detail: components["schemas"]["ServicePublic"];
+            fields?: unknown;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        ObligationRequest: {
+            label: string;
+            service: number;
+            fields?: unknown;
+        };
+        OtpRequestRequest: {
+            phone: string;
+        };
+        OtpSent: {
+            phone: string;
+            expires_in: number;
+            demo_code?: string;
+        };
+        OtpVerifyRequest: {
+            phone: string;
+            code: string;
+        };
+        PaginatedPaymentList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Payment"][];
+        };
         PaginatedRequestPublicList: {
             /** @example 123 */
             count: number;
@@ -477,8 +645,12 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Settlement"][];
         };
-        PatchedServicePortal: {
-            readonly id?: number;
+        PatchedObligationRequest: {
+            label?: string;
+            service?: number;
+            fields?: unknown;
+        };
+        PatchedServicePortalRequest: {
             name?: string;
             slug?: string;
             description?: string;
@@ -500,7 +672,7 @@ export interface components {
              * Format: int64
              */
             max_amount?: number | null;
-            fields?: components["schemas"]["ServiceField"][];
+            fields?: components["schemas"]["ServiceFieldRequest"][];
             is_active?: boolean;
             /** Comissão (pontos base) */
             commission_bps?: number | null;
@@ -510,39 +682,33 @@ export interface components {
              */
             commission_fixed?: number | null;
             commission_payer?: components["schemas"]["CommissionPayerEnum"] | components["schemas"]["BlankEnum"];
-            /** Format: date-time */
-            readonly updated_at?: string;
         };
         Payment: {
             readonly reference: string;
-            status?: components["schemas"]["PaymentStatusEnum"];
-            service: number;
+            readonly status: components["schemas"]["PaymentStatusEnum"];
+            readonly service: number;
             service_name: string;
             institution_name: string;
-            description?: string;
-            /** Format: int64 */
-            amount: number;
-            /** Format: int64 */
-            commission: number;
-            commission_payer: string;
-            /** Format: int64 */
-            total: number;
-            /** Format: int64 */
-            institution_net: number;
-            currency?: string;
-            method: components["schemas"]["MethodEnum"];
+            readonly description: string;
+            readonly amount: number;
+            readonly commission: number;
+            readonly commission_payer: string;
+            readonly total: number;
+            readonly institution_net: number;
+            readonly currency: string;
+            readonly method: components["schemas"]["MethodEnum"];
             readonly instructions: string;
-            failure_reason?: string;
+            readonly failure_reason: string;
             /** Format: date-time */
             readonly created_at: string;
             /** Format: date-time */
-            expires_at?: string;
+            readonly expires_at: string;
             /** Format: date-time */
-            confirmed_at?: string | null;
+            readonly confirmed_at: string | null;
             /** Format: date-time */
-            settled_at?: string | null;
+            readonly settled_at: string | null;
         };
-        PaymentCreate: {
+        PaymentCreateRequest: {
             service: number;
             fields?: {
                 [key: string]: string;
@@ -579,6 +745,16 @@ export interface components {
          * @enum {string}
          */
         PaymentStatusEnum: "CRIADA" | "PENDENTE" | "CONFIRMADA" | "LIQUIDADA" | "FALHADA" | "EXPIRADA" | "REVERTIDA" | "EM_DISPUTA";
+        PriceRequestRequest: {
+            amount?: number;
+        };
+        PriceResponse: {
+            amount: number;
+            commission: number;
+            total: number;
+            commission_payer: string;
+            institution_net: number;
+        };
         /**
          * @description * `fixo` - Valor fixo
          *     * `consulta` - Valor obtido por consulta
@@ -586,7 +762,7 @@ export interface components {
          * @enum {string}
          */
         PricingEnum: "fixo" | "consulta" | "aberto";
-        QuoteRequest: {
+        QuoteRequestRequest: {
             fields: {
                 [key: string]: string;
             };
@@ -603,7 +779,7 @@ export interface components {
             total: number;
             commission_payer: string;
         };
-        RequestCreate: {
+        RequestCreateRequest: {
             service: number;
             /** @description JSON */
             fields: string;
@@ -611,8 +787,8 @@ export interface components {
         };
         RequestPortal: {
             readonly code: string;
-            status?: components["schemas"]["RequestStatusEnum"];
-            service: number;
+            readonly status: components["schemas"]["RequestStatusEnum"];
+            readonly service: number;
             service_name: string;
             institution_name: string;
             amount: number;
@@ -627,8 +803,8 @@ export interface components {
         };
         RequestPublic: {
             readonly code: string;
-            status?: components["schemas"]["RequestStatusEnum"];
-            service: number;
+            readonly status: components["schemas"]["RequestStatusEnum"];
+            readonly service: number;
             service_name: string;
             institution_name: string;
             amount: number;
@@ -671,10 +847,18 @@ export interface components {
         Scenarios: {
             demo_mode: boolean;
             scenarios: {
-                [key: string]: unknown;
+                [key: string]: string;
             };
         };
         ServiceField: {
+            name: string;
+            label: string;
+            type: components["schemas"]["TypeEnum"];
+            /** @default true */
+            required: boolean;
+            pattern?: string;
+        };
+        ServiceFieldRequest: {
             name: string;
             label: string;
             type: components["schemas"]["TypeEnum"];
@@ -718,13 +902,11 @@ export interface components {
             /** Format: date-time */
             readonly updated_at: string;
         };
-        ServicePublic: {
-            readonly id: number;
+        ServicePortalRequest: {
             name: string;
             slug: string;
             description?: string;
-            readonly institution: components["schemas"]["InstitutionPublic"];
-            readonly category: string;
+            category: string;
             integration_level: components["schemas"]["IntegrationLevelEnum"];
             pricing: components["schemas"]["PricingEnum"];
             /**
@@ -742,26 +924,51 @@ export interface components {
              * Format: int64
              */
             max_amount?: number | null;
+            fields?: components["schemas"]["ServiceFieldRequest"][];
+            is_active?: boolean;
+            /** Comissão (pontos base) */
+            commission_bps?: number | null;
+            /**
+             * Comissão fixa (centavos)
+             * Format: int64
+             */
+            commission_fixed?: number | null;
+            commission_payer?: components["schemas"]["CommissionPayerEnum"] | components["schemas"]["BlankEnum"];
+        };
+        ServicePublic: {
+            readonly id: number;
+            readonly name: string;
+            readonly slug: string;
+            readonly description: string;
+            readonly institution: components["schemas"]["InstitutionPublic"];
+            readonly category: string;
+            readonly integration_level: components["schemas"]["IntegrationLevelEnum"];
+            readonly pricing: components["schemas"]["PricingEnum"];
+            /** Valor fixo (centavos) */
+            readonly amount: number | null;
+            /** Mínimo (centavos) */
+            readonly min_amount: number | null;
+            /** Máximo (centavos) */
+            readonly max_amount: number | null;
             readonly fields: components["schemas"]["ServiceField"][];
+        };
+        Session: {
+            phone: string;
         };
         Settlement: {
             readonly id: number;
             /** Format: date */
-            business_date: string;
-            /** Format: int64 */
-            count: number;
-            /** Format: int64 */
-            gross: number;
-            /** Format: int64 */
-            commission: number;
-            /** Format: int64 */
-            net: number;
-            destination: string;
-            provider?: string;
+            readonly business_date: string;
+            readonly count: number;
+            readonly gross: number;
+            readonly commission: number;
+            readonly net: number;
+            readonly destination: string;
+            readonly provider: string;
             /** Format: date-time */
             readonly created_at: string;
         };
-        StatusChange: {
+        StatusChangeRequest: {
             status: components["schemas"]["RequestStatusEnum"];
             /** @default  */
             note: string;
@@ -787,6 +994,74 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    auth_logout_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    auth_otp_request_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OtpRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["OtpRequestRequest"];
+                "multipart/form-data": components["schemas"]["OtpRequestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OtpSent"];
+                };
+            };
+        };
+    };
+    auth_otp_verify_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OtpVerifyRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["OtpVerifyRequest"];
+                "multipart/form-data": components["schemas"]["OtpVerifyRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Session"];
+                };
+            };
+        };
+    };
     catalog_categories_list: {
         parameters: {
             query?: never;
@@ -809,8 +1084,14 @@ export interface operations {
     catalog_services_list: {
         parameters: {
             query?: {
+                /** @description slug da categoria */
+                category?: string;
+                /** @description slug da instituição */
+                institution?: string;
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                /** @description pesquisa livre */
+                q?: string;
             };
             header?: never;
             path?: never;
@@ -850,6 +1131,33 @@ export interface operations {
             };
         };
     };
+    catalog_services_price_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PriceRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PriceRequestRequest"];
+                "multipart/form-data": components["schemas"]["PriceRequestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceResponse"];
+                };
+            };
+        };
+    };
     catalog_services_quote_create: {
         parameters: {
             query?: never;
@@ -861,9 +1169,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QuoteRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["QuoteRequest"];
-                "multipart/form-data": components["schemas"]["QuoteRequest"];
+                "application/json": components["schemas"]["QuoteRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["QuoteRequestRequest"];
+                "multipart/form-data": components["schemas"]["QuoteRequestRequest"];
             };
         };
         responses: {
@@ -915,6 +1223,193 @@ export interface operations {
             };
         };
     };
+    me_obligations_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Obligation"][];
+                };
+            };
+        };
+    };
+    me_obligations_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ObligationRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ObligationRequest"];
+                "multipart/form-data": components["schemas"]["ObligationRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Obligation"];
+                };
+            };
+        };
+    };
+    me_obligations_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this saved obligation. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Obligation"];
+                };
+            };
+        };
+    };
+    me_obligations_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this saved obligation. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ObligationRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ObligationRequest"];
+                "multipart/form-data": components["schemas"]["ObligationRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Obligation"];
+                };
+            };
+        };
+    };
+    me_obligations_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this saved obligation. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    me_obligations_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this saved obligation. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedObligationRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedObligationRequest"];
+                "multipart/form-data": components["schemas"]["PatchedObligationRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Obligation"];
+                };
+            };
+        };
+    };
+    me_payments_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedPaymentList"];
+                };
+            };
+        };
+    };
+    me_requests_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedRequestPublicList"];
+                };
+            };
+        };
+    };
     payments_create: {
         parameters: {
             query?: never;
@@ -926,9 +1421,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["PaymentCreate"];
-                "application/x-www-form-urlencoded": components["schemas"]["PaymentCreate"];
-                "multipart/form-data": components["schemas"]["PaymentCreate"];
+                "application/json": components["schemas"]["PaymentCreateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PaymentCreateRequest"];
+                "multipart/form-data": components["schemas"]["PaymentCreateRequest"];
             };
         };
         responses: {
@@ -1092,9 +1587,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["StatusChange"];
-                "application/x-www-form-urlencoded": components["schemas"]["StatusChange"];
-                "multipart/form-data": components["schemas"]["StatusChange"];
+                "application/json": components["schemas"]["StatusChangeRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["StatusChangeRequest"];
+                "multipart/form-data": components["schemas"]["StatusChangeRequest"];
             };
         };
         responses: {
@@ -1143,9 +1638,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ServicePortal"];
-                "application/x-www-form-urlencoded": components["schemas"]["ServicePortal"];
-                "multipart/form-data": components["schemas"]["ServicePortal"];
+                "application/json": components["schemas"]["ServicePortalRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ServicePortalRequest"];
+                "multipart/form-data": components["schemas"]["ServicePortalRequest"];
             };
         };
         responses: {
@@ -1195,9 +1690,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ServicePortal"];
-                "application/x-www-form-urlencoded": components["schemas"]["ServicePortal"];
-                "multipart/form-data": components["schemas"]["ServicePortal"];
+                "application/json": components["schemas"]["ServicePortalRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ServicePortalRequest"];
+                "multipart/form-data": components["schemas"]["ServicePortalRequest"];
             };
         };
         responses: {
@@ -1224,9 +1719,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["PatchedServicePortal"];
-                "application/x-www-form-urlencoded": components["schemas"]["PatchedServicePortal"];
-                "multipart/form-data": components["schemas"]["PatchedServicePortal"];
+                "application/json": components["schemas"]["PatchedServicePortalRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedServicePortalRequest"];
+                "multipart/form-data": components["schemas"]["PatchedServicePortalRequest"];
             };
         };
         responses: {
@@ -1273,7 +1768,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "multipart/form-data": components["schemas"]["RequestCreate"];
+                "multipart/form-data": components["schemas"]["RequestCreateRequest"];
             };
         };
         responses: {

@@ -11,3 +11,5 @@ staticfiles/
 coverage/
 *.tsbuildinfo
 media_private/
+test-results/
+playwright-report/

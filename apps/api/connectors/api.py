@@ -16,6 +16,7 @@ from .models import Quote
 
 
 class LookupThrottle(AnonRateThrottle):
+    scope = "lookup"  # contador próprio (ver OtpThrottle)
     rate = "30/min"  # consulta revela dados da instituição: limitar enumeração
 
 
@@ -63,3 +64,33 @@ class ServiceQuote(APIView):
         p = price(service, q.amount)
         q.commission, q.total, q.commission_payer = p["commission"], p["total"], p["commission_payer"]
         return Response(QuoteResponse(q).data, status=201)
+
+
+class PriceRequest(serializers.Serializer):
+    amount = serializers.IntegerField(required=False, min_value=1)
+
+
+class PriceResponse(serializers.Serializer):
+    amount = serializers.IntegerField()
+    commission = serializers.IntegerField()
+    total = serializers.IntegerField()
+    commission_payer = serializers.CharField()
+    institution_net = serializers.IntegerField()
+
+
+class ServicePrice(APIView):
+    """Decomposição do valor (comissão, total) antes de pagar — serviços de valor fixo ou aberto."""
+
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(request=PriceRequest, responses=PriceResponse)
+    def post(self, request, pk):
+        from payments.domain import resolve_amount
+
+        service = get_object_or_404(_public_services(), pk=pk)
+        s = PriceRequest(data=request.data)
+        s.is_valid(raise_exception=True)
+        try:
+            return Response(price(service, resolve_amount(service, s.validated_data.get("amount"))))
+        except PaymentError as e:
+            return Response({"detail": e.args[0]}, status=400)

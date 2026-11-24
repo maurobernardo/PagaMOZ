@@ -95,6 +95,10 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 6 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 6 * 1024 * 1024
 
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:3000"])
+# A web chama a API pelo mesmo domínio (proxy /api do Next) -> cookies de sessão first-party.
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=["http://localhost:3000", "http://127.0.0.1:3000"])
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 14
+SESSION_COOKIE_SAMESITE = CSRF_COOKIE_SAMESITE = "Lax"
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
@@ -113,6 +117,7 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Plataforma de pagamentos de serviços — protótipo de demonstração.",
     "VERSION": "0.1.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
     "ENUM_NAME_OVERRIDES": {
         "PaymentStatusEnum": "payments.models.Status",
         "RequestStatusEnum": "servicerequests.models.RequestStatus",

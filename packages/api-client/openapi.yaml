@@ -4,6 +4,71 @@ info:
   version: 0.1.0
   description: Plataforma de pagamentos de serviços — protótipo de demonstração.
 paths:
+  /api/auth/logout:
+    post:
+      operationId: auth_logout_create
+      tags:
+      - auth
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/auth/otp/request:
+    post:
+      operationId: auth_otp_request_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OtpRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OtpRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OtpRequestRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OtpSent'
+          description: ''
+  /api/auth/otp/verify:
+    post:
+      operationId: auth_otp_verify_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OtpVerifyRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OtpVerifyRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OtpVerifyRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+          description: ''
   /api/catalog/categories:
     get:
       operationId: catalog_categories_list
@@ -25,12 +90,27 @@ paths:
     get:
       operationId: catalog_services_list
       parameters:
+      - in: query
+        name: category
+        schema:
+          type: string
+        description: slug da categoria
+      - in: query
+        name: institution
+        schema:
+          type: string
+        description: slug da instituição
       - name: page
         required: false
         in: query
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: pesquisa livre
       tags:
       - catalog
       security:
@@ -65,6 +145,40 @@ paths:
               schema:
                 $ref: '#/components/schemas/ServicePublic'
           description: ''
+  /api/catalog/services/{id}/price:
+    post:
+      operationId: catalog_services_price_create
+      description: Decomposição do valor (comissão, total) antes de pagar — serviços
+        de valor fixo ou aberto.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - catalog
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PriceRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PriceRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PriceRequestRequest'
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceResponse'
+          description: ''
   /api/catalog/services/{id}/quote:
     post:
       operationId: catalog_services_quote_create
@@ -82,13 +196,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/QuoteRequest'
+              $ref: '#/components/schemas/QuoteRequestRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/QuoteRequest'
+              $ref: '#/components/schemas/QuoteRequestRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/QuoteRequest'
+              $ref: '#/components/schemas/QuoteRequestRequest'
         required: true
       security:
       - cookieAuth: []
@@ -129,6 +243,189 @@ paths:
               schema:
                 $ref: '#/components/schemas/Me'
           description: ''
+  /api/me/obligations:
+    get:
+      operationId: me_obligations_list
+      tags:
+      - me
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Obligation'
+          description: ''
+    post:
+      operationId: me_obligations_create
+      tags:
+      - me
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ObligationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ObligationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ObligationRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Obligation'
+          description: ''
+  /api/me/obligations/{id}:
+    get:
+      operationId: me_obligations_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this saved obligation.
+        required: true
+      tags:
+      - me
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Obligation'
+          description: ''
+    put:
+      operationId: me_obligations_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this saved obligation.
+        required: true
+      tags:
+      - me
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ObligationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ObligationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ObligationRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Obligation'
+          description: ''
+    patch:
+      operationId: me_obligations_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this saved obligation.
+        required: true
+      tags:
+      - me
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedObligationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedObligationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedObligationRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Obligation'
+          description: ''
+    delete:
+      operationId: me_obligations_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this saved obligation.
+        required: true
+      tags:
+      - me
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/me/payments:
+    get:
+      operationId: me_payments_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - me
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPaymentList'
+          description: ''
+  /api/me/requests:
+    get:
+      operationId: me_requests_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - me
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRequestPublicList'
+          description: ''
   /api/payments:
     post:
       operationId: payments_create
@@ -144,13 +441,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PaymentCreate'
+              $ref: '#/components/schemas/PaymentCreateRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PaymentCreate'
+              $ref: '#/components/schemas/PaymentCreateRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PaymentCreate'
+              $ref: '#/components/schemas/PaymentCreateRequest'
         required: true
       security:
       - cookieAuth: []
@@ -330,13 +627,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StatusChange'
+              $ref: '#/components/schemas/StatusChangeRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/StatusChange'
+              $ref: '#/components/schemas/StatusChangeRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/StatusChange'
+              $ref: '#/components/schemas/StatusChangeRequest'
         required: true
       security:
       - cookieAuth: []
@@ -391,13 +688,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ServicePortal'
+              $ref: '#/components/schemas/ServicePortalRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ServicePortal'
+              $ref: '#/components/schemas/ServicePortalRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ServicePortal'
+              $ref: '#/components/schemas/ServicePortalRequest'
         required: true
       security:
       - cookieAuth: []
@@ -458,13 +755,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ServicePortal'
+              $ref: '#/components/schemas/ServicePortalRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ServicePortal'
+              $ref: '#/components/schemas/ServicePortalRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ServicePortal'
+              $ref: '#/components/schemas/ServicePortalRequest'
         required: true
       security:
       - cookieAuth: []
@@ -497,13 +794,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedServicePortal'
+              $ref: '#/components/schemas/PatchedServicePortalRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedServicePortal'
+              $ref: '#/components/schemas/PatchedServicePortalRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedServicePortal'
+              $ref: '#/components/schemas/PatchedServicePortalRequest'
       security:
       - cookieAuth: []
       responses:
@@ -550,7 +847,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/RequestCreate'
+              $ref: '#/components/schemas/RequestCreateRequest'
         required: true
       security:
       - cookieAuth: []
@@ -615,21 +912,19 @@ components:
           readOnly: true
         field:
           type: string
-          maxLength: 60
+          readOnly: true
         original_name:
           type: string
-          maxLength: 200
+          readOnly: true
         content_type:
           type: string
-          maxLength: 60
+          readOnly: true
         size:
           type: integer
-          maximum: 9223372036854775807
-          minimum: 0
-          format: int64
+          readOnly: true
         sha256:
           type: string
-          maxLength: 64
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -666,28 +961,29 @@ components:
           readOnly: true
         name:
           type: string
-          maxLength: 80
+          readOnly: true
         slug:
           type: string
-          maxLength: 50
+          readOnly: true
           pattern: ^[-a-zA-Z0-9_]+$
         description:
           type: string
-          maxLength: 200
+          readOnly: true
         icon:
           type: string
-          maxLength: 40
+          readOnly: true
         order:
           type: integer
-          maximum: 9223372036854775807
-          minimum: 0
-          format: int64
+          readOnly: true
         service_count:
           type: integer
           readOnly: true
       required:
+      - description
+      - icon
       - id
       - name
+      - order
       - service_count
       - slug
     CommissionPayerEnum:
@@ -702,16 +998,19 @@ components:
       type: object
       properties:
         status:
-          $ref: '#/components/schemas/RequestStatusEnum'
+          allOf:
+          - $ref: '#/components/schemas/RequestStatusEnum'
+          readOnly: true
         note:
           type: string
-          maxLength: 500
+          readOnly: true
         created_at:
           type: string
           format: date-time
           readOnly: true
       required:
       - created_at
+      - note
       - status
     Health:
       type: object
@@ -737,16 +1036,18 @@ components:
           readOnly: true
         name:
           type: string
+          readOnly: true
           title: Nome
-          maxLength: 160
         slug:
           type: string
-          maxLength: 50
+          readOnly: true
           pattern: ^[-a-zA-Z0-9_]+$
         is_demo:
           type: boolean
+          readOnly: true
       required:
       - id
+      - is_demo
       - name
       - slug
     IntegrationLevelEnum:
@@ -802,6 +1103,101 @@ components:
         * `cartao` - Cartão Visa/Mastercard
         * `referencia_bancaria` - Referência bancária
         * `qr` - QR Code
+    Obligation:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        label:
+          type: string
+          maxLength: 60
+        service:
+          type: integer
+        service_detail:
+          allOf:
+          - $ref: '#/components/schemas/ServicePublic'
+          readOnly: true
+        fields: {}
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - label
+      - service
+      - service_detail
+    ObligationRequest:
+      type: object
+      properties:
+        label:
+          type: string
+          minLength: 1
+          maxLength: 60
+        service:
+          type: integer
+        fields: {}
+      required:
+      - label
+      - service
+    OtpRequestRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+          minLength: 1
+      required:
+      - phone
+    OtpSent:
+      type: object
+      properties:
+        phone:
+          type: string
+        expires_in:
+          type: integer
+        demo_code:
+          type: string
+      required:
+      - expires_in
+      - phone
+    OtpVerifyRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+          minLength: 1
+        code:
+          type: string
+          minLength: 1
+          pattern: ^\d{6}$
+      required:
+      - code
+      - phone
+    PaginatedPaymentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Payment'
     PaginatedRequestPublicList:
       type: object
       required:
@@ -894,23 +1290,33 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Settlement'
-    PatchedServicePortal:
+    PatchedObligationRequest:
       type: object
       properties:
-        id:
+        label:
+          type: string
+          minLength: 1
+          maxLength: 60
+        service:
           type: integer
-          readOnly: true
+        fields: {}
+    PatchedServicePortalRequest:
+      type: object
+      properties:
         name:
           type: string
+          minLength: 1
           maxLength: 160
         slug:
           type: string
+          minLength: 1
           maxLength: 50
           pattern: ^[-a-zA-Z0-9_]+$
         description:
           type: string
         category:
           type: string
+          minLength: 1
         integration_level:
           allOf:
           - $ref: '#/components/schemas/IntegrationLevelEnum'
@@ -942,7 +1348,7 @@ components:
         fields:
           type: array
           items:
-            $ref: '#/components/schemas/ServiceField'
+            $ref: '#/components/schemas/ServiceFieldRequest'
         is_active:
           type: boolean
         commission_bps:
@@ -962,10 +1368,6 @@ components:
           oneOf:
           - $ref: '#/components/schemas/CommissionPayerEnum'
           - $ref: '#/components/schemas/BlankEnum'
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
     Payment:
       type: object
       properties:
@@ -973,50 +1375,47 @@ components:
           type: string
           readOnly: true
         status:
-          $ref: '#/components/schemas/PaymentStatusEnum'
+          allOf:
+          - $ref: '#/components/schemas/PaymentStatusEnum'
+          readOnly: true
         service:
           type: integer
+          readOnly: true
         service_name:
           type: string
         institution_name:
           type: string
         description:
           type: string
-          maxLength: 200
+          readOnly: true
         amount:
           type: integer
-          maximum: 9223372036854775807
-          minimum: 0
-          format: int64
+          readOnly: true
         commission:
           type: integer
-          maximum: 9223372036854775807
-          minimum: 0
-          format: int64
+          readOnly: true
         commission_payer:
           type: string
-          maxLength: 12
+          readOnly: true
         total:
           type: integer
-          maximum: 9223372036854775807
-          minimum: 0
-          format: int64
+          readOnly: true
         institution_net:
           type: integer
-          maximum: 9223372036854775807
-          minimum: 0
-          format: int64
+          readOnly: true
         currency:
           type: string
-          maxLength: 3
+          readOnly: true
         method:
-          $ref: '#/components/schemas/MethodEnum'
+          allOf:
+          - $ref: '#/components/schemas/MethodEnum'
+          readOnly: true
         instructions:
           type: string
           readOnly: true
         failure_reason:
           type: string
-          maxLength: 200
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -1024,19 +1423,27 @@ components:
         expires_at:
           type: string
           format: date-time
+          readOnly: true
         confirmed_at:
           type: string
           format: date-time
+          readOnly: true
           nullable: true
         settled_at:
           type: string
           format: date-time
+          readOnly: true
           nullable: true
       required:
       - amount
       - commission
       - commission_payer
+      - confirmed_at
       - created_at
+      - currency
+      - description
+      - expires_at
+      - failure_reason
       - institution_name
       - institution_net
       - instructions
@@ -1044,8 +1451,10 @@ components:
       - reference
       - service
       - service_name
+      - settled_at
+      - status
       - total
-    PaymentCreate:
+    PaymentCreateRequest:
       type: object
       properties:
         service:
@@ -1080,9 +1489,11 @@ components:
             * `webhook_repetido` - webhook_repetido
         quote:
           type: string
+          minLength: 1
           description: Obrigatório em serviços de valor por consulta.
         request:
           type: string
+          minLength: 1
           description: Código do pedido (serviços de nível 3).
       required:
       - method
@@ -1107,6 +1518,31 @@ components:
         * `EXPIRADA` - Expired
         * `REVERTIDA` - Reversed
         * `EM_DISPUTA` - Disputed
+    PriceRequestRequest:
+      type: object
+      properties:
+        amount:
+          type: integer
+          minimum: 1
+    PriceResponse:
+      type: object
+      properties:
+        amount:
+          type: integer
+        commission:
+          type: integer
+        total:
+          type: integer
+        commission_payer:
+          type: string
+        institution_net:
+          type: integer
+      required:
+      - amount
+      - commission
+      - commission_payer
+      - institution_net
+      - total
     PricingEnum:
       enum:
       - fixo
@@ -1117,7 +1553,7 @@ components:
         * `fixo` - Valor fixo
         * `consulta` - Valor obtido por consulta
         * `aberto` - Valor introduzido pelo cidadão
-    QuoteRequest:
+    QuoteRequestRequest:
       type: object
       properties:
         fields:
@@ -1160,16 +1596,18 @@ components:
       - expires_at
       - id
       - total
-    RequestCreate:
+    RequestCreateRequest:
       type: object
       properties:
         service:
           type: integer
         fields:
           type: string
+          minLength: 1
           description: JSON
         applicant_phone:
           type: string
+          minLength: 1
       required:
       - fields
       - service
@@ -1180,9 +1618,12 @@ components:
           type: string
           readOnly: true
         status:
-          $ref: '#/components/schemas/RequestStatusEnum'
+          allOf:
+          - $ref: '#/components/schemas/RequestStatusEnum'
+          readOnly: true
         service:
           type: integer
+          readOnly: true
         service_name:
           type: string
         institution_name:
@@ -1218,6 +1659,7 @@ components:
       - institution_name
       - service
       - service_name
+      - status
       - updated_at
     RequestPublic:
       type: object
@@ -1226,9 +1668,12 @@ components:
           type: string
           readOnly: true
         status:
-          $ref: '#/components/schemas/RequestStatusEnum'
+          allOf:
+          - $ref: '#/components/schemas/RequestStatusEnum'
+          readOnly: true
         service:
           type: integer
+          readOnly: true
         service_name:
           type: string
         institution_name:
@@ -1255,6 +1700,7 @@ components:
       - institution_name
       - service
       - service_name
+      - status
       - updated_at
     RequestStatusEnum:
       enum:
@@ -1311,7 +1757,8 @@ components:
           type: boolean
         scenarios:
           type: object
-          additionalProperties: {}
+          additionalProperties:
+            type: string
       required:
       - demo_mode
       - scenarios
@@ -1323,6 +1770,28 @@ components:
           pattern: ^[-a-zA-Z0-9_]+$
         label:
           type: string
+          maxLength: 80
+        type:
+          $ref: '#/components/schemas/TypeEnum'
+        required:
+          type: boolean
+          default: true
+        pattern:
+          type: string
+      required:
+      - label
+      - name
+      - type
+    ServiceFieldRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          pattern: ^[-a-zA-Z0-9_]+$
+        label:
+          type: string
+          minLength: 1
           maxLength: 80
         type:
           $ref: '#/components/schemas/TypeEnum'
@@ -1415,28 +1884,23 @@ components:
       - pricing
       - slug
       - updated_at
-    ServicePublic:
+    ServicePortalRequest:
       type: object
       properties:
-        id:
-          type: integer
-          readOnly: true
         name:
           type: string
+          minLength: 1
           maxLength: 160
         slug:
           type: string
+          minLength: 1
           maxLength: 50
           pattern: ^[-a-zA-Z0-9_]+$
         description:
           type: string
-        institution:
-          allOf:
-          - $ref: '#/components/schemas/InstitutionPublic'
-          readOnly: true
         category:
           type: string
-          readOnly: true
+          minLength: 1
         integration_level:
           allOf:
           - $ref: '#/components/schemas/IntegrationLevelEnum'
@@ -1468,17 +1932,103 @@ components:
         fields:
           type: array
           items:
-            $ref: '#/components/schemas/ServiceField'
-          readOnly: true
+            $ref: '#/components/schemas/ServiceFieldRequest'
+        is_active:
+          type: boolean
+        commission_bps:
+          type: integer
+          maximum: 10000
+          minimum: 0
+          nullable: true
+          title: Comissão (pontos base)
+        commission_fixed:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          title: Comissão fixa (centavos)
+        commission_payer:
+          oneOf:
+          - $ref: '#/components/schemas/CommissionPayerEnum'
+          - $ref: '#/components/schemas/BlankEnum'
       required:
       - category
-      - fields
-      - id
-      - institution
       - integration_level
       - name
       - pricing
       - slug
+    ServicePublic:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+          readOnly: true
+        institution:
+          allOf:
+          - $ref: '#/components/schemas/InstitutionPublic'
+          readOnly: true
+        category:
+          type: string
+          readOnly: true
+        integration_level:
+          allOf:
+          - $ref: '#/components/schemas/IntegrationLevelEnum'
+          readOnly: true
+        pricing:
+          allOf:
+          - $ref: '#/components/schemas/PricingEnum'
+          readOnly: true
+        amount:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: Valor fixo (centavos)
+        min_amount:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: Mínimo (centavos)
+        max_amount:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: Máximo (centavos)
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceField'
+          readOnly: true
+      required:
+      - amount
+      - category
+      - description
+      - fields
+      - id
+      - institution
+      - integration_level
+      - max_amount
+      - min_amount
+      - name
+      - pricing
+      - slug
+    Session:
+      type: object
+      properties:
+        phone:
+          type: string
+      required:
+      - phone
     Settlement:
       type: object
       properties:
@@ -1488,32 +2038,25 @@ components:
         business_date:
           type: string
           format: date
+          readOnly: true
         count:
           type: integer
-          maximum: 9223372036854775807
-          minimum: 0
-          format: int64
+          readOnly: true
         gross:
           type: integer
-          maximum: 9223372036854775807
-          minimum: 0
-          format: int64
+          readOnly: true
         commission:
           type: integer
-          maximum: 9223372036854775807
-          minimum: 0
-          format: int64
+          readOnly: true
         net:
           type: integer
-          maximum: 9223372036854775807
-          minimum: 0
-          format: int64
+          readOnly: true
         destination:
           type: string
-          maxLength: 120
+          readOnly: true
         provider:
           type: string
-          maxLength: 40
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -1527,7 +2070,8 @@ components:
       - gross
       - id
       - net
-    StatusChange:
+      - provider
+    StatusChangeRequest:
       type: object
       properties:
         status:

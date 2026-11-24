@@ -205,3 +205,15 @@ def test_institution_notification_dead_letter(monkeypatch, django_capture_on_com
     assert t.status == "CONFIRMADA" and not t.institution_notified_at  # o pagamento não depende da instituição
     assert notify_institution.apply(args=(t.pk,), retries=8).get() == "dead-letter"
     assert DeadLetter.objects.filter(kind="connector:confirm").exists()
+
+
+def test_price_breakdown_before_paying():
+    c = APIClient()
+    fixed = svc("transito-demo", "inspeccao")
+    r = c.post(f"/api/catalog/services/{fixed.id}/price", {}, format="json").json()
+    assert r["amount"] == fixed.amount and r["total"] >= r["amount"]
+    open_ = svc("energia-austral", "recarga")
+    assert c.post(f"/api/catalog/services/{open_.id}/price", {}, format="json").status_code == 400
+    assert (
+        c.post(f"/api/catalog/services/{open_.id}/price", {"amount": 50_000}, format="json").json()["amount"] == 50_000
+    )
