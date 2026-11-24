@@ -1,0 +1,30 @@
+# Opcional: stack completa (Postgres + Redis + Celery). Dev sem Docker usa .\tasks.ps1 up.
+x-api: &api
+  build: ../apps/api
+  env_file: ../apps/api/.env
+  environment:
+    DATABASE_URL: postgres://pagamoz:pagamoz@db:5432/pagamoz
+    REDIS_URL: redis://redis:6379/0
+    ALLOWED_HOSTS: "*"
+  depends_on:
+    db: { condition: service_healthy }
+    redis: { condition: service_healthy }
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment: { POSTGRES_USER: pagamoz, POSTGRES_PASSWORD: pagamoz, POSTGRES_DB: pagamoz }
+    healthcheck: { test: ["CMD", "pg_isready", "-U", "pagamoz"], interval: 5s, retries: 10 }
+  redis:
+    image: redis:7-alpine
+    healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 5s, retries: 10 }
+  api:
+    <<: *api
+    command: sh -c "python manage.py migrate && gunicorn config.wsgi -b 0.0.0.0:8000"
+    ports: ["8000:8000"]
+  worker:
+    <<: *api
+    command: celery -A config worker -l info
+  beat:
+    <<: *api
+    command: celery -A config beat -l info

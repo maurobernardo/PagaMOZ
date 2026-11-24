@@ -1,0 +1,48 @@
+openapi: 3.0.3
+info:
+  title: PagaMOZ API
+  version: 0.1.0
+  description: Plataforma de pagamentos de serviços — protótipo de demonstração.
+paths:
+  /api/health:
+    get:
+      operationId: health_retrieve
+      tags:
+      - health
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+          description: ''
+components:
+  schemas:
+    Health:
+      type: object
+      properties:
+        status:
+          type: string
+        database:
+          type: string
+        queue:
+          type: string
+        demo_mode:
+          type: boolean
+      required:
+      - database
+      - demo_mode
+      - queue
+      - status
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
