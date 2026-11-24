@@ -2,8 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Alert, Button, Card, Field, Row } from "@/components/ui";
-import { Icon } from "@/components/icons";
+import {
+  ArrowLeft, ArrowRight, BadgeCheck, Bookmark, CheckCircle2, ClipboardList, FileCheck2, FlaskConical, Lock, Pencil,
+  ReceiptText, Search, Share2, Upload, UserRound, Wallet,
+} from "lucide-react";
+import { MethodIcon } from "@/components/method-icon";
+import { useToast } from "@/components/toast";
+import { Alert, Button, Card, Field, Row, Toolbar } from "@/components/ui";
 import { api, csrfToken, errorMessage, fieldErrors, newIdempotencyKey, type Service } from "@/lib/api";
 import { formatMZN, isValidPhone, METHOD_LABEL, normalizePhone } from "@/lib/i18n";
 
@@ -12,6 +17,7 @@ type Confirmed = Breakdown & { quote?: string; request?: string; holder?: string
 type Step = "dados" | "confirmar" | "metodo";
 
 const WALLETS = ["mpesa", "emola", "mkesh"];
+const STEP_ICON = { dados: ClipboardList, confirmar: ReceiptText, metodo: Wallet };
 const STEPS: [Step, string][] = [
   ["dados", "Dados"],
   ["confirmar", "Valor"],
@@ -44,7 +50,7 @@ export function PayFlow({
   const [method, setMethod] = useState("mpesa");
   const [phone, setPhone] = useState("");
   const [scenario, setScenario] = useState("sucesso");
-  const [note, setNote] = useState("");
+  const toast = useToast();
   const idemKey = useRef<string>("");
   // Até o JS hidratar, o formulário faria um envio nativo e perderia o fluxo.
   const [ready, setReady] = useState(false);
@@ -152,34 +158,42 @@ export function PayFlow({
     const url = `${location.origin}/servicos/${s.id}?${q}`;
     const text = `Pode pagar por mim? ${s.name} (${s.institution.name})`;
     if (navigator.share) navigator.share({ title: "PagaMOZ", text, url }).catch(() => {});
-    else navigator.clipboard.writeText(url).then(() => setNote("Link copiado. Envie-o por WhatsApp ou SMS."));
+    else navigator.clipboard.writeText(url).then(() => toast("Link copiado. Envie-o por WhatsApp ou SMS."));
   }
 
   async function saveToWallet() {
     const r = await api.POST("/api/me/obligations", {
       body: { service: s.id, label: s.name.slice(0, 60), fields: values },
     });
-    setNote(r.response.status === 403 ? "Entre na sua conta para guardar." : r.data ? "Guardado na sua carteira." : errorMessage(r.error));
+    if (r.response.status === 403) toast("Entre na sua conta para guardar.", "info");
+    else if (r.data) toast("Guardado na sua carteira.");
+    else toast(errorMessage(r.error), "bad");
   }
 
   const idx = STEPS.findIndex(([k]) => k === step);
+  const isWallet = WALLETS.includes(method);
 
   return (
     <div>
-      <ol className="mb-5 flex gap-2" aria-label="Passos">
-        {STEPS.map(([k, label], i) => (
-          <li key={k} aria-current={k === step ? "step" : undefined}
-            className={`flex-1 border-t-4 pt-2 text-sm font-medium ${i <= idx ? "border-brand-600 text-brand-800" : "border-line text-muted"}`}>
-            {i + 1}. {label}
-          </li>
-        ))}
+      <ol className="mb-6 grid grid-cols-3 gap-2" aria-label="Passos">
+        {STEPS.map(([k, label], i) => {
+          const I = STEP_ICON[k];
+          const done = i < idx;
+          return (
+            <li key={k} aria-current={k === step ? "step" : undefined}
+              className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition ${i === idx ? "bg-ink text-white" : done ? "bg-white text-ink" : "bg-white/60 text-muted"}`}>
+              {done ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <I className="h-4 w-4 shrink-0" />}
+              <span className="truncate">{i + 1}. {label}</span>
+            </li>
+          );
+        })}
       </ol>
 
-      {error ? <div className="mb-4"><Alert>{error}</Alert></div> : null}
+      {error ? <div className="mb-5"><Alert>{error}</Alert></div> : null}
 
       {step === "dados" && (
-        <Card>
-          <form onSubmit={submitData} noValidate className="space-y-4">
+        <Card className="animate-rise">
+          <form onSubmit={submitData} noValidate className="space-y-5">
             {textFields.map((f) => (
               <Field key={f.name} id={f.name} label={f.label} required={f.required} error={errors[f.name]}
                 type={f.type === "date" ? "date" : f.type === "phone" ? "tel" : "text"}
@@ -193,17 +207,23 @@ export function PayFlow({
             )}
             {fileFields.map((f) => (
               <div key={f.name}>
-                <label htmlFor={f.name} className="block text-sm font-medium text-ink/80">{f.label}</label>
-                <input id={f.name} type="file" accept="application/pdf,image/jpeg,image/png"
-                  aria-describedby={`${f.name}-hint`}
-                  className="mt-1 block w-full text-sm file:mr-3 file:min-h-11 file:rounded-xl file:border-0 file:bg-brand-50 file:px-4 file:font-semibold file:text-brand-800"
+                <span className="block text-sm font-semibold">{f.label}</span>
+                <label htmlFor={f.name}
+                  className={`mt-1.5 flex cursor-pointer items-center gap-4 rounded-2xl border border-dashed p-4 transition hover:border-ink ${errors[f.name] ? "border-accent" : files[f.name] ? "border-ink bg-canvas" : "border-ink/20"}`}>
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-ink text-white">
+                    {files[f.name] ? <FileCheck2 className="h-5 w-5" /> : <Upload className="h-5 w-5" />}
+                  </span>
+                  <span className="min-w-0 text-sm">
+                    <span className="block truncate font-semibold">{files[f.name]?.name ?? "Escolher ficheiro"}</span>
+                    <span id={`${f.name}-hint`} className={errors[f.name] ? "text-accent" : "text-muted"}>{errors[f.name] ?? "PDF, JPG ou PNG até 5 MB."}</span>
+                  </span>
+                </label>
+                <input id={f.name} aria-label={f.label} type="file" accept="application/pdf,image/jpeg,image/png" aria-describedby={`${f.name}-hint`} className="sr-only"
                   onChange={(e) => e.target.files?.[0] && setFiles({ ...files, [f.name]: e.target.files[0] })} />
-                <p id={`${f.name}-hint`} className={`mt-1 text-sm ${errors[f.name] ? "text-accent" : "text-muted"}`}>
-                  {errors[f.name] ?? "PDF, JPG ou PNG até 5 MB."}
-                </p>
               </div>
             ))}
-            <Button type="submit" disabled={busy || !ready} className="w-full">
+            <Button type="submit" disabled={busy || !ready} className="w-full !min-h-12">
+              {s.pricing === "consulta" ? <Search className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
               {busy ? "A consultar…" : s.pricing === "consulta" ? "Consultar valor" : "Continuar"}
             </Button>
           </form>
@@ -211,71 +231,71 @@ export function PayFlow({
       )}
 
       {step === "confirmar" && confirmed && (
-        <Card>
-          <h2 className="text-lg font-bold">Confirme o valor</h2>
+        <Card className="animate-rise">
+          <h2 className="text-2xl font-bold">Confirme o valor</h2>
           {confirmed.description ? <p className="mt-1 text-muted">{confirmed.description}</p> : null}
-          {confirmed.holder ? <p className="mt-1 text-sm text-muted">Titular: <strong>{confirmed.holder}</strong></p> : null}
-          <dl className="mt-4 divide-y divide-line">
-            <Row label="Valor do serviço">{formatMZN(confirmed.amount)}</Row>
-            {confirmed.commission_payer === "cidadao" ? (
-              <Row label="Taxa de serviço">{formatMZN(confirmed.commission)}</Row>
+          <div className="mt-6 rounded-3xl border border-dashed border-ink/20 bg-canvas/70 p-5">
+            {confirmed.holder ? (
+              <p className="flex items-center gap-2 text-sm"><UserRound className="h-4 w-4 text-muted" /> Titular: <strong>{confirmed.holder}</strong></p>
             ) : null}
-            <Row label="Total a pagar" strong>{formatMZN(confirmed.total)}</Row>
-          </dl>
+            <dl className="mt-2 divide-y divide-line">
+              <Row label="Valor do serviço">{formatMZN(confirmed.amount)}</Row>
+              {confirmed.commission_payer === "cidadao" ? <Row label="Taxa de serviço">{formatMZN(confirmed.commission)}</Row> : null}
+              <Row label="Total a pagar" strong>{formatMZN(confirmed.total)}</Row>
+            </dl>
+          </div>
           {confirmed.commission_payer !== "cidadao" ? (
-            <p className="mt-2 text-sm text-muted">Sem taxas para si: a comissão é suportada pela instituição.</p>
+            <p className="mt-3 flex items-center gap-2 text-sm text-muted"><BadgeCheck className="h-4 w-4" /> Sem taxas para si: a comissão é suportada pela instituição.</p>
           ) : null}
-          <div className="mt-5 grid gap-2">
-            <Button onClick={() => setStep("metodo")}>Continuar para pagamento</Button>
-            <div className="grid grid-cols-2 gap-2">
-              <Button variant="secondary" onClick={shareLink}><Icon name="share" className="h-5 w-5" />Pedir a alguém</Button>
-              {!confirmed.request ? (
-                <Button variant="secondary" onClick={saveToWallet}>Guardar</Button>
-              ) : <span />}
-            </div>
-            {!existingRequest && !confirmed.request ? (
-              <button className="min-h-11 text-sm font-medium text-muted underline-offset-2 hover:underline" onClick={() => setStep("dados")}>
-                Alterar dados
-              </button>
-            ) : null}
-            {note ? <p role="status" className="text-center text-sm text-brand-800">{note}</p> : null}
+          <div className="mt-6 space-y-4">
+            <Button onClick={() => setStep("metodo")} className="w-full !min-h-12">Continuar para pagamento <ArrowRight className="h-4 w-4" /></Button>
+            <Toolbar className="flex w-full flex-wrap justify-center">
+              <Button variant="ghost" className="!min-h-10 text-sm" onClick={shareLink}><Share2 className="h-4 w-4" /> Pedir a alguém</Button>
+              {!confirmed.request ? <Button variant="ghost" className="!min-h-10 text-sm" onClick={saveToWallet}><Bookmark className="h-4 w-4" /> Guardar</Button> : null}
+              {!existingRequest && !confirmed.request ? (
+                <Button variant="ghost" className="!min-h-10 text-sm" onClick={() => setStep("dados")}><Pencil className="h-4 w-4" /> Alterar dados</Button>
+              ) : null}
+            </Toolbar>
           </div>
         </Card>
       )}
 
       {step === "metodo" && confirmed && (
-        <Card>
-          <form onSubmit={pay} className="space-y-4">
+        <Card className="animate-rise">
+          <form onSubmit={pay} className="space-y-6">
             <fieldset>
-              <legend className="text-lg font-bold">Como quer pagar?</legend>
-              <div className="mt-3 grid gap-2">
+              <legend className="text-2xl font-bold">Como quer pagar?</legend>
+              <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {Object.entries(METHOD_LABEL).map(([k, label]) => (
-                  <label key={k} className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-xl px-4 ring-1 ring-inset ${method === k ? "bg-brand-50 ring-2 ring-brand-600" : "ring-line"}`}>
-                    <input type="radio" name="method" value={k} checked={method === k} onChange={() => setMethod(k)} className="h-5 w-5 accent-brand-700" />
-                    <span className="font-medium">{label}</span>
+                  <label key={k}
+                    className={`relative flex cursor-pointer flex-col gap-3 rounded-2xl border p-4 transition ${method === k ? "border-ink bg-ink text-white" : "border-line bg-white hover:border-ink/40"}`}>
+                    <input type="radio" name="method" value={k} checked={method === k} onChange={() => setMethod(k)} className="sr-only" />
+                    <MethodIcon method={k} className={method === k ? "!bg-white/15 !text-white" : ""} />
+                    <span className="text-sm font-semibold leading-tight">{label}</span>
+                    {method === k ? <CheckCircle2 className="absolute right-3 top-3 h-4 w-4" /> : null}
                   </label>
                 ))}
               </div>
             </fieldset>
-            {WALLETS.includes(method) && (
+            {isWallet && (
               <Field id="phone" label={`Número ${METHOD_LABEL[method]}`} type="tel" inputMode="tel" autoComplete="tel"
                 placeholder="84 123 4567" value={phone} error={errors.phone} onChange={(e) => setPhone(e.target.value)} />
             )}
             {Object.keys(scenarios).length > 0 && (
-              <div className="rounded-xl bg-white p-3 ring-1 ring-inset ring-line">
-                <label htmlFor="scenario" className="block text-sm font-semibold text-ink">Cenário de demonstração</label>
+              <div className="glass rounded-2xl p-4">
+                <label htmlFor="scenario" className="flex items-center gap-2 text-sm font-semibold"><FlaskConical className="h-4 w-4 text-accent" /> Cenário de demonstração</label>
                 <select id="scenario" value={scenario} onChange={(e) => setScenario(e.target.value)}
-                  className="mt-1 block min-h-11 w-full rounded-lg border border-line bg-white px-2">
+                  className="mt-2 block min-h-11 w-full rounded-xl border border-line bg-white px-3 text-sm">
                   {Object.entries(scenarios).map(([k, d]) => <option key={k} value={k}>{k} — {d}</option>)}
                 </select>
               </div>
             )}
-            <Button type="submit" disabled={busy || !ready} className="w-full">
-              {busy ? "A enviar…" : `Pagar ${formatMZN(confirmed.total)}`}
+            <Button type="submit" disabled={busy || !ready} className="w-full !min-h-14 text-base">
+              <Lock className="h-4 w-4" /> {busy ? "A enviar…" : `Pagar ${formatMZN(confirmed.total)}`}
             </Button>
-            <button type="button" className="min-h-11 w-full text-sm font-medium text-muted hover:underline" onClick={() => setStep("confirmar")}>
-              Voltar
-            </button>
+            <Toolbar className="flex w-full justify-center">
+              <Button type="button" variant="ghost" className="!min-h-10 text-sm" onClick={() => setStep("confirmar")}><ArrowLeft className="h-4 w-4" /> Voltar</Button>
+            </Toolbar>
           </form>
         </Card>
       )}
