@@ -69,6 +69,79 @@ paths:
               schema:
                 $ref: '#/components/schemas/Session'
           description: ''
+  /api/auth/portal/login:
+    post:
+      operationId: auth_portal_login_create
+      description: 'Passo 1: telefone + palavra-passe. Não abre sessão completa: fica
+        à espera do MFA.'
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PortalLoginRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PortalLoginRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PortalLoginRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalLoginStep'
+          description: ''
+  /api/auth/portal/mfa/setup:
+    post:
+      operationId: auth_portal_mfa_setup_create
+      description: 'Primeiro acesso: gera segredo e URI otpauth para a app autenticadora.'
+      tags:
+      - auth
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MfaSetup'
+          description: ''
+  /api/auth/portal/mfa/verify:
+    post:
+      operationId: auth_portal_mfa_verify_create
+      description: 'Passo 2: código TOTP. Na primeira vez também activa o MFA.'
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaCodeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MfaCodeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MfaCodeRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalSession'
+          description: ''
   /api/catalog/categories:
     get:
       operationId: catalog_categories_list
@@ -549,6 +622,197 @@ paths:
               schema:
                 $ref: '#/components/schemas/Balances'
           description: ''
+  /api/portal/{institution_slug}/dashboard:
+    get:
+      operationId: portal_dashboard_retrieve
+      parameters:
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+          description: ''
+  /api/portal/{institution_slug}/members:
+    get:
+      operationId: portal_members_list
+      parameters:
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Member'
+          description: ''
+    post:
+      operationId: portal_members_create
+      parameters:
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InviteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InviteRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+          description: ''
+  /api/portal/{institution_slug}/members/{id}:
+    patch:
+      operationId: portal_members_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedRoleChangeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedRoleChangeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedRoleChangeRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+          description: ''
+    delete:
+      operationId: portal_members_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/portal/{institution_slug}/reconciliation:
+    get:
+      operationId: portal_reconciliation_retrieve
+      parameters:
+      - in: query
+        name: date
+        schema:
+          type: string
+        description: 'AAAA-MM-DD (omissão: última reconciliação)'
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reconciliation'
+          description: ''
+  /api/portal/{institution_slug}/reconciliation/{id}/resolve:
+    post:
+      operationId: portal_reconciliation_resolve_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ResolveRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ResolveRequestRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Discrepancy'
+          description: ''
   /api/portal/{institution_slug}/requests:
     get:
       operationId: portal_requests_list
@@ -860,6 +1124,103 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedSettlementList'
           description: ''
+  /api/portal/{institution_slug}/transactions:
+    get:
+      operationId: portal_transactions_list
+      parameters:
+      - in: query
+        name: date_from
+        schema:
+          type: string
+        description: AAAA-MM-DD
+      - in: query
+        name: date_to
+        schema:
+          type: string
+      - in: query
+        name: export
+        schema:
+          type: string
+          enum:
+          - csv
+          - xlsx
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: method
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: referência
+      - in: query
+        name: service
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+      tags:
+      - portal
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPortalTransactionList'
+          description: ''
+  /api/portal/{institution_slug}/transactions/{reference}/reverse:
+    post:
+      operationId: portal_transactions_reverse_create
+      description: Estorno antes da liquidação (admin/financeiro).
+      parameters:
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: reference
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReverseRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReverseRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReverseRequestRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalTransaction'
+          description: ''
   /api/receipts/{code}:
     get:
       operationId: receipts_retrieve
@@ -1067,6 +1428,96 @@ components:
       description: |-
         * `cidadao` - Cidadão
         * `instituicao` - Instituição
+    Dashboard:
+      type: object
+      properties:
+        today:
+          type: object
+          additionalProperties: {}
+        week:
+          type: object
+          additionalProperties: {}
+        month:
+          type: object
+          additionalProperties: {}
+        by_service:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        by_method:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        daily:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+        balances:
+          type: object
+          additionalProperties: {}
+        pending_requests:
+          type: integer
+        open_discrepancies:
+          type: integer
+      required:
+      - balances
+      - by_method
+      - by_service
+      - daily
+      - month
+      - open_discrepancies
+      - pending_requests
+      - today
+      - week
+    Discrepancy:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/KindEnum'
+          readOnly: true
+        kind_label:
+          type: string
+        reference:
+          type: string
+          readOnly: true
+        provider_ref:
+          type: string
+          readOnly: true
+        platform_amount:
+          type: integer
+          readOnly: true
+          nullable: true
+        provider_amount:
+          type: integer
+          readOnly: true
+          nullable: true
+        detail:
+          type: string
+          readOnly: true
+        resolved:
+          type: boolean
+          readOnly: true
+        resolution_note:
+          type: string
+          readOnly: true
+      required:
+      - detail
+      - id
+      - kind
+      - kind_label
+      - platform_amount
+      - provider_amount
+      - provider_ref
+      - reference
+      - resolution_note
+      - resolved
     Event:
       type: object
       properties:
@@ -1133,6 +1584,32 @@ components:
         * `1` - Consulta + pagamento em tempo real
         * `2` - Referência de pagamento
         * `3` - Pedido assistido
+    InviteRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          maxLength: 80
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+      required:
+      - phone
+      - role
+    KindEnum:
+      enum:
+      - falta_no_provedor
+      - falta_na_plataforma
+      - valor_divergente
+      - estado_divergente
+      type: string
+      description: |-
+        * `falta_no_provedor` - Confirmado na plataforma, ausente no provedor
+        * `falta_na_plataforma` - Recebido pelo provedor, sem transacção confirmada
+        * `valor_divergente` - Valor diferente
+        * `estado_divergente` - Estado diferente
     Me:
       type: object
       properties:
@@ -1148,6 +1625,34 @@ components:
       - memberships
       - name
       - phone
+    Member:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        phone:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+        mfa_enabled:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - mfa_enabled
+      - name
+      - phone
+      - role
     Membership:
       type: object
       properties:
@@ -1176,6 +1681,27 @@ components:
         * `cartao` - Cartão Visa/Mastercard
         * `referencia_bancaria` - Referência bancária
         * `qr` - QR Code
+    MfaCodeRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          pattern: ^\d{6}$
+      required:
+      - code
+    MfaSetup:
+      type: object
+      properties:
+        secret:
+          type: string
+        otpauth_uri:
+          type: string
+        demo_code:
+          type: string
+      required:
+      - otpauth_uri
+      - secret
     NotIssued:
       type: object
       properties:
@@ -1281,6 +1807,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Payment'
+    PaginatedPortalTransactionList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortalTransaction'
     PaginatedRequestPublicList:
       type: object
       required:
@@ -1383,6 +1932,11 @@ components:
         service:
           type: integer
         fields: {}
+    PatchedRoleChangeRequest:
+      type: object
+      properties:
+        role:
+          $ref: '#/components/schemas/RoleEnum'
     PatchedServicePortalRequest:
       type: object
       properties:
@@ -1606,6 +2160,126 @@ components:
         * `EXPIRADA` - Expired
         * `REVERTIDA` - Reversed
         * `EM_DISPUTA` - Disputed
+    PortalLoginRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          minLength: 1
+          maxLength: 128
+      required:
+      - password
+      - phone
+    PortalLoginStep:
+      type: object
+      properties:
+        mfa_enrolled:
+          type: boolean
+        demo_code:
+          type: string
+      required:
+      - mfa_enrolled
+    PortalSession:
+      type: object
+      properties:
+        phone:
+          type: string
+        memberships:
+          type: array
+          items:
+            $ref: '#/components/schemas/Membership'
+      required:
+      - memberships
+      - phone
+    PortalTransaction:
+      type: object
+      properties:
+        reference:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/PaymentStatusEnum'
+          readOnly: true
+        service:
+          type: integer
+          readOnly: true
+        service_name:
+          type: string
+        description:
+          type: string
+          readOnly: true
+        method:
+          allOf:
+          - $ref: '#/components/schemas/MethodEnum'
+          readOnly: true
+        method_label:
+          type: string
+        amount:
+          type: integer
+          readOnly: true
+        commission:
+          type: integer
+          readOnly: true
+        commission_payer:
+          type: string
+          readOnly: true
+        total:
+          type: integer
+          readOnly: true
+        institution_net:
+          type: integer
+          readOnly: true
+        provider_ref:
+          type: string
+          readOnly: true
+        institution_ref:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        confirmed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        settled_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        settlement_date:
+          type: string
+          format: date
+          nullable: true
+        failure_reason:
+          type: string
+          readOnly: true
+      required:
+      - amount
+      - commission
+      - commission_payer
+      - confirmed_at
+      - created_at
+      - description
+      - failure_reason
+      - institution_net
+      - institution_ref
+      - method
+      - method_label
+      - provider_ref
+      - reference
+      - service
+      - service_name
+      - settled_at
+      - settlement_date
+      - status
+      - total
     PriceRequestRequest:
       type: object
       properties:
@@ -1684,6 +2358,37 @@ components:
       - expires_at
       - id
       - total
+    Reconciliation:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          nullable: true
+        ran_at:
+          type: string
+          format: date-time
+          nullable: true
+        platform_count:
+          type: integer
+        matched:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Discrepancy'
+        runs:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+      required:
+      - date
+      - items
+      - matched
+      - platform_count
+      - ran_at
+      - runs
     RequestCreateRequest:
       type: object
       properties:
@@ -1812,6 +2517,15 @@ components:
         * `CONCLUIDO` - Concluído
         * `REJEITADO` - Rejeitado
         * `CANCELADO` - Cancelado
+    ResolveRequestRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          minLength: 5
+          maxLength: 300
+      required:
+      - note
     ResultadoEnum:
       enum:
       - valido
@@ -1824,6 +2538,15 @@ components:
         * `anulado` - anulado
         * `em_analise` - em_analise
         * `adulterado` - adulterado
+    ReverseRequestRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 5
+          maxLength: 200
+      required:
+      - reason
     RoleEnum:
       enum:
       - admin

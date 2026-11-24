@@ -14,6 +14,7 @@ DEMO_MODE = env.bool("DEMO_MODE", default=True)
 WEBHOOK_SECRET = env("WEBHOOK_SECRET", default="dev-webhook-secret" if DEBUG else environ.Env.NOTSET)
 PAYMENT_EXPIRY_MINUTES = env.int("PAYMENT_EXPIRY_MINUTES", default=15)
 RECEIPT_SIGNING_KEY = env("RECEIPT_SIGNING_KEY", default="dev-receipt-key" if DEBUG else environ.Env.NOTSET)
+PORTAL_REQUIRE_MFA = env.bool("PORTAL_REQUIRE_MFA", default=True)
 PUBLIC_WEB_URL = env("PUBLIC_WEB_URL", default="http://localhost:3000")  # vai no QR do comprovativo
 
 INSTALLED_APPS = [
@@ -37,6 +38,8 @@ INSTALLED_APPS = [
     "connectors",
     "servicerequests",
     "receipts",
+    "portal",
+    "reconciliation",
 ]
 
 MIDDLEWARE = [
@@ -80,6 +83,10 @@ CELERY_TIMEZONE = "Africa/Maputo"
 CELERY_BEAT_SCHEDULE = {
     "ping": {"task": "core.tasks.ping", "schedule": 300.0},
     "expirar-pagamentos": {"task": "payments.tasks.expire_stale_payments", "schedule": 60.0},
+    "reconciliacao-diaria": {
+        "task": "reconciliation.services.run_daily_reconciliation",
+        "schedule": crontab(hour=23, minute=30),
+    },
     "liquidacao-diaria": {
         "task": "settlement.services.run_daily_settlement",
         "schedule": crontab(hour=18, minute=0),

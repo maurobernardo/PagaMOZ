@@ -46,6 +46,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <p>O dinheiro vai directamente para a conta da instituição. O PagaMOZ não guarda fundos.</p>
             <p>
               <Link href="/verificar" className="font-medium text-brand-800 underline">Verificar comprovativo</Link>
+              {" · "}
+              <Link href="/portal" className="font-medium text-brand-800 underline">Portal das instituições</Link>
               {" · "}Protótipo · instituições fictícias
             </p>
           </div>

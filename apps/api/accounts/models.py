@@ -32,6 +32,11 @@ class User(AbstractUser):
     username = None
     phone = models.CharField("telefone", max_length=13, unique=True, validators=[phone_validator])
     email = models.EmailField(blank=True)
+    # MFA (TOTP) para portal/backoffice.
+    # ponytail: segredo em claro na BD; cifrar em repouso (KMS/Fernet) na Fase 8.
+    mfa_secret = models.CharField(max_length=64, blank=True)
+    mfa_enabled = models.BooleanField(default=False)
+    mfa_last_counter = models.BigIntegerField(default=0)  # anti-reutilização do mesmo código
 
     USERNAME_FIELD = "phone"
     REQUIRED_FIELDS: list[str] = []

@@ -5,11 +5,14 @@ from rest_framework.routers import SimpleRouter
 
 from accounts.api import (
     LogoutView,
+    MfaSetupView,
+    MfaVerifyView,
     MyPayments,
     MyRequests,
     ObligationViewSet,
     OtpRequestView,
     OtpVerifyView,
+    PortalLoginView,
 )
 from catalog.api import CategoryList, Me, PortalServiceViewSet, PublicServiceViewSet
 from connectors.api import ServicePrice, ServiceQuote
@@ -21,6 +24,15 @@ from payments.api import (
     PortalSettlements,
     Scenarios,
     Webhook,
+)
+from portal.api import (
+    Dashboard,
+    PortalMember,
+    PortalMembers,
+    PortalReconciliation,
+    PortalResolveDiscrepancy,
+    PortalReverse,
+    PortalTransactions,
 )
 from receipts.api import ReceiptPdf, VerifyByCode, VerifyByFile
 from servicerequests.api import (
@@ -49,6 +61,9 @@ urlpatterns = [
     path("api/auth/otp/request", OtpRequestView.as_view(), name="otp-request"),
     path("api/auth/otp/verify", OtpVerifyView.as_view(), name="otp-verify"),
     path("api/auth/logout", LogoutView.as_view(), name="logout"),
+    path("api/auth/portal/login", PortalLoginView.as_view(), name="portal-login"),
+    path("api/auth/portal/mfa/setup", MfaSetupView.as_view(), name="mfa-setup"),
+    path("api/auth/portal/mfa/verify", MfaVerifyView.as_view(), name="mfa-verify"),
     path("api/catalog/categories", CategoryList.as_view(), name="categories"),
     path("api/payments", PaymentCreate.as_view(), name="payment-create"),
     path("api/payments/scenarios", Scenarios.as_view(), name="payment-scenarios"),
@@ -59,6 +74,13 @@ urlpatterns = [
     path("api/webhooks/<str:method>", Webhook.as_view(), name="webhook"),
     path("api/portal/<slug:institution_slug>/settlements", PortalSettlements.as_view()),
     path("api/portal/<slug:institution_slug>/balances", PortalBalances.as_view()),
+    path("api/portal/<slug:institution_slug>/dashboard", Dashboard.as_view()),
+    path("api/portal/<slug:institution_slug>/transactions", PortalTransactions.as_view()),
+    path("api/portal/<slug:institution_slug>/transactions/<str:reference>/reverse", PortalReverse.as_view()),
+    path("api/portal/<slug:institution_slug>/reconciliation", PortalReconciliation.as_view()),
+    path("api/portal/<slug:institution_slug>/reconciliation/<int:pk>/resolve", PortalResolveDiscrepancy.as_view()),
+    path("api/portal/<slug:institution_slug>/members", PortalMembers.as_view()),
+    path("api/portal/<slug:institution_slug>/members/<int:pk>", PortalMember.as_view()),
     path("api/catalog/services/<int:pk>/quote", ServiceQuote.as_view(), name="service-quote"),
     path("api/catalog/services/<int:pk>/price", ServicePrice.as_view(), name="service-price"),
     path("api/requests", RequestCreate.as_view(), name="request-create"),

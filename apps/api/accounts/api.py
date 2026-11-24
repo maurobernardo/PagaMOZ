@@ -11,7 +11,7 @@ from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 
 from audit.models import record
-from catalog.api import ServicePublicSerializer, _public_services
+from catalog.api import MembershipSerializer, ServicePublicSerializer, _public_services
 from payments.api import PaymentSerializer
 from payments.models import Transaction
 from servicerequests.api import RequestPublicSerializer
@@ -154,3 +154,112 @@ class MyRequests(generics.ListAPIView):
             return ServiceRequest.objects.none()
         return (ServiceRequest.objects.filter(user=self.request.user)
                 .select_related("service", "institution").prefetch_related("events"))  # fmt: skip
+
+
+# ---------- Portal: palavra-passe + MFA (TOTP) ----------
+
+LOCK_AFTER = 5
+LOCK_SECONDS = 15 * 60
+
+
+class PortalLogin(serializers.Serializer):
+    phone = PhoneField()
+    password = serializers.CharField(max_length=128)
+
+
+class MfaCode(serializers.Serializer):
+    code = serializers.RegexField(r"^\d{6}$")
+
+
+def _demo_code(user):
+    from .totp import now_code
+
+    return {"demo_code": now_code(user.mfa_secret)} if settings.DEMO_MODE and user.mfa_secret else {}
+
+
+class PortalLoginView(APIView):
+    """Passo 1: telefone + palavra-passe. Não abre sessão completa: fica à espera do MFA."""
+
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [OtpThrottle]
+
+    @extend_schema(request=PortalLogin, responses=inline_serializer("PortalLoginStep", {
+        "mfa_enrolled": serializers.BooleanField(), "demo_code": serializers.CharField(required=False)}))  # fmt: skip
+    def post(self, request):
+        from django.contrib.auth import authenticate
+        from django.core.cache import cache
+
+        s = PortalLogin(data=request.data)
+        s.is_valid(raise_exception=True)
+        phone = s.validated_data["phone"]
+        key = f"portal-login-fail:{phone}"
+        if cache.get(key, 0) >= LOCK_AFTER:
+            return Response({"detail": "Conta bloqueada temporariamente por tentativas falhadas. Tente em 15 minutos."},
+                            status=429)  # fmt: skip
+        user = authenticate(request, phone=phone, password=s.validated_data["password"])
+        if user is None or not (user.memberships.exists() or user.is_staff):
+            cache.set(key, cache.get(key, 0) + 1, LOCK_SECONDS)
+            record("auth.portal_login_failed", request=request, phone=phone)
+            return Response({"detail": "Telefone ou palavra-passe incorrectos."}, status=400)
+        cache.delete(key)
+        request.session.cycle_key()
+        request.session["pre_mfa_user"] = user.pk
+        return Response({"mfa_enrolled": user.mfa_enabled, **_demo_code(user)})
+
+
+def _pre_mfa_user(request):
+    pk = request.session.get("pre_mfa_user")
+    return User.objects.filter(pk=pk, is_active=True).first() if pk else None
+
+
+class MfaSetupView(APIView):
+    """Primeiro acesso: gera segredo e URI otpauth para a app autenticadora."""
+
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(request=None, responses=inline_serializer("MfaSetup", {
+        "secret": serializers.CharField(), "otpauth_uri": serializers.CharField(),
+        "demo_code": serializers.CharField(required=False)}))  # fmt: skip
+    def post(self, request):
+        from .totp import new_secret, uri
+
+        user = _pre_mfa_user(request)
+        if user is None:
+            return Response({"detail": "Entre primeiro com a palavra-passe."}, status=401)
+        if user.mfa_enabled:
+            return Response({"detail": "MFA já configurado."}, status=409)
+        user.mfa_secret = new_secret()
+        user.save(update_fields=["mfa_secret"])
+        return Response(
+            {"secret": user.mfa_secret, "otpauth_uri": uri(user.mfa_secret, user.phone), **_demo_code(user)}
+        )
+
+
+class MfaVerifyView(APIView):
+    """Passo 2: código TOTP. Na primeira vez também activa o MFA."""
+
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [OtpThrottle]
+
+    @extend_schema(request=MfaCode, responses=inline_serializer("PortalSession", {
+        "phone": serializers.CharField(), "memberships": MembershipSerializer(many=True)}))  # fmt: skip
+    def post(self, request):
+        from .totp import verify
+
+        user = _pre_mfa_user(request)
+        if user is None or not user.mfa_secret:
+            return Response({"detail": "Entre primeiro com a palavra-passe."}, status=401)
+        s = MfaCode(data=request.data)
+        s.is_valid(raise_exception=True)
+        counter = verify(user.mfa_secret, s.validated_data["code"])
+        if counter is None or counter <= user.mfa_last_counter:
+            record("auth.mfa_failed", actor=user, request=request)
+            return Response({"detail": "Código inválido ou já usado."}, status=400)
+        User.objects.filter(pk=user.pk).update(mfa_last_counter=counter, mfa_enabled=True)
+        login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+        request.session.pop("pre_mfa_user", None)
+        request.session["mfa_ok"] = True
+        record("auth.portal_login", actor=user, request=request)
+        get_token(request)
+        return Response({"phone": user.phone, "memberships": MembershipSerializer(user.memberships.select_related(
+            "institution"), many=True).data})  # fmt: skip

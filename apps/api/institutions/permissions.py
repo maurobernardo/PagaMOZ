@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.http import Http404
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 
@@ -30,6 +31,10 @@ class InstitutionRole(BasePermission):
 
     def has_permission(self, request, view):
         m = resolve_membership(request, view.kwargs["institution_slug"])
+        if settings.PORTAL_REQUIRE_MFA and not request.session.get("mfa_ok"):
+            self.message = "Confirme a segunda verificação (MFA) para aceder ao portal."
+            return False
         if request.method in SAFE_METHODS:
             return True
+        self.message = "O seu perfil não permite esta acção."
         return m.role in getattr(view, "write_roles", {Role.ADMIN})

@@ -52,6 +52,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/portal/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Passo 1: telefone + palavra-passe. Não abre sessão completa: fica à espera do MFA. */
+        post: operations["auth_portal_login_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/portal/mfa/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Primeiro acesso: gera segredo e URI otpauth para a app autenticadora. */
+        post: operations["auth_portal_mfa_setup_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/portal/mfa/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Passo 2: código TOTP. Na primeira vez também activa o MFA. */
+        post: operations["auth_portal_mfa_verify_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/catalog/categories": {
         parameters: {
             query?: never;
@@ -313,6 +364,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/portal/{institution_slug}/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["portal_dashboard_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/{institution_slug}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["portal_members_list"];
+        put?: never;
+        post: operations["portal_members_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/{institution_slug}/members/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["portal_members_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["portal_members_partial_update"];
+        trace?: never;
+    };
+    "/api/portal/{institution_slug}/reconciliation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["portal_reconciliation_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/{institution_slug}/reconciliation/{id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["portal_reconciliation_resolve_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/portal/{institution_slug}/requests": {
         parameters: {
             query?: never;
@@ -424,6 +555,39 @@ export interface paths {
         get: operations["portal_settlements_list"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/{institution_slug}/transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["portal_transactions_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/{institution_slug}/transactions/{reference}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Estorno antes da liquidação (admin/financeiro). */
+        post: operations["portal_transactions_reverse_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -549,6 +713,43 @@ export interface components {
          * @enum {string}
          */
         CommissionPayerEnum: "cidadao" | "instituicao";
+        Dashboard: {
+            today: {
+                [key: string]: unknown;
+            };
+            week: {
+                [key: string]: unknown;
+            };
+            month: {
+                [key: string]: unknown;
+            };
+            by_service: {
+                [key: string]: unknown;
+            }[];
+            by_method: {
+                [key: string]: unknown;
+            }[];
+            daily: {
+                [key: string]: unknown;
+            }[];
+            balances: {
+                [key: string]: unknown;
+            };
+            pending_requests: number;
+            open_discrepancies: number;
+        };
+        Discrepancy: {
+            readonly id: number;
+            readonly kind: components["schemas"]["KindEnum"];
+            kind_label: string;
+            readonly reference: string;
+            readonly provider_ref: string;
+            readonly platform_amount: number | null;
+            readonly provider_amount: number | null;
+            readonly detail: string;
+            readonly resolved: boolean;
+            readonly resolution_note: string;
+        };
         Event: {
             readonly status: components["schemas"]["RequestStatusEnum"];
             readonly note: string;
@@ -575,10 +776,32 @@ export interface components {
          * @enum {integer}
          */
         IntegrationLevelEnum: 1 | 2 | 3;
+        InviteRequest: {
+            phone: string;
+            name?: string;
+            role: components["schemas"]["RoleEnum"];
+        };
+        /**
+         * @description * `falta_no_provedor` - Confirmado na plataforma, ausente no provedor
+         *     * `falta_na_plataforma` - Recebido pelo provedor, sem transacção confirmada
+         *     * `valor_divergente` - Valor diferente
+         *     * `estado_divergente` - Estado diferente
+         * @enum {string}
+         */
+        KindEnum: "falta_no_provedor" | "falta_na_plataforma" | "valor_divergente" | "estado_divergente";
         Me: {
             phone: string;
             name: string;
             memberships: components["schemas"]["Membership"][];
+        };
+        Member: {
+            readonly id: number;
+            readonly phone: string;
+            readonly name: string;
+            role: components["schemas"]["RoleEnum"];
+            readonly mfa_enabled: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
         };
         Membership: {
             readonly institution: components["schemas"]["InstitutionPublic"];
@@ -594,6 +817,14 @@ export interface components {
          * @enum {string}
          */
         MethodEnum: "mpesa" | "emola" | "mkesh" | "cartao" | "referencia_bancaria" | "qr";
+        MfaCodeRequest: {
+            code: string;
+        };
+        MfaSetup: {
+            secret: string;
+            otpauth_uri: string;
+            demo_code?: string;
+        };
         NotIssued: {
             resultado: string;
             mensagem: string;
@@ -638,6 +869,21 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Payment"][];
+        };
+        PaginatedPortalTransactionList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["PortalTransaction"][];
         };
         PaginatedRequestPublicList: {
             /** @example 123 */
@@ -703,6 +949,9 @@ export interface components {
             label?: string;
             service?: number;
             fields?: unknown;
+        };
+        PatchedRoleChangeRequest: {
+            role?: components["schemas"]["RoleEnum"];
         };
         PatchedServicePortalRequest: {
             name?: string;
@@ -800,6 +1049,43 @@ export interface components {
          * @enum {string}
          */
         PaymentStatusEnum: "CRIADA" | "PENDENTE" | "CONFIRMADA" | "LIQUIDADA" | "FALHADA" | "EXPIRADA" | "REVERTIDA" | "EM_DISPUTA";
+        PortalLoginRequest: {
+            phone: string;
+            password: string;
+        };
+        PortalLoginStep: {
+            mfa_enrolled: boolean;
+            demo_code?: string;
+        };
+        PortalSession: {
+            phone: string;
+            memberships: components["schemas"]["Membership"][];
+        };
+        PortalTransaction: {
+            readonly reference: string;
+            readonly status: components["schemas"]["PaymentStatusEnum"];
+            readonly service: number;
+            service_name: string;
+            readonly description: string;
+            readonly method: components["schemas"]["MethodEnum"];
+            method_label: string;
+            readonly amount: number;
+            readonly commission: number;
+            readonly commission_payer: string;
+            readonly total: number;
+            readonly institution_net: number;
+            readonly provider_ref: string;
+            readonly institution_ref: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly confirmed_at: string | null;
+            /** Format: date-time */
+            readonly settled_at: string | null;
+            /** Format: date */
+            settlement_date: string | null;
+            readonly failure_reason: string;
+        };
         PriceRequestRequest: {
             amount?: number;
         };
@@ -833,6 +1119,18 @@ export interface components {
             commission: number;
             total: number;
             commission_payer: string;
+        };
+        Reconciliation: {
+            /** Format: date */
+            date: string | null;
+            /** Format: date-time */
+            ran_at: string | null;
+            platform_count: number;
+            matched: number;
+            items: components["schemas"]["Discrepancy"][];
+            runs: {
+                [key: string]: unknown;
+            }[];
         };
         RequestCreateRequest: {
             service: number;
@@ -882,6 +1180,9 @@ export interface components {
          * @enum {string}
          */
         RequestStatusEnum: "AGUARDA_PAGAMENTO" | "SUBMETIDO" | "EM_ANALISE" | "PENDENTE_INFO" | "APROVADO" | "PRONTO" | "CONCLUIDO" | "REJEITADO" | "CANCELADO";
+        ResolveRequestRequest: {
+            note: string;
+        };
         /**
          * @description * `valido` - valido
          *     * `anulado` - anulado
@@ -890,6 +1191,9 @@ export interface components {
          * @enum {string}
          */
         ResultadoEnum: "valido" | "anulado" | "em_analise" | "adulterado";
+        ReverseRequestRequest: {
+            reason: string;
+        };
         /**
          * @description * `admin` - Administrador
          *     * `financeiro` - Financeiro
@@ -1139,6 +1443,75 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Session"];
+                };
+            };
+        };
+    };
+    auth_portal_login_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PortalLoginRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PortalLoginRequest"];
+                "multipart/form-data": components["schemas"]["PortalLoginRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalLoginStep"];
+                };
+            };
+        };
+    };
+    auth_portal_mfa_setup_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MfaSetup"];
+                };
+            };
+        };
+    };
+    auth_portal_mfa_verify_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MfaCodeRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["MfaCodeRequest"];
+                "multipart/form-data": components["schemas"]["MfaCodeRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalSession"];
                 };
             };
         };
@@ -1608,6 +1981,176 @@ export interface operations {
             };
         };
     };
+    portal_dashboard_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Dashboard"];
+                };
+            };
+        };
+    };
+    portal_members_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Member"][];
+                };
+            };
+        };
+    };
+    portal_members_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InviteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["InviteRequest"];
+                "multipart/form-data": components["schemas"]["InviteRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Member"];
+                };
+            };
+        };
+    };
+    portal_members_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    portal_members_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedRoleChangeRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedRoleChangeRequest"];
+                "multipart/form-data": components["schemas"]["PatchedRoleChangeRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Member"];
+                };
+            };
+        };
+    };
+    portal_reconciliation_retrieve: {
+        parameters: {
+            query?: {
+                /** @description AAAA-MM-DD (omissão: última reconciliação) */
+                date?: string;
+            };
+            header?: never;
+            path: {
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Reconciliation"];
+                };
+            };
+        };
+    };
+    portal_reconciliation_resolve_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResolveRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ResolveRequestRequest"];
+                "multipart/form-data": components["schemas"]["ResolveRequestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Discrepancy"];
+                };
+            };
+        };
+    };
     portal_requests_list: {
         parameters: {
             query?: {
@@ -1857,6 +2400,67 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaginatedSettlementList"];
+                };
+            };
+        };
+    };
+    portal_transactions_list: {
+        parameters: {
+            query?: {
+                /** @description AAAA-MM-DD */
+                date_from?: string;
+                date_to?: string;
+                export?: "csv" | "xlsx";
+                method?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description referência */
+                q?: string;
+                service?: number;
+                status?: string;
+            };
+            header?: never;
+            path: {
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedPortalTransactionList"];
+                };
+            };
+        };
+    };
+    portal_transactions_reverse_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                institution_slug: string;
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ReverseRequestRequest"];
+                "multipart/form-data": components["schemas"]["ReverseRequestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalTransaction"];
                 };
             };
         };
