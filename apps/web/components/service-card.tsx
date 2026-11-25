@@ -1,9 +1,6 @@
-import { ArrowUpRight, ListChecks, Radio, Smartphone, Tag, Tv, Wallet, Zap } from "lucide-react";
-
-const GROUP_ICON = { energia: Zap, tv: Tv, recarga: Smartphone } as const;
+import { ArrowUpRight, ListChecks, Radio, Tag, Wallet } from "lucide-react";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand-mark";
-import { CategoryIcon } from "@/components/category-icon";
 import type { Service } from "@/lib/api";
 import { formatMZN } from "@/lib/i18n";
 
@@ -41,8 +38,10 @@ export function GroupCard({ s, options }: { s: Service; options: Service[] }) {
       <Link href={`/servicos/grupo/${g.key}`}
         className="group flex h-full flex-col rounded-[var(--radius-card)] border border-line bg-white p-5 transition duration-300 hover:-translate-y-1 hover:border-ink hover:shadow-2xl">
         <div className="flex items-start justify-between gap-3">
-          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-ink text-white">
-            {(() => { const I = GROUP_ICON[g.key as keyof typeof GROUP_ICON]; return I ? <I className="h-5 w-5" strokeWidth={1.8} /> : <CategoryIcon slug={s.category} />; })()}
+          <span className="flex -space-x-3">
+            {[...new Map(options.map((o) => [o.institution.slug, o])).values()].map((o) => (
+              <BrandMark key={o.id} slug={o.institution.slug} name={o.group?.option ?? o.institution.name} size={48} className="!rounded-2xl border-2 border-white shadow-sm" />
+            ))}
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-canvas px-2.5 py-1 text-[11px] font-semibold text-ink/70">
             <ListChecks className="h-3.5 w-3.5" /> {options.length} opções
