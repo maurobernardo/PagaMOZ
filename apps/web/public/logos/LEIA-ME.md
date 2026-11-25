@@ -11,3 +11,4 @@ Instituições: edm, adrmm, vodacom, movitel, tmcel, tvcabo, dstv, zap, at, inss
 mpesa.svg (M-PESA LOGO-01.svg), movitel.jpg (Movitel-Logo2015.jpg), dstv.svg (DStv Logo (2023).svg),
 zap.png (ZAP logo.png), visa.svg (Visa Inc. logo (2021–present).svg), mastercard.svg (Mastercard 2019 logo.svg).
 São marcas registadas: para produção, confirmar autorização de cada marca.
+vodacom.svg (Wikipedia: Vodacom Logo 2017.svg), tmcel.png (tmcel.mz), tvcabo.svg (tvcabo.mz).

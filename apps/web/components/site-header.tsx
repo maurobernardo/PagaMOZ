@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Logo } from "./logo";
+import { BrandMark } from "./brand-mark";
 import { METHOD_ICON } from "./method-icon";
 import { METHOD_LABEL } from "@/lib/i18n";
 
@@ -126,7 +127,13 @@ export function SiteFooter() {
             const I = METHOD_ICON[k];
             return (
               <li key={k} className="glass-dark inline-flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3.5 text-xs font-semibold text-white/70">
-                <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-ink"><I className="h-3.5 w-3.5" /></span>{m}
+                {k === "cartao" ? (
+                  <><BrandMark slug="visa" name="Visa" size={28} className="!rounded-full" /><BrandMark slug="mastercard" name="Mastercard" size={28} className="!rounded-full" /></>
+                ) : ["mpesa", "emola", "mkesh"].includes(k) ? (
+                  <BrandMark slug={k} name={m} size={28} className="!rounded-full !text-[10px]" />
+                ) : (
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-ink"><I className="h-3.5 w-3.5" /></span>
+                )}{m}
               </li>
             );
           })}
