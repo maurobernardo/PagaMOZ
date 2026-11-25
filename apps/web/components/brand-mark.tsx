@@ -1,5 +1,5 @@
 /** Logótipos disponíveis em /public/logos (ver LEIA-ME.md). Sem ficheiro, mostra as iniciais. */
-const LOGOS: Record<string, string> = { adrmm: "adrmm.webp", emola: "emola.webp", hcm: "hcm.webp", inatter: "inatter.webp", mkesh: "mkesh.webp", senami: "senami.webp", dstv: "dstv.svg", edm: "edm.png", emose: "emose.png", inss: "inss.png", mastercard: "mastercard.svg", movitel: "movitel.jpg", mpesa: "mpesa.svg", tmcel: "tmcel.png", tvcabo: "tvcabo.svg", uem: "uem.png", visa: "visa.svg", vodacom: "vodacom.svg", zap: "zap.png" };
+const LOGOS: Record<string, string> = { at: "at.webp", cmm: "cmm.webp", adrmm: "adrmm.webp", emola: "emola.webp", hcm: "hcm.webp", inatter: "inatter.webp", mkesh: "mkesh.webp", senami: "senami.webp", dstv: "dstv.svg", edm: "edm.png", emose: "emose.png", inss: "inss.png", mastercard: "mastercard.svg", movitel: "movitel.jpg", mpesa: "mpesa.svg", tmcel: "tmcel.png", tvcabo: "tvcabo.svg", uem: "uem.png", visa: "visa.svg", vodacom: "vodacom.svg", zap: "zap.png" };
 
 export function hasLogo(slug: string) {
   return slug in LOGOS;
