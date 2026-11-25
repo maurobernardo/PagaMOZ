@@ -42,19 +42,19 @@ class Command(BaseCommand):
 
         password = os.environ.get(DEMO_PASSWORD_ENV)  # sem variável -> utilizadores sem password
         n_services = 0
-        for i, (cat, slug, name, bank, services) in enumerate(INSTITUTIONS, 1):
+        for i, (cat, slug, name, services) in enumerate(INSTITUTIONS, 1):
             inst, _ = Institution.objects.update_or_create(
                 slug=slug,
                 defaults={
                     "name": name,
-                    "settlement_bank": bank,
+                    "settlement_bank": "Conta de liquidação",
                     "settlement_account_masked": f"****{1000 + i}",
                     "commission_bps": 150,  # 1,5% por omissão na demo
                     "commission_payer": Institution.Payer.INSTITUTION,
                     "is_demo": True,
                 },
             )
-            for s_slug, s_name, level, pricing, amount, fields in services:
+            for s_slug, s_name, level, pricing, amount, fields, connector_config in services:
                 Service.objects.update_or_create(
                     institution=inst,
                     slug=s_slug,
@@ -64,8 +64,10 @@ class Command(BaseCommand):
                         "integration_level": level,
                         "pricing": pricing,
                         "amount": amount,
-                        "min_amount": 2_000 if pricing == "aberto" else None,
+                        "min_amount": 1_000 if pricing == "aberto" else None,  # 10 MT
+                        "max_amount": 5_000_000 if pricing == "aberto" else None,
                         "fields": fields,
+                        "connector_config": connector_config,
                     },
                 )
                 n_services += 1

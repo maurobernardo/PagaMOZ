@@ -22,17 +22,20 @@ class ConnectorUnavailable(Exception):
 
 @dataclass
 class QuoteData:
-    amount: int  # centavos
+    amount: int | None  # centavos
     description: str
     holder: str = ""
     external_ref: str = ""
     valid_minutes: int = 30
+    details: list = field(default_factory=list)  # [[rótulo, valor], …] mostrados ao cidadão
+    items: list = field(default_factory=list)  # faturas/multas/prestações: {titulo, referencia, detalhe, valor}
 
 
 @dataclass
 class Confirmation:
     institution_ref: str
     received_at: datetime = field(default_factory=timezone.now)
+    delivery: dict = field(default_factory=dict)  # o que a instituição entrega (ex.: código Credelec)
 
 
 @dataclass
@@ -42,7 +45,7 @@ class RequestStatus:
 
 
 class ServiceConnector(Protocol):
-    def lookup(self, service, payload: dict) -> QuoteData: ...
+    def lookup(self, service, payload: dict, amount: int | None = None) -> QuoteData: ...
     def confirm_payment(self, transaction) -> Confirmation: ...
     def reverse(self, transaction) -> None: ...
     def request_status(self, service_request) -> RequestStatus: ...
@@ -66,13 +69,17 @@ class SimulatedConnector:
       valid_minutes      validade da cotação (omissão 30)
     """
 
-    def lookup(self, service, payload):
+    def lookup(self, service, payload, amount=None):
         cfg = service.connector_config or {}
         key = "|".join(str(payload[k]) for k in sorted(payload))
         if key.endswith(cfg.get("not_found_suffix", "0000")):
             raise LookupError_("Referência não encontrada na instituição.")
         if key.endswith(cfg.get("unavailable_suffix", "9999")):
             raise ConnectorUnavailable("Instituição temporariamente indisponível.")
+        if cfg.get("profile"):
+            from .simulated import lookup as profile_lookup
+
+            return profile_lookup(service, payload, amount)
         h = int(hashlib.sha256(f"{service.pk}|{key}".encode()).hexdigest(), 16)
         lo, hi = cfg.get("min", 50_000), cfg.get("max", 1_500_000)
         amount = lo + h % (hi - lo + 1)
@@ -85,6 +92,11 @@ class SimulatedConnector:
         )  # fmt: skip
 
     def confirm_payment(self, transaction):
+        profile = (transaction.service.connector_config or {}).get("profile")
+        if profile:
+            from .simulated import deliver
+
+            return deliver(profile, transaction)
         return Confirmation(institution_ref=f"SIM-ACK-{transaction.reference}")
 
     def reverse(self, transaction):

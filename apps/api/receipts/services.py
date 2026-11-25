@@ -37,6 +37,10 @@ def _content(txn: Transaction, code: str, issued) -> dict:
         "comissao_paga_por": PAYER.get(txn.commission_payer, txn.commission_payer),
         "total": txn.total,
         "estado": "PAGO",
+        # O que a instituição entregou (ex.: código Credelec) — faz parte do que se prova.
+        "entrega": [txn.delivery.get("titulo", ""), txn.delivery.get("codigo", "")]
+        if txn.delivery.get("codigo")
+        else [],
         "moeda": txn.currency,
         "demo": settings.DEMO_MODE,
     }

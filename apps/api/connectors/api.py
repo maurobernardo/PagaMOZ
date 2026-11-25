@@ -21,16 +21,29 @@ class LookupThrottle(AnonRateThrottle):
 
 class QuoteRequest(serializers.Serializer):
     fields = serializers.DictField(child=serializers.CharField(allow_blank=True))
+    amount = serializers.IntegerField(
+        required=False, min_value=1, help_text="Centavos, nos serviços de valor livre (ex.: Credelec)."
+    )
+
+
+class QuoteItem(serializers.Serializer):
+    titulo = serializers.CharField()
+    referencia = serializers.CharField()
+    detalhe = serializers.CharField()
+    valor = serializers.IntegerField()
 
 
 class QuoteResponse(serializers.ModelSerializer):
     commission = serializers.IntegerField()
     total = serializers.IntegerField()
     commission_payer = serializers.CharField()
+    details = serializers.ListField(child=serializers.ListField(child=serializers.CharField()))
+    items = QuoteItem(many=True)
 
     class Meta:
         model = Quote
-        fields = ["id", "amount", "description", "holder", "expires_at", "commission", "total", "commission_payer"]
+        fields = ["id", "amount", "description", "holder", "details", "items", "expires_at", "commission", "total",
+                  "commission_payer"]  # fmt: skip
 
 
 class ServiceQuote(APIView):
@@ -42,22 +55,27 @@ class ServiceQuote(APIView):
     @extend_schema(request=QuoteRequest, responses=QuoteResponse)
     def post(self, request, pk):
         service = get_object_or_404(_public_services(), pk=pk)
-        if service.pricing != "consulta":
-            return Response({"detail": "Este serviço não tem valor por consulta."}, status=400)
+        has_profile = bool((service.connector_config or {}).get("profile"))
+        if service.pricing != "consulta" and not (service.pricing == "aberto" and has_profile):
+            return Response({"detail": "Este serviço não tem consulta à instituição."}, status=400)
         s = QuoteRequest(data=request.data)
         s.is_valid(raise_exception=True)
         try:
+            from payments.domain import resolve_amount
+
             payload = validate_fields(service, s.validated_data["fields"])
-            data = get_connector(service).lookup(service, payload)
+            amount = resolve_amount(service, s.validated_data.get("amount")) if service.pricing == "aberto" else None
+            data = get_connector(service).lookup(service, payload, amount)
         except PaymentError as e:
-            return Response({"fields": e.args[0]}, status=400)
+            msg = e.args[0]
+            return Response({"detail": msg} if isinstance(msg, str) else {"fields": msg}, status=400)
         except LookupError_ as e:
             return Response({"detail": str(e)}, status=404)
         except ConnectorUnavailable as e:
             return Response({"detail": str(e)}, status=503, headers={"Retry-After": "30"})
         q = Quote.objects.create(
             service=service, payload=payload, amount=data.amount, description=data.description[:200],
-            holder=data.holder, external_ref=data.external_ref,
+            holder=data.holder, external_ref=data.external_ref, details=data.details, items=data.items,
             expires_at=timezone.now() + timedelta(minutes=data.valid_minutes),
         )  # fmt: skip
         p = price(service, q.amount)

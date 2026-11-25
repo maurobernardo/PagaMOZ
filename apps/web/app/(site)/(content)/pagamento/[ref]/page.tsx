@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Clock3, Copy, Download, LayoutGrid, RotateCcw, ShieldCheck, UserRound, XCircle } from "lucide-react";
+import { CheckCircle2, Clock3, Copy, Download, KeyRound, LayoutGrid, RotateCcw, ShieldCheck, UserRound, XCircle } from "lucide-react";
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import { MethodIcon } from "@/components/method-icon";
@@ -63,6 +63,22 @@ export default function PaymentStatus({ params }: { params: Promise<{ ref: strin
         </p>
         <p className={`mt-6 font-display text-4xl font-bold tabular-nums ${ok ? "" : "text-ink"}`}>{formatMZN(p.total)}</p>
       </section>
+
+      {ok && p.delivery?.codigo ? (
+        <section className="mt-4 rounded-[2rem] border-2 border-ink bg-white p-6 text-center">
+          <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+            <KeyRound className="h-4 w-4 text-accent" /> {p.delivery.titulo}
+          </p>
+          <p className="mt-3 break-all font-mono text-2xl font-bold tracking-wider sm:text-3xl">{p.delivery.codigo}</p>
+          {p.delivery.instrucao ? <p className="mx-auto mt-3 max-w-sm text-sm text-muted">{p.delivery.instrucao}</p> : null}
+          <div className="glass mt-5 inline-flex rounded-full p-1.5">
+            <button onClick={() => navigator.clipboard?.writeText(p.delivery!.codigo!.replace(/\s/g, "")).then(() => toast("Código copiado."))}
+              className="inline-flex min-h-10 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white hover:bg-ink/85">
+              <Copy className="h-4 w-4" /> Copiar código
+            </button>
+          </div>
+        </section>
+      ) : null}
 
       {/* Talão */}
       <section className="relative mt-4 rounded-[2rem] border border-line bg-white p-6">

@@ -42,7 +42,7 @@ def notify_institution(self, txn_id: int):
     """connector.confirm_payment com retry exponencial; esgotado -> DeadLetter."""
     from connectors.base import get_connector
 
-    txn = Transaction.objects.select_related("service").get(pk=txn_id)
+    txn = Transaction.objects.select_related("service", "institution").get(pk=txn_id)
     if txn.institution_notified_at:
         return "ja_notificada"
     try:
@@ -52,8 +52,9 @@ def notify_institution(self, txn_id: int):
             DeadLetter.objects.create(kind="connector:confirm", payload={"reference": txn.reference}, error=repr(exc))
             return "dead-letter"
         raise self.retry(exc=exc) from exc
-    Transaction.objects.filter(pk=txn_id).update(institution_ref=conf.institution_ref,
-                                                 institution_notified_at=conf.received_at)  # fmt: skip
+    Transaction.objects.filter(pk=txn_id).update(
+        institution_ref=conf.institution_ref, institution_notified_at=conf.received_at, delivery=conf.delivery
+    )
     return "ok"
 
 

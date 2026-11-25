@@ -73,6 +73,7 @@ class Transaction(models.Model):
     )
     institution_ref = models.CharField(max_length=64, blank=True)  # recibo da instituição (confirm_payment)
     institution_notified_at = models.DateTimeField(null=True, blank=True)
+    delivery = models.JSONField(default=dict, blank=True)  # entregue pela instituição (código Credelec, recibo…)
     settlement = models.ForeignKey(
         "settlement.SettlementBatch", null=True, blank=True, on_delete=models.PROTECT, related_name="transactions"
     )

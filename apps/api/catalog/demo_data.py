@@ -1,7 +1,10 @@
-"""Dados de demonstração. Todas as instituições são FICTÍCIAS; qualquer semelhança é coincidência.
+"""Catálogo de demonstração com instituições reais de Moçambique (só o nome — sem logótipos nem identidade).
 
-Valores em centavos (MZN x 100). Formato do serviço:
-(slug, nome, nível, pricing, valor, campos)
+Fontes e o que está por verificar: docs/pesquisa-instituicoes.md.
+Respostas das instituições (titulares, faturas, valores em dívida) vêm do conector simulado (connectors/simulated.py).
+Valores fixos só com fonte: passaporte (Diploma Ministerial 18/2024) e DIRE CPLP.
+
+Formato do serviço: (slug, nome, nível, pricing, valor_centavos, campos, config_do_conector)
 """
 
 L1, L2, L3 = 1, 2, 3
@@ -15,191 +18,319 @@ def f(name, label, type="text", required=True, pattern=""):
     return d
 
 
-CONTADOR = f("contador", "N.º do contador", pattern=r"^\d{11}$")
-CONTRATO = f("contrato", "N.º de contrato/cliente", pattern=r"^\d{6,10}$")
-REFERENCIA = f("referencia", "Referência de pagamento", pattern=r"^[A-Z0-9]{8,15}$")
-NOME = f("nome_completo", "Nome completo")
-DATA_NASC = f("data_nascimento", "Data de nascimento", "date")
-ESTUDANTE = f("n_estudante", "N.º de estudante", pattern=r"^\d{8}$")
-MATRICULA = f("matricula", "Matrícula do veículo", pattern=r"^[A-Z]{3}-\d{3}-[A-Z]{2}$")
-ANEXO_BI = f("anexo_bi", "Cópia do documento de identificação", "file")
+MATRICULA = f("matricula", "Matrícula do veículo", pattern=r"^[A-Za-z]{3}[- ]?\d{3}[- ]?[A-Za-z]{2}$")
 NUIT = f("nuit", "NUIT", pattern=r"^\d{9}$")
+NOME = f("nome_completo", "Nome completo (como no BI)")
+DATA_NASC = f("data_nascimento", "Data de nascimento", "date")
+BI = f("bi", "N.º do Bilhete de Identidade", pattern=r"^[0-9A-Za-z]{8,14}$")
+
+
+def conf(profile, *guide):
+    return {"profile": profile, "guide": list(guide)} if profile else {"guide": list(guide)}
+
 
 CATEGORIES = [
-    ("documentos", "Documentos e identificação", "id-card", "BI, passaporte, certidões, registo criminal"),
-    ("transportes", "Transportes e trânsito", "car", "Carta de condução, veículos, multas"),
-    ("servicos-basicos", "Água, energia e serviços básicos", "bolt", "Água, electricidade, recargas, internet"),
-    ("impostos", "Impostos e serviços governamentais", "landmark", "IVA, IRPS, IRPC, taxas e licenças"),
-    ("educacao", "Educação", "graduation-cap", "Propinas, matrículas, exames, certificados"),
-    ("saude", "Saúde", "heart-pulse", "Consultas, exames, taxas hospitalares, seguros"),
-    ("municipios", "Municípios e serviços locais", "building", "Mercados, licenças, lixo, construção"),
-    ("outros", "Outros", "grid", "Seguros, eventos, viagens, subscrições"),
+    ("documentos", "Documentos e migração", "id-card", "Passaporte, DIRE e outros documentos"),
+    ("transportes", "Transportes e trânsito", "car", "Multas e impostos sobre veículos"),
+    ("servicos-basicos", "Energia, água e telecomunicações", "bolt", "Credelec, faturas, recargas e TV"),
+    ("impostos", "Impostos e segurança social", "landmark", "GARE da Autoridade Tributária e contribuições ao INSS"),
+    ("educacao", "Educação", "graduation-cap", "Propinas e taxas académicas"),
+    ("saude", "Saúde", "heart-pulse", "Facturas hospitalares"),
+    ("municipios", "Autarquias", "building", "Impostos e taxas municipais"),
+    ("outros", "Seguros e outros", "grid", "Prémios de seguro e outros pagamentos"),
 ]
 
-# (categoria, slug, nome, banco, [serviços])
+# (categoria, slug, nome, [serviços])
 INSTITUTIONS = [
     (
-        "documentos",
-        "registo-civil-demo",
-        "Conservatória Central de Registos",
-        "Banco Horizonte",
+        "servicos-basicos",
+        "edm",
+        "EDM — Electricidade de Moçambique",
         [
-            ("certidao-nascimento", "Certidão de nascimento", L3, FIXO, 25_000, [NOME, DATA_NASC, ANEXO_BI]),
-            ("certidao-casamento", "Certidão de casamento", L3, FIXO, 30_000, [NOME, ANEXO_BI]),
-            ("registo-criminal", "Registo criminal", L3, FIXO, 45_000, [NOME, DATA_NASC, ANEXO_BI]),
-            ("autenticacao", "Autenticação de documentos", L2, FIXO, 10_000, [REFERENCIA]),
+            (
+                "credelec",
+                "Recarga de energia Credelec",
+                L1,
+                ABERTO,
+                None,
+                [f("contador", "N.º do contador Credelec", pattern=r"^\d{11,13}$")],
+                conf(
+                    "credelec",
+                    "Recebe o código de recarga logo após o pagamento.",
+                    "Introduza-o no teclado do contador.",
+                ),
+            ),
+            (
+                "fatura",
+                "Fatura de electricidade (pós-pago)",
+                L1,
+                CONSULTA,
+                None,
+                [f("cliente", "N.º de cliente", pattern=r"^\d{6,12}$")],
+                conf("edm_fatura", "São listadas todas as faturas em aberto."),
+            ),
         ],
     ),
     (
-        "documentos",
-        "identificacao-demo",
-        "Serviço Nacional de Identificação",
-        "Banco Horizonte",
+        "servicos-basicos",
+        "adrmm",
+        "Águas da Região Metropolitana de Maputo",
         [
-            ("bi-renovacao", "Renovação do BI", L3, FIXO, 35_000, [NOME, DATA_NASC, ANEXO_BI]),
-            ("passaporte", "Pedido de passaporte", L3, FIXO, 450_000, [NOME, DATA_NASC, ANEXO_BI]),
+            (
+                "fatura",
+                "Fatura de água",
+                L1,
+                CONSULTA,
+                None,
+                [f("cliente", "N.º de cliente", pattern=r"^\d{5,12}$")],
+                conf("agua_fatura", "Maputo, Matola, Boane e Marracuene."),
+            ),
+        ],
+    ),
+    (
+        "servicos-basicos",
+        "vodacom",
+        "Vodacom Moçambique",
+        [
+            (
+                "recarga",
+                "Recarga de saldo Vodacom",
+                L1,
+                ABERTO,
+                None,
+                [f("numero", "Número Vodacom", "phone", pattern=r"^8[45]\d{7}$")],
+                conf("recarga"),
+            ),
+        ],
+    ),
+    (
+        "servicos-basicos",
+        "movitel",
+        "Movitel",
+        [
+            (
+                "recarga",
+                "Recarga de saldo Movitel",
+                L1,
+                ABERTO,
+                None,
+                [f("numero", "Número Movitel", "phone", pattern=r"^8[67]\d{7}$")],
+                conf("recarga"),
+            ),
+        ],
+    ),
+    (
+        "servicos-basicos",
+        "tmcel",
+        "Tmcel",
+        [
+            (
+                "recarga",
+                "Recarga de saldo Tmcel",
+                L1,
+                ABERTO,
+                None,
+                [f("numero", "Número Tmcel", "phone", pattern=r"^8[23]\d{7}$")],
+                conf("recarga"),
+            ),
+        ],
+    ),
+    (
+        "servicos-basicos",
+        "tvcabo",
+        "TVCabo Moçambique",
+        [
+            (
+                "mensalidade",
+                "Mensalidade de TV e internet",
+                L1,
+                CONSULTA,
+                None,
+                [f("cliente", "N.º de cliente", pattern=r"^\d{6,12}$")],
+                conf("tv"),
+            ),
+        ],
+    ),
+    (
+        "servicos-basicos",
+        "dstv",
+        "DStv Moçambique",
+        [
+            (
+                "mensalidade",
+                "Mensalidade DStv",
+                L1,
+                CONSULTA,
+                None,
+                [f("smartcard", "N.º do smartcard", pattern=r"^\d{8,12}$")],
+                conf("tv"),
+            ),
+        ],
+    ),
+    (
+        "impostos",
+        "at",
+        "Autoridade Tributária de Moçambique",
+        [
+            (
+                "gare",
+                "Pagamento de impostos (GARE)",
+                L2,
+                CONSULTA,
+                None,
+                [NUIT, f("referencia", "Referência da GARE", pattern=r"^\d{8,20}$")],
+                conf("at_gare", "Gere a GARE no e-Tributação e indique aqui a referência.", "IVA, IRPS, IRPC e ISPC."),
+            ),
+        ],
+    ),
+    (
+        "impostos",
+        "inss",
+        "INSS — Instituto Nacional de Segurança Social",
+        [
+            (
+                "contribuicoes",
+                "Contribuições mensais (empresas)",
+                L2,
+                CONSULTA,
+                None,
+                [
+                    f("nuit", "NUIT do contribuinte", pattern=r"^\d{9}$"),
+                    f("guia", "N.º da guia de pagamento", pattern=r"^\d{6,15}$"),
+                ],
+                conf("inss_guia", "A guia é confirmada no sistema do INSS antes do pagamento."),
+            ),
         ],
     ),
     (
         "transportes",
-        "transito-demo",
-        "Instituto de Trânsito Austral",
-        "Banco Maré",
+        "inatter",
+        "INATTER — Instituto Nacional dos Transportes Terrestres",
         [
-            ("carta-renovacao", "Renovação de carta de condução", L3, FIXO, 120_000, [NOME, ANEXO_BI]),
-            ("multa", "Pagamento de multa", L2, CONSULTA, None, [REFERENCIA]),
-            ("taxa-circulacao", "Taxa de circulação", L2, CONSULTA, None, [MATRICULA]),
-            ("inspeccao", "Inspecção de veículo", L2, FIXO, 80_000, [MATRICULA]),
-        ],
-    ),
-    (
-        "servicos-basicos",
-        "energia-austral",
-        "Energia Austral",
-        "Banco Índico Comercial",
-        [
-            ("recarga", "Recarga de energia pré-paga", L1, ABERTO, None, [CONTADOR]),
-            ("fatura", "Fatura de electricidade pós-paga", L1, CONSULTA, None, [CONTRATO]),
-        ],
-    ),
-    (
-        "servicos-basicos",
-        "aguas-do-indico",
-        "Águas do Índico",
-        "Banco Maré",
-        [
-            ("fatura", "Fatura de água", L1, CONSULTA, None, [CONTRATO]),
-            ("ligacao", "Pedido de nova ligação", L3, FIXO, 350_000, [NOME, ANEXO_BI]),
-        ],
-    ),
-    (
-        "servicos-basicos",
-        "rede-acacia",
-        "Rede Acácia Telecom",
-        "Banco Horizonte",
-        [
-            ("internet", "Mensalidade de internet", L1, CONSULTA, None, [CONTRATO]),
-            ("tv", "Subscrição de TV", L1, CONSULTA, None, [CONTRATO]),
-            ("recarga-movel", "Recarga de telemóvel", L1, ABERTO, None, [f("numero", "Número", "phone")]),
-        ],
-    ),
-    (
-        "impostos",
-        "autoridade-fiscal-demo",
-        "Autoridade Fiscal",
-        "Banco Central (conta demo)",
-        [
-            ("iva", "IVA", L2, CONSULTA, None, [NUIT, REFERENCIA]),
-            ("irps", "IRPS", L2, CONSULTA, None, [NUIT, REFERENCIA]),
-            ("irpc", "IRPC", L2, CONSULTA, None, [NUIT, REFERENCIA]),
-            ("certidao-quitacao", "Certidão de quitação", L3, FIXO, 50_000, [NUIT]),
-        ],
-    ),
-    (
-        "impostos",
-        "licenciamento-demo",
-        "Balcão de Licenciamento Comercial",
-        "Banco Horizonte",
-        [
-            ("alvara", "Alvará comercial", L3, FIXO, 250_000, [NUIT, ANEXO_BI]),
-            ("taxa-administrativa", "Taxa administrativa", L2, ABERTO, None, [REFERENCIA]),
-        ],
-    ),
-    (
-        "educacao",
-        "universidade-baobab",
-        "Universidade Baobá",
-        "Banco Maré",
-        [
-            ("propina", "Propina mensal", L1, CONSULTA, None, [ESTUDANTE]),
-            ("inscricao", "Inscrição/matrícula", L2, FIXO, 150_000, [NOME]),
-            ("exame", "Taxa de exame de recurso", L2, FIXO, 50_000, [ESTUDANTE]),
-            ("certificado", "Pedido de certificado", L3, FIXO, 200_000, [ESTUDANTE, NOME]),
-        ],
-    ),
-    (
-        "educacao",
-        "escola-tecnica-limpopo",
-        "Escola Técnica do Vale",
-        "Banco Índico Comercial",
-        [
-            ("propina", "Propina trimestral", L1, CONSULTA, None, [ESTUDANTE]),
-            ("matricula", "Matrícula", L2, FIXO, 80_000, [NOME]),
-        ],
-    ),
-    (
-        "saude",
-        "hospital-central-demo",
-        "Hospital Central do Sol",
-        "Banco Horizonte",
-        [
-            ("consulta", "Consulta externa", L2, FIXO, 20_000, [NOME]),
-            ("exames", "Exames de diagnóstico", L2, CONSULTA, None, [REFERENCIA]),
-            ("internamento", "Taxa de internamento", L2, CONSULTA, None, [REFERENCIA]),
-        ],
-    ),
-    (
-        "saude",
-        "clinica-marula",
-        "Clínica Marula",
-        "Banco Maré",
-        [
-            ("consulta", "Consulta de especialidade", L2, FIXO, 250_000, [NOME]),
-            ("laboratorio", "Análises clínicas", L2, ABERTO, None, [REFERENCIA]),
+            (
+                "multas",
+                "Multas de trânsito",
+                L2,
+                CONSULTA,
+                None,
+                [MATRICULA],
+                conf(
+                    "inatter_multas",
+                    "Mostra todos os autos registados para a matrícula.",
+                    "Multas por pagar impedem a renovação da carta.",
+                ),
+            ),
         ],
     ),
     (
         "municipios",
-        "municipio-cidade-sol",
-        "Município da Cidade do Sol",
-        "Banco Índico Comercial",
+        "cmm",
+        "Conselho Municipal da Cidade de Maputo",
         [
-            ("taxa-mercado", "Taxa diária de mercado", L2, FIXO, 1_000, [f("banca", "N.º da banca")]),
-            ("licenca-vendedor", "Licença de vendedor", L3, FIXO, 60_000, [NOME, ANEXO_BI]),
-            ("recolha-lixo", "Taxa de recolha de lixo", L1, CONSULTA, None, [CONTRATO]),
-            ("licenca-construcao", "Licença de construção", L3, FIXO, 500_000, [NOME, ANEXO_BI]),
-            ("publicidade", "Licença de publicidade", L3, FIXO, 150_000, [NUIT]),
+            ("iav", "Imposto Autárquico de Veículos (IAV)", L2, CONSULTA, None, [MATRICULA], conf("iav")),
+            (
+                "ipra",
+                "Imposto Predial Autárquico (IPRA)",
+                L2,
+                CONSULTA,
+                None,
+                [f("artigo", "N.º do artigo matricial", pattern=r"^\d{3,10}$")],
+                conf("ipra"),
+            ),
+        ],
+    ),
+    (
+        "documentos",
+        "senami",
+        "SENAMI — Serviço Nacional de Migração",
+        [
+            (
+                "passaporte-normal",
+                "Passaporte — modalidade normal",
+                L3,
+                FIXO,
+                240_000,
+                [NOME, DATA_NASC, BI, f("anexo_bi", "Cópia do BI", "file")],
+                conf(
+                    None,
+                    "Taxa do Diploma Ministerial n.º 18/2024.",
+                    "Depois de pago, dirija-se ao posto indicado para a recolha biométrica.",
+                ),
+            ),
+            (
+                "passaporte-urgente",
+                "Passaporte — modalidade urgente",
+                L3,
+                FIXO,
+                277_500,
+                [NOME, DATA_NASC, BI, f("anexo_bi", "Cópia do BI", "file")],
+                conf(
+                    None,
+                    "Taxa do Diploma Ministerial n.º 18/2024.",
+                    "Depois de pago, dirija-se ao posto indicado para a recolha biométrica.",
+                ),
+            ),
+            (
+                "dire-cplp",
+                "DIRE — cidadãos da CPLP",
+                L3,
+                FIXO,
+                2_931_000,
+                [
+                    NOME,
+                    f("passaporte", "N.º do passaporte", pattern=r"^[0-9A-Za-z]{6,12}$"),
+                    f("anexo_passaporte", "Cópia do passaporte", "file"),
+                ],
+                conf(None, "Residência temporária, permanente ou vitalícia — Diploma Ministerial n.º 18/2024."),
+            ),
+        ],
+    ),
+    (
+        "educacao",
+        "uem",
+        "Universidade Eduardo Mondlane",
+        [
+            (
+                "propinas",
+                "Propinas",
+                L1,
+                CONSULTA,
+                None,
+                [f("n_estudante", "N.º de estudante", pattern=r"^\d{5,10}$")],
+                conf("uem_propinas", "Mostra as prestações em dívida, com multa se estiverem em atraso."),
+            ),
+        ],
+    ),
+    (
+        "saude",
+        "hcm",
+        "Hospital Central de Maputo",
+        [
+            (
+                "factura",
+                "Factura hospitalar",
+                L2,
+                CONSULTA,
+                None,
+                [f("factura", "N.º da factura", pattern=r"^\d{5,12}$")],
+                conf("hospital"),
+            ),
         ],
     ),
     (
         "outros",
-        "seguros-tchova",
-        "Seguros Tchova",
-        "Banco Maré",
+        "emose",
+        "EMOSE — Empresa Moçambicana de Seguros",
         [
-            ("auto", "Seguro automóvel", L1, CONSULTA, None, [f("apolice", "N.º de apólice")]),
-            ("saude", "Seguro de saúde", L1, CONSULTA, None, [f("apolice", "N.º de apólice")]),
-        ],
-    ),
-    (
-        "outros",
-        "bilheteira-xigubo",
-        "Bilheteira Xigubo",
-        "Banco Horizonte",
-        [
-            ("concerto", "Bilhete de concerto", L2, FIXO, 100_000, [NOME]),
-            ("autocarro", "Bilhete interprovincial", L2, ABERTO, None, [REFERENCIA]),
-            ("associacao", "Quota de associação", L2, FIXO, 50_000, [NOME]),
+            (
+                "premio",
+                "Prémio de seguro",
+                L1,
+                CONSULTA,
+                None,
+                [f("apolice", "N.º da apólice", pattern=r"^[0-9A-Za-z/-]{5,20}$")],
+                conf("apolice"),
+            ),
         ],
     ),
 ]

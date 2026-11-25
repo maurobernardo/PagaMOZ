@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, JetBrains_Mono, Manrope } from "next/font/google";
+import { PresenterFlag } from "@/components/presenter-flag";
 import { Toaster } from "@/components/toast";
 import "./globals.css";
 
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <a href="#conteudo" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[60] focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-white">
           Saltar para o conteúdo
         </a>
+        <PresenterFlag />
         <Toaster>{children}</Toaster>
       </body>
     </html>

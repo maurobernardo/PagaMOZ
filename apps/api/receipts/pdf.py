@@ -57,6 +57,8 @@ def render(content: dict, verify_url: str, demo: bool, compress: bool = True) ->
         ("Valor", mzn(content["valor"])),
         ("Comissão", f"{mzn(content['comissao'])} ({content['comissao_paga_por']})"),
     ]
+    if content.get("entrega"):
+        rows.append(tuple(content["entrega"]))
     y = H - 40 * mm
     for label, value in rows:
         c.setFont("Helvetica", 8.5)

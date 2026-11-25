@@ -961,6 +961,11 @@ export interface components {
             readonly error: string;
             readonly resolved: boolean;
         };
+        Delivery: {
+            titulo?: string;
+            codigo?: string;
+            instrucao?: string;
+        };
         Discrepancy: {
             readonly id: number;
             readonly kind: components["schemas"]["KindEnum"];
@@ -1407,6 +1412,7 @@ export interface components {
             readonly method: components["schemas"]["MethodEnum"];
             readonly instructions: string;
             readonly receipt_code: string | null;
+            readonly delivery: components["schemas"]["Delivery"];
             readonly failure_reason: string;
             /** Format: date-time */
             readonly created_at: string;
@@ -1522,10 +1528,18 @@ export interface components {
             success_rate_24h: number | null;
             pending: number;
         };
+        QuoteItem: {
+            titulo: string;
+            referencia: string;
+            detalhe: string;
+            valor: number;
+        };
         QuoteRequestRequest: {
             fields: {
                 [key: string]: string;
             };
+            /** @description Centavos, nos serviços de valor livre (ex.: Credelec). */
+            amount?: number;
         };
         QuoteResponse: {
             readonly id: string;
@@ -1533,6 +1547,8 @@ export interface components {
             amount: number;
             description: string;
             holder?: string;
+            details: string[][];
+            items: components["schemas"]["QuoteItem"][];
             /** Format: date-time */
             expires_at: string;
             commission: number;
@@ -1744,6 +1760,10 @@ export interface components {
             /** Máximo (centavos) */
             readonly max_amount: number | null;
             readonly fields: components["schemas"]["ServiceField"][];
+            /** @description Há consulta à instituição antes de pagar. */
+            readonly lookup: boolean;
+            /** @description Notas do processo (presencial, prazos…). */
+            readonly guide: string[];
         };
         Session: {
             phone: string;

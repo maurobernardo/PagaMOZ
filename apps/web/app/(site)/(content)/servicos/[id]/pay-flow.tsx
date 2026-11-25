@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  ArrowLeft, ArrowRight, BadgeCheck, Bookmark, CheckCircle2, ClipboardList, FileCheck2, FlaskConical, Lock, Pencil,
+  ArrowLeft, ArrowRight, BadgeCheck, Bookmark, CheckCircle2, CircleAlert, ClipboardList, FileCheck2, FlaskConical, Lock, Pencil,
   ReceiptText, Search, Share2, Upload, UserRound, Wallet,
 } from "lucide-react";
 import { MethodIcon } from "@/components/method-icon";
@@ -13,7 +13,8 @@ import { api, csrfToken, errorMessage, fieldErrors, newIdempotencyKey, type Serv
 import { formatMZN, isValidPhone, METHOD_LABEL, normalizePhone } from "@/lib/i18n";
 
 type Breakdown = { amount: number; commission: number; total: number; commission_payer: string };
-type Confirmed = Breakdown & { quote?: string; request?: string; holder?: string; description?: string };
+type Item = { titulo: string; referencia: string; detalhe: string; valor: number };
+type Confirmed = Breakdown & { quote?: string; request?: string; holder?: string; description?: string; details?: string[][]; items?: Item[] };
 type Step = "dados" | "confirmar" | "metodo";
 
 const WALLETS = ["mpesa", "emola", "mkesh"];
@@ -51,6 +52,14 @@ export function PayFlow({
   const [phone, setPhone] = useState("");
   const [scenario, setScenario] = useState("sucesso");
   const toast = useToast();
+  const [presenter, setPresenter] = useState(false);
+  useEffect(() => {
+    try {
+      setPresenter(sessionStorage.getItem("pagamoz-apresentador") === "1");
+    } catch {
+      setPresenter(false);
+    }
+  }, []);
   const idemKey = useRef<string>("");
   // Até o JS hidratar, o formulário faria um envio nativo e perderia o fluxo.
   const [ready, setReady] = useState(false);
@@ -85,10 +94,10 @@ export function PayFlow({
 
     setBusy(true);
     try {
-      if (s.pricing === "consulta") {
+      if (s.pricing === "consulta" || (s.lookup && s.pricing === "aberto")) {
         const r = await api.POST("/api/catalog/services/{id}/quote", {
           params: { path: { id: s.id } },
-          body: { fields: values },
+          body: { fields: values, ...(s.pricing === "aberto" ? { amount: cents } : {}) },
         });
         if (!r.data) return void (setErrors(fieldErrors(r.error)), setError(errorMessage(r.error)));
         setConfirmed({ ...r.data, quote: r.data.id });
@@ -134,11 +143,11 @@ export function PayFlow({
           service: s.id,
           method: method as never,
           fields: values,
-          amount: s.pricing === "aberto" ? confirmed.amount : undefined,
+          amount: s.pricing === "aberto" && !confirmed.quote ? confirmed.amount : undefined,
           quote: confirmed.quote,
           request: confirmed.request,
           payer_phone: WALLETS.includes(method) ? normalizePhone(phone) : undefined,
-          scenario: Object.keys(scenarios).length ? (scenario as never) : undefined,
+          scenario: presenter && Object.keys(scenarios).length ? (scenario as never) : undefined,
         },
       });
       if (!r.data) {
@@ -223,8 +232,8 @@ export function PayFlow({
               </div>
             ))}
             <Button type="submit" disabled={busy || !ready} className="w-full !min-h-12">
-              {s.pricing === "consulta" ? <Search className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
-              {busy ? "A consultar…" : s.pricing === "consulta" ? "Consultar valor" : "Continuar"}
+              {s.lookup ? <Search className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
+              {busy ? "A consultar…" : s.pricing === "consulta" ? "Consultar valor" : s.lookup ? "Verificar e continuar" : "Continuar"}
             </Button>
           </form>
         </Card>
@@ -237,6 +246,32 @@ export function PayFlow({
           <div className="mt-6 rounded-3xl border border-dashed border-ink/20 bg-canvas/70 p-5">
             {confirmed.holder ? (
               <p className="flex items-center gap-2 text-sm"><UserRound className="h-4 w-4 text-muted" /> Titular: <strong>{confirmed.holder}</strong></p>
+            ) : null}
+            {confirmed.details?.length ? (
+              <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2 rounded-2xl bg-white p-4 text-sm sm:grid-cols-2">
+                {confirmed.details.map(([k, v]) => (
+                  <div key={k} className={k === "Aviso" ? "sm:col-span-2" : ""}>
+                    <dt className="text-xs text-muted">{k}</dt>
+                    <dd className={`font-semibold ${k === "Aviso" ? "flex items-center gap-1.5 text-accent" : ""}`}>
+                      {k === "Aviso" ? <CircleAlert className="h-4 w-4 shrink-0" /> : null}{v}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            ) : null}
+            {confirmed.items?.length ? (
+              <ul className="mt-3 divide-y divide-line rounded-2xl bg-white">
+                {confirmed.items.map((it) => (
+                  <li key={it.referencia} className="flex items-center gap-3 px-4 py-3">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-canvas"><ReceiptText className="h-4 w-4" /></span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold">{it.titulo}</span>
+                      <span className="block truncate text-xs text-muted">{it.referencia} · {it.detalhe}</span>
+                    </span>
+                    <span className="shrink-0 font-display font-bold tabular-nums">{formatMZN(it.valor)}</span>
+                  </li>
+                ))}
+              </ul>
             ) : null}
             <dl className="mt-2 divide-y divide-line">
               <Row label="Valor do serviço">{formatMZN(confirmed.amount)}</Row>
@@ -281,9 +316,9 @@ export function PayFlow({
               <Field id="phone" label={`Número ${METHOD_LABEL[method]}`} type="tel" inputMode="tel" autoComplete="tel"
                 placeholder="84 123 4567" value={phone} error={errors.phone} onChange={(e) => setPhone(e.target.value)} />
             )}
-            {Object.keys(scenarios).length > 0 && (
+            {presenter && Object.keys(scenarios).length > 0 && (
               <div className="glass rounded-2xl p-4">
-                <label htmlFor="scenario" className="flex items-center gap-2 text-sm font-semibold"><FlaskConical className="h-4 w-4 text-accent" /> Cenário de demonstração</label>
+                <label htmlFor="scenario" className="flex items-center gap-2 text-sm font-semibold"><FlaskConical className="h-4 w-4 text-accent" /> Cenário de demonstração (modo apresentador)</label>
                 <select id="scenario" value={scenario} onChange={(e) => setScenario(e.target.value)}
                   className="mt-2 block min-h-11 w-full rounded-xl border border-line bg-white px-3 text-sm">
                   {Object.entries(scenarios).map(([k, d]) => <option key={k} value={k}>{k} — {d}</option>)}

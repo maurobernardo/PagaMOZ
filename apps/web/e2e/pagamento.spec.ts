@@ -1,8 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 async function openService(page: Page, search: string, name: RegExp) {
-  await page.goto("/");
-  await expect(page.getByText("AMBIENTE DE DEMONSTRAÇÃO")).toBeVisible();
+  await page.goto("/?apresentador=1"); // modo apresentador: permite escolher o cenário do simulador
   await page.getByRole("searchbox", { name: "Pesquisar serviço" }).fill(search);
   await page.getByRole("button", { name: "Pesquisar" }).click();
   await page.getByRole("link", { name }).first().click();
@@ -18,7 +17,7 @@ async function payWithMpesa(page: Page, scenario = "sucesso") {
 
 test("nível 1: consultar fatura, pagar com M-Pesa e ver confirmação", async ({ page }) => {
   await openService(page, "electricidade", /Fatura de electricidade/);
-  await page.getByLabel("N.º de contrato/cliente").fill("12345678");
+  await page.getByLabel("N.º de cliente").fill("12345678");
   await page.getByRole("button", { name: "Consultar valor" }).click();
 
   await expect(page.getByRole("heading", { name: "Confirme o valor" })).toBeVisible();
@@ -32,26 +31,28 @@ test("nível 1: consultar fatura, pagar com M-Pesa e ver confirmação", async (
 
 test("validação: contrato inválido não avança", async ({ page }) => {
   await openService(page, "água", /Fatura de água/);
-  await page.getByLabel("N.º de contrato/cliente").fill("12");
+  await page.getByLabel("N.º de cliente").fill("12");
   await page.getByRole("button", { name: "Consultar valor" }).click();
   await expect(page.getByText("Formato inválido.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Confirme o valor" })).toBeHidden();
 });
 
 test("pagamento recusado pelo provedor mostra falha e permite repetir", async ({ page }) => {
-  await openService(page, "inspecção", /Inspecção de veículo/);
-  await page.getByLabel("Matrícula do veículo").fill("AAA-123-MC");
-  await page.getByRole("button", { name: "Continuar" }).click();
+  await openService(page, "multas", /Multas de trânsito/);
+  await page.getByLabel("Matrícula do veículo").fill("AFG-123-MC");
+  await page.getByRole("button", { name: "Consultar valor" }).click();
+  await expect(page.getByText(/AUTO-\d{4}-\d{6}/).first()).toBeVisible();
   await payWithMpesa(page, "falha");
   await expect(page.getByRole("heading", { name: "Falhou" })).toBeVisible({ timeout: 20_000 });
   await expect(page.getByRole("link", { name: "Tentar de novo" })).toBeVisible();
 });
 
 test("nível 3: pedido com anexo, pagamento e acompanhamento", async ({ page }) => {
-  await openService(page, "nascimento", /Certidão de nascimento/);
-  await page.getByLabel("Nome completo").fill("Ana Demo");
+  await openService(page, "passaporte", /Passaporte — modalidade normal/);
+  await page.getByLabel("Nome completo (como no BI)").fill("Ana Machava");
   await page.getByLabel("Data de nascimento").fill("1990-01-01");
-  await page.getByLabel("Cópia do documento de identificação").setInputFiles({
+  await page.getByLabel("N.º do Bilhete de Identidade").fill("110100123456A");
+  await page.getByLabel("Cópia do BI").setInputFiles({
     name: "bi.pdf",
     mimeType: "application/pdf",
     buffer: Buffer.from("%PDF-1.4\n% demo\n"),
@@ -82,7 +83,7 @@ test("entrar com OTP, guardar na carteira e ver histórico", async ({ page }) =>
   await expect(page.getByRole("heading", { name: "A minha conta" })).toBeVisible();
 
   await openService(page, "água", /Fatura de água/);
-  await page.getByLabel("N.º de contrato/cliente").fill("7654321");
+  await page.getByLabel("N.º de cliente").fill("7654321");
   await page.getByRole("button", { name: "Consultar valor" }).click();
   await page.getByRole("button", { name: "Guardar" }).click();
   await expect(page.getByText("Guardado na sua carteira.")).toBeVisible();
@@ -96,11 +97,15 @@ test("entrar com OTP, guardar na carteira e ver histórico", async ({ page }) =>
 });
 
 test("comprovativo: descarregar PDF, verificar por código e detectar adulteração", async ({ page, request }) => {
-  await openService(page, "inspecção", /Inspecção de veículo/);
-  await page.getByLabel("Matrícula do veículo").fill("ABC-123-MP");
-  await page.getByRole("button", { name: "Continuar" }).click();
+  await openService(page, "Credelec", /Recarga de energia Credelec/);
+  await page.getByLabel("N.º do contador Credelec").fill("12345678901");
+  await page.getByLabel("Valor a pagar (MT)").fill("500");
+  await page.getByRole("button", { name: "Verificar e continuar" }).click();
+  await expect(page.getByText(/Titular: .\*+/)).toBeVisible();
   await payWithMpesa(page);
   await expect(page.getByRole("heading", { name: "Pagamento confirmado" })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText("Código de recarga Credelec")).toBeVisible();
+  await expect(page.getByText(/^(\d{4} ){4}\d{4}$/)).toBeVisible();
 
   const link = page.getByRole("link", { name: "Descarregar comprovativo (PDF)" });
   const pdf = await (await request.get((await link.getAttribute("href"))!)).body();

@@ -19,6 +19,8 @@ class Quote(models.Model):
     description = models.CharField(max_length=200)
     holder = models.CharField(max_length=80, blank=True)  # nome mascarado do titular
     external_ref = models.CharField(max_length=64, blank=True)
+    details = models.JSONField(default=list, blank=True)
+    items = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
     used_at = models.DateTimeField(null=True, blank=True)

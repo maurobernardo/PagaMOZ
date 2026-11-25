@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "./toast";
 
 export const GOOGLE_ERRORS: Record<string, string> = {
@@ -27,6 +27,11 @@ function GoogleG() {
 export function GoogleButton({ flow, next, dark = false }: { flow: "portal" | "cidadao"; next?: string; dark?: boolean }) {
   const toast = useToast();
   const [busy, setBusy] = useState(false);
+  // Só aparece quando o servidor tem credenciais Google configuradas: nada de botões que não funcionam.
+  const [enabled, setEnabled] = useState(false);
+  useEffect(() => {
+    fetch("/api/auth/google/status").then((r) => r.json()).then((d) => setEnabled(!!d.enabled), () => setEnabled(false));
+  }, []);
   async function go() {
     setBusy(true);
     const ok = await fetch("/api/auth/google/status").then((r) => r.json()).then((d) => d.enabled, () => false);
@@ -36,6 +41,7 @@ export function GoogleButton({ flow, next, dark = false }: { flow: "portal" | "c
     }
     location.href = `/api/auth/google/start?${new URLSearchParams({ flow, ...(next ? { next } : {}) })}`;
   }
+  if (!enabled) return null;
   return (
     <button type="button" onClick={go} disabled={busy}
       className={`frame inline-flex min-h-12 w-full items-center justify-center gap-3 rounded-full text-[15px] font-semibold transition active:scale-[0.98] disabled:opacity-60 ${dark ? "glass-dark text-white hover:bg-white/10" : "border border-line bg-white text-ink hover:border-ink/40"}`}>
@@ -44,7 +50,13 @@ export function GoogleButton({ flow, next, dark = false }: { flow: "portal" | "c
   );
 }
 
+/** Separador "ou": só faz sentido quando há outra forma de entrar (Google configurada). */
 export function OrDivider() {
+  const [enabled, setEnabled] = useState(false);
+  useEffect(() => {
+    fetch("/api/auth/google/status").then((r) => r.json()).then((d) => setEnabled(!!d.enabled), () => setEnabled(false));
+  }, []);
+  if (!enabled) return null;
   return (
     <div className="my-6 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.16em] text-muted">
       <span className="h-px flex-1 bg-line" /> ou <span className="h-px flex-1 bg-line" />

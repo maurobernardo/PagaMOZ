@@ -146,7 +146,7 @@ def test_seed_covers_all_categories_and_is_idempotent():
     for cat in Category.objects.all():
         assert cat.services.exists(), cat.slug
     for inst in Institution.objects.all():
-        assert 2 <= inst.services.count() <= 5, inst.slug
+        assert 1 <= inst.services.count() <= 5, inst.slug
         assert inst.is_demo
     assert set(Service.objects.values_list("integration_level", flat=True)) == {1, 2, 3}
     for s in Service.objects.filter(pricing="fixo"):

@@ -22,8 +22,8 @@
 
 Deixe três separadores abertos no portátil e um telemóvel ao lado:
 
-1. `http://localhost:3000` em modo telemóvel (F12, vista de dispositivo)
-2. `http://localhost:3000/portal`, já com login feito na **Bilheteira Xigubo**: telefone `840000015`, palavra-passe do `.env` e o código que aparece no ecrã
+1. `http://localhost:3000/?apresentador=1` em modo telemóvel (F12, vista de dispositivo). O parâmetro liga, só nesse browser, o selector de cenário do simulador.
+2. `http://localhost:3000/portal`, já com login feito na **EDM**: telefone `840000001`, palavra-passe do `.env` e o código que aparece no ecrã
 3. `http://localhost:3000/backoffice` (opcional, para perguntas de bancos)
 
 Teste o projector. A faixa amarela "AMBIENTE DE DEMONSTRAÇÃO" tem de se ver: é ela que diz à sala que nada aqui é dinheiro real.
@@ -38,14 +38,16 @@ Não se apresente ainda. Abra logo o telemóvel.
 
 ## 0:20 · O cidadão paga (90 s)
 
-No separador 1, pesquise **"electricidade"** e abra *Fatura de electricidade pós-paga*.
+No separador 1, pesquise **"Credelec"** e abra *Recarga de energia Credelec*.
 
-1. Contrato `12345678` e depois **Consultar valor**.
-   > "A plataforma pergunta ao sistema da instituição quanto se deve. O cidadão não escreve o valor; não há como pagar a menos."
+1. Contador `12345678901`, valor `500` e depois **Verificar e continuar**.
+   > "Antes de pagar, a plataforma confirma com a EDM de quem é o contador. Ninguém carrega energia no contador errado."
    Aponte para o titular mascarado: os dados pessoais não aparecem inteiros.
 2. **Continuar para pagamento**, escolha M-Pesa, número `84 123 4567` e cenário `sucesso`.
-3. **Pagar**. Aparece **Pagamento confirmado**.
-   > "Três ecrãs. Sem fila, sem papel."
+3. **Pagar**. Aparece **Pagamento confirmado** e, logo abaixo, o **código de recarga Credelec**.
+   > "Três ecrãs. O código chega no próprio telemóvel, pronto a introduzir no contador."
+
+   Para mostrar uma fatura com várias linhas, repita com *Fatura de água* (AdRMM), cliente `1234567`: aparecem as faturas em aberto, com período e vencimento.
 
 ## 1:50 · O comprovativo prova-se a si próprio (60 s)
 

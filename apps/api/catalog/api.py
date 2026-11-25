@@ -40,11 +40,20 @@ class ServicePublicSerializer(serializers.ModelSerializer):
     category = serializers.SlugRelatedField(slug_field="slug", read_only=True)
     fields = ServiceField(many=True, read_only=True)
 
+    lookup = serializers.SerializerMethodField(help_text="Há consulta à instituição antes de pagar.")
+    guide = serializers.SerializerMethodField(help_text="Notas do processo (presencial, prazos…).")
+
+    def get_lookup(self, obj) -> bool:
+        return obj.pricing == "consulta" or bool((obj.connector_config or {}).get("profile"))
+
+    def get_guide(self, obj) -> list[str]:
+        return list((obj.connector_config or {}).get("guide", []))
+
     class Meta:
         model = Service
         fields = [
             "id", "name", "slug", "description", "institution", "category", "integration_level",
-            "pricing", "amount", "min_amount", "max_amount", "fields",
+            "pricing", "amount", "min_amount", "max_amount", "fields", "lookup", "guide",
         ]  # fmt: skip
         read_only_fields = fields
 

@@ -173,7 +173,7 @@ def resolve_source(service, data: dict) -> dict:
         return {"amount": resolve_amount(service, data.get("amount")), "payload": req.form,
                 "description": service.name, "service_request": req}  # fmt: skip
 
-    if service.pricing == "consulta":
+    if service.pricing == "consulta" or (service.pricing == "aberto" and data.get("quote")):
         q = Quote.objects.select_for_update().filter(pk=data.get("quote", ""), service=service).first()
         if q is None or not q.is_valid:
             raise PaymentError("Consulta expirada ou inválida. Consulte o valor novamente.")

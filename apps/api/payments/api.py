@@ -34,18 +34,25 @@ class PaymentCreateSerializer(serializers.Serializer):
     request = serializers.CharField(required=False, help_text="Código do pedido (serviços de nível 3).")
 
 
+class DeliverySerializer(serializers.Serializer):
+    titulo = serializers.CharField(required=False)
+    codigo = serializers.CharField(required=False)
+    instrucao = serializers.CharField(required=False, allow_blank=True)
+
+
 class PaymentSerializer(serializers.ModelSerializer):
     service_name = serializers.CharField(source="service.name")
     institution_name = serializers.CharField(source="institution.name")
     instructions = serializers.SerializerMethodField()
     receipt_code = serializers.SerializerMethodField()
+    delivery = DeliverySerializer(read_only=True)
 
     class Meta:
         model = Transaction
         fields = [
             "reference", "status", "service", "service_name", "institution_name", "description",
             "amount", "commission", "commission_payer", "total", "institution_net", "currency",
-            "method", "instructions", "receipt_code", "failure_reason",
+            "method", "instructions", "receipt_code", "delivery", "failure_reason",
             "created_at", "expires_at", "confirmed_at", "settled_at",
         ]  # fmt: skip
         read_only_fields = fields

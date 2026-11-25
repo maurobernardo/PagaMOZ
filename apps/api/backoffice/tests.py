@@ -73,30 +73,30 @@ def test_overview_consistent(demo):
 
 def test_create_and_suspend_institution_audited(demo):
     c = staff()
-    r = c.post("/api/backoffice/institutions", {"name": "Nova Instituição", "slug": "nova-demo",
+    r = c.post("/api/backoffice/institutions", {"name": "Nova Instituição", "slug": "nova-instituicao",
                "nuit": "400123456", "settlement_bank": "Banco X", "settlement_account_masked": "0001 2345 6789",
                "commission_bps": 120, "commission_payer": "instituicao"}, format="json")  # fmt: skip
     assert r.status_code == 201, r.json()
     assert r.json()["settlement_account_masked"] == "****6789"  # nunca o número completo
     assert c.post("/api/backoffice/institutions", {"name": "X", "slug": "x", "nuit": "12"},
                   format="json").status_code == 400  # fmt: skip
-    r = c.patch("/api/backoffice/institutions/energia-austral", {"status": "suspensa"}, format="json")
+    r = c.patch("/api/backoffice/institutions/edm", {"status": "suspensa"}, format="json")
     assert r.json()["status"] == "suspensa"
     log = AuditLog.objects.get(action="institution.update")
     assert log.data["changes"]["status"] == ["activa", "suspensa"]
     assert AuditLog.objects.filter(action="institution.create").exists()
     # Suspensa: sai do catálogo público.
-    assert all(s["institution"]["slug"] != "energia-austral"
+    assert all(s["institution"]["slug"] != "edm"
                for s in APIClient().get("/api/catalog/services?page_size=500").json()["results"])  # fmt: skip
 
 
 def test_cross_institution_transactions_and_filter(demo):
     c = staff()
     all_ = c.get("/api/backoffice/transactions").json()["count"]
-    one = c.get("/api/backoffice/transactions?institution=energia-austral").json()
+    one = c.get("/api/backoffice/transactions?institution=edm").json()
     assert all_ == Transaction.objects.count()
-    assert one["count"] == Transaction.objects.filter(institution__slug="energia-austral").count() < all_
-    assert {t["institution_name"] for t in one["results"]} == {"Energia Austral"}
+    assert one["count"] == Transaction.objects.filter(institution__slug="edm").count() < all_
+    assert {t["institution_name"] for t in one["results"]} == {"EDM — Electricidade de Moçambique"}
 
 
 def test_dead_letter_retry_and_resolve(demo):
@@ -107,7 +107,7 @@ def test_dead_letter_retry_and_resolve(demo):
     assert len(c.get("/api/backoffice/dead-letters").json()["results"]) == 1
     assert c.post(f"/api/backoffice/dead-letters/{dl.id}", {"action": "retry"}, format="json").json()["resolved"]
     t.refresh_from_db()
-    assert t.institution_ref == f"SIM-ACK-{t.reference}"  # Celery eager: reenvio aconteceu
+    assert t.institution_ref and t.institution_notified_at  # Celery eager: reenvio aconteceu
     assert c.post(f"/api/backoffice/dead-letters/{dl.id}", {"action": "retry"}, format="json").status_code == 404
     assert AuditLog.objects.filter(action="deadletter.retry").exists()
 
@@ -120,7 +120,7 @@ def test_run_reconciliation_now(demo):
 
 
 def test_audit_filters(demo):
-    staff().patch("/api/backoffice/institutions/aguas-do-indico", {"commission_bps": 90}, format="json")
+    staff().patch("/api/backoffice/institutions/adrmm", {"commission_bps": 90}, format="json")
     r = staff().get("/api/backoffice/audit?action=institution.").json()["results"]
     assert r and all(e["action"].startswith("institution.") for e in r)
 

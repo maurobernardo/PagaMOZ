@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, CircleAlert, LayoutGrid, LifeBuoy, LogOut, Menu, X, type LucideIcon } from "lucide-react";
+import { Bell, CircleAlert, LayoutGrid, LogOut, Menu, X, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -74,9 +74,6 @@ export function AppShell({ nav, eyebrow, org, orgSub, userName, greeting, alerts
 
       <div className="space-y-1 border-t border-line pt-4">
         <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Outros</p>
-        <a href="mailto:suporte@pagamoz.example" className="flex min-h-11 items-center gap-3 rounded-2xl px-3 text-[15px] font-medium text-ink/70 hover:bg-canvas hover:text-ink">
-          <LifeBuoy className="h-[18px] w-[18px]" strokeWidth={1.8} /> Centro de ajuda
-        </a>
         <button onClick={onLogout} className="flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-[15px] font-medium text-ink/70 hover:bg-accent-soft hover:text-accent">
           <LogOut className="h-[18px] w-[18px]" strokeWidth={1.8} /> Sair
         </button>

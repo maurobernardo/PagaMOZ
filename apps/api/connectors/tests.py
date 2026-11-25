@@ -53,12 +53,12 @@ def portal(inst_slug, role="admin"):
 
 
 def test_level1_lookup_quote_pay_notify(django_capture_on_commit_callbacks):
-    s = svc("energia-austral", "fatura")
+    s = svc("edm", "fatura")
     c = APIClient()
-    q = c.post(f"/api/catalog/services/{s.id}/quote", {"fields": {"contrato": "12345678"}}, format="json")
+    q = c.post(f"/api/catalog/services/{s.id}/quote", {"fields": {"cliente": "12345678"}}, format="json")
     assert q.status_code == 201, q.json()
     q = q.json()
-    again = c.post(f"/api/catalog/services/{s.id}/quote", {"fields": {"contrato": "12345678"}}, format="json")
+    again = c.post(f"/api/catalog/services/{s.id}/quote", {"fields": {"cliente": "12345678"}}, format="json")
     assert again.json()["amount"] == q["amount"]  # determinístico
     assert "*" in q["holder"] and q["total"] >= q["amount"]
 
@@ -66,7 +66,8 @@ def test_level1_lookup_quote_pay_notify(django_capture_on_commit_callbacks):
     assert r.status_code == 201, r.json()
     t = Transaction.objects.get(reference=r.json()["reference"])
     assert t.status == "CONFIRMADA" and t.amount == q["amount"]
-    assert t.institution_ref == f"SIM-ACK-{t.reference}" and t.institution_notified_at
+    assert t.institution_ref.startswith("EDM-") and t.institution_notified_at
+    assert t.delivery["titulo"] == "Pagamento registado na instituição"
     assert trial_balance() == 0
 
     # Cotação é de uso único.
@@ -75,16 +76,16 @@ def test_level1_lookup_quote_pay_notify(django_capture_on_commit_callbacks):
 
 
 def test_level1_amount_cannot_be_forged():
-    s = svc("energia-austral", "fatura")
+    s = svc("edm", "fatura")
     r = APIClient().post("/api/payments", {"service": s.id, "method": "mpesa", "amount": 100, "fields": {
-        "contrato": "12345678"}}, format="json", HTTP_IDEMPOTENCY_KEY="forge-001")  # fmt: skip
+        "cliente": "12345678"}}, format="json", HTTP_IDEMPOTENCY_KEY="forge-001")  # fmt: skip
     assert r.status_code == 400
 
 
 def test_quote_expired_or_other_service():
-    s = svc("energia-austral", "fatura")
-    other = svc("aguas-do-indico", "fatura")
-    q = Quote.objects.create(service=s, payload={"contrato": "123456"}, amount=1000, description="x",
+    s = svc("edm", "fatura")
+    other = svc("adrmm", "fatura")
+    q = Quote.objects.create(service=s, payload={"cliente": "123456"}, amount=1000, description="x",
                              expires_at=timezone.now() - timedelta(seconds=1))  # fmt: skip
     c = APIClient()
     body = {"method": "mpesa", "quote": q.id}
@@ -96,14 +97,14 @@ def test_quote_expired_or_other_service():
 
 
 def test_lookup_not_found_and_unavailable():
-    s = svc("aguas-do-indico", "fatura")
+    s = svc("adrmm", "fatura")
     c = APIClient()
     url = f"/api/catalog/services/{s.id}/quote"
-    assert c.post(url, {"fields": {"contrato": "12340000"}}, format="json").status_code == 404
-    r = c.post(url, {"fields": {"contrato": "12349999"}}, format="json")
+    assert c.post(url, {"fields": {"cliente": "12340000"}}, format="json").status_code == 404
+    r = c.post(url, {"fields": {"cliente": "12349999"}}, format="json")
     assert r.status_code == 503 and r.headers["Retry-After"]
-    assert c.post(url, {"fields": {"contrato": "abc"}}, format="json").status_code == 400
-    fixed = svc("transito-demo", "inspeccao")
+    assert c.post(url, {"fields": {"cliente": "abc"}}, format="json").status_code == 400
+    fixed = svc("senami", "passaporte-normal")
     assert c.post(f"/api/catalog/services/{fixed.id}/quote", {"fields": {}}, format="json").status_code == 400
 
 
@@ -111,25 +112,26 @@ def test_lookup_not_found_and_unavailable():
 
 
 def test_level2_reference_payment(django_capture_on_commit_callbacks):
-    s = svc("transito-demo", "multa")
+    s = svc("inatter", "multas")
     c = APIClient()
-    q = c.post(f"/api/catalog/services/{s.id}/quote", {"fields": {"referencia": "MUL2026ABC1"}}, format="json").json()
+    q = c.post(f"/api/catalog/services/{s.id}/quote", {"fields": {"matricula": "AFG-123-MC"}}, format="json").json()
     r = pay(c, django_capture_on_commit_callbacks, "lvl2-0001", service=s.id, quote=q["id"], method="cartao")
     t = Transaction.objects.get(reference=r.json()["reference"])
-    assert t.status == "CONFIRMADA" and t.payload == {"referencia": "MUL2026ABC1"} and t.institution_notified_at
+    assert t.status == "CONFIRMADA" and t.payload == {"matricula": "AFG-123-MC"} and t.institution_notified_at
+    assert t.delivery["titulo"] == "Multas liquidadas"
 
 
 # ---------- Nível 3: pedido assistido ----------
 
 
 def create_request(c, s, files=None, **fields):
-    form = {"nome_completo": "Ana Demo", "data_nascimento": "1990-01-01", **fields}
+    form = {"nome_completo": "Ana Demo", "data_nascimento": "1990-01-01", "bi": "110100123456A", **fields}
     files = files if files is not None else {"anexo_bi": SimpleUploadedFile("bi.pdf", PDF, "application/pdf")}
     return c.post("/api/requests", {"service": s.id, "fields": json.dumps(form), **files}, format="multipart")
 
 
 def test_level3_request_pay_and_institution_workflow(django_capture_on_commit_callbacks):
-    s = svc("registo-civil-demo", "certidao-nascimento")
+    s = svc("senami", "passaporte-normal")
     c = APIClient()
     r = create_request(c, s)
     assert r.status_code == 201, r.json()
@@ -146,8 +148,8 @@ def test_level3_request_pay_and_institution_workflow(django_capture_on_commit_ca
     # Segundo pagamento do mesmo pedido é recusado.
     assert pay(c, django_capture_on_commit_callbacks, "lvl3-0002", service=s.id, request=code).status_code == 400
 
-    op = portal("registo-civil-demo", "operador")
-    base = f"/api/portal/registo-civil-demo/requests/{code}"
+    op = portal("senami", "operador")
+    base = f"/api/portal/senami/requests/{code}"
     d = op.get(base).json()
     assert d["form"]["nome_completo"] == "Ana Demo" and d["attachments"][0]["content_type"] == "application/pdf"
     dl = op.get(f"{base}/attachments/{d['attachments'][0]['id']}")
@@ -163,22 +165,22 @@ def test_level3_request_pay_and_institution_workflow(django_capture_on_commit_ca
 
 
 def test_level3_tenant_isolation_and_roles():
-    s = svc("registo-civil-demo", "certidao-nascimento")
+    s = svc("senami", "passaporte-normal")
     code = create_request(APIClient(), s).json()["code"]
-    outsider = portal("transito-demo")
-    assert outsider.get(f"/api/portal/registo-civil-demo/requests/{code}").status_code == 404
-    assert outsider.get(f"/api/portal/transito-demo/requests/{code}").status_code == 404
+    outsider = portal("inatter")
+    assert outsider.get(f"/api/portal/senami/requests/{code}").status_code == 404
+    assert outsider.get(f"/api/portal/inatter/requests/{code}").status_code == 404
     req = ServiceRequest.objects.get(code=code)
     att = req.attachments.get()
-    assert outsider.get(f"/api/portal/transito-demo/requests/{code}/attachments/{att.id}").status_code == 404
-    fin = portal("registo-civil-demo", "financeiro")
-    assert fin.get(f"/api/portal/registo-civil-demo/requests/{code}").status_code == 200
-    assert fin.post(f"/api/portal/registo-civil-demo/requests/{code}/status", {"status": "EM_ANALISE"},
+    assert outsider.get(f"/api/portal/inatter/requests/{code}/attachments/{att.id}").status_code == 404
+    fin = portal("senami", "financeiro")
+    assert fin.get(f"/api/portal/senami/requests/{code}").status_code == 200
+    assert fin.post(f"/api/portal/senami/requests/{code}/status", {"status": "EM_ANALISE"},
                     format="json").status_code == 403  # fmt: skip
 
 
 def test_level3_rejects_bad_files():
-    s = svc("registo-civil-demo", "certidao-nascimento")
+    s = svc("senami", "passaporte-normal")
     c = APIClient()
     fake = SimpleUploadedFile("bi.pdf", b"MZ\x90\x00 executavel", "application/pdf")
     assert create_request(c, s, files={"anexo_bi": fake}).status_code == 400
@@ -192,7 +194,7 @@ def test_level3_rejects_bad_files():
 
 
 def test_institution_notification_dead_letter(monkeypatch, django_capture_on_commit_callbacks):
-    s = svc("energia-austral", "recarga")
+    s = svc("edm", "credelec")
     from connectors.base import SimulatedConnector
 
     def down(self, txn):
@@ -209,11 +211,56 @@ def test_institution_notification_dead_letter(monkeypatch, django_capture_on_com
 
 def test_price_breakdown_before_paying():
     c = APIClient()
-    fixed = svc("transito-demo", "inspeccao")
+    fixed = svc("senami", "passaporte-normal")
     r = c.post(f"/api/catalog/services/{fixed.id}/price", {}, format="json").json()
     assert r["amount"] == fixed.amount and r["total"] >= r["amount"]
-    open_ = svc("energia-austral", "recarga")
+    open_ = svc("edm", "credelec")
     assert c.post(f"/api/catalog/services/{open_.id}/price", {}, format="json").status_code == 400
     assert (
         c.post(f"/api/catalog/services/{open_.id}/price", {"amount": 50_000}, format="json").json()["amount"] == 50_000
     )
+
+
+# ---------- Fluxos realistas por instituição ----------
+
+
+def test_credelec_quote_with_amount_then_recharge_code_on_receipt(django_capture_on_commit_callbacks):
+    import re
+
+    s = svc("edm", "credelec")
+    c = APIClient()
+    assert (
+        c.post(
+            f"/api/catalog/services/{s.id}/quote", {"fields": {"contador": "12345678901"}}, format="json"
+        ).status_code
+        == 400
+    )
+    q = c.post(f"/api/catalog/services/{s.id}/quote", {"fields": {"contador": "12345678901"}, "amount": 50_000},
+               format="json").json()  # fmt: skip
+    assert q["amount"] == 50_000 and "*" in q["holder"] and ["Contador", "12345678901"] in q["details"]
+    r = pay(c, django_capture_on_commit_callbacks, "credelec-01", service=s.id, quote=q["id"])
+    body = c.get(f"/api/payments/{r.json()['reference']}").json()
+    assert body["status"] == "CONFIRMADA"
+    assert body["delivery"]["titulo"] == "Código de recarga Credelec"
+    assert re.fullmatch(r"(\d{4} ){4}\d{4}", body["delivery"]["codigo"])
+    t = Transaction.objects.get(reference=body["reference"])
+    assert t.receipt.content["entrega"] == ["Código de recarga Credelec", body["delivery"]["codigo"]]
+
+
+def test_invoices_and_fines_are_itemised_and_total_matches():
+    c = APIClient()
+    cases = [
+        (svc("adrmm", "fatura"), {"cliente": "1234567"}),
+        (svc("inatter", "multas"), {"matricula": "AFG-123-MC"}),
+        (svc("uem", "propinas"), {"n_estudante": "20210345"}),
+    ]
+    for service, fields in cases:
+        q = c.post(f"/api/catalog/services/{service.id}/quote", {"fields": fields}, format="json").json()
+        assert q["items"] and q["amount"] == sum(i["valor"] for i in q["items"]), service.slug
+        again = c.post(f"/api/catalog/services/{service.id}/quote", {"fields": fields}, format="json").json()
+        assert again["items"] == q["items"]  # mesma referência, mesma resposta
+
+
+def test_real_fees_for_passport_from_ministerial_diploma():
+    assert svc("senami", "passaporte-normal").amount == 240_000
+    assert svc("senami", "passaporte-urgente").amount == 277_500

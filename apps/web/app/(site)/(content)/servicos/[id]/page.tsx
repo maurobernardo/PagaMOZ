@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ArrowLeft, Landmark, QrCode, Share2 } from "lucide-react";
+import { ArrowLeft, ChevronRight, Info, Landmark, QrCode, Share2 } from "lucide-react";
 import Link from "next/link";
 import { CategoryIcon } from "@/components/category-icon";
 import { notFound } from "next/navigation";
@@ -46,6 +46,14 @@ export default async function ServicePage({ params, searchParams }: Props) {
           {s.description ? <p className="mt-3 text-white/65">{s.description}</p> : null}
           <p className="mt-8 font-display text-3xl font-bold">{price}</p>
         </div>
+        {s.guide.length ? (
+          <div className="mt-5 rounded-3xl border border-line bg-white p-5">
+            <p className="flex items-center gap-2 text-sm font-bold"><Info className="h-4 w-4" /> Como funciona este serviço</p>
+            <ul className="mt-3 space-y-2 text-sm text-ink/80">
+              {s.guide.map((g) => <li key={g} className="flex gap-2"><ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-accent" />{g}</li>)}
+            </ul>
+          </div>
+        ) : null}
         <ul className="mt-5 grid gap-2 text-sm">
           {[
             [Landmark, "O valor vai directamente para a conta da instituição."],

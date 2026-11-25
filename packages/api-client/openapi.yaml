@@ -1890,6 +1890,15 @@ components:
       - kind
       - payload
       - resolved
+    Delivery:
+      type: object
+      properties:
+        titulo:
+          type: string
+        codigo:
+          type: string
+        instrucao:
+          type: string
     Discrepancy:
       type: object
       properties:
@@ -2854,6 +2863,10 @@ components:
           type: string
           nullable: true
           readOnly: true
+        delivery:
+          allOf:
+          - $ref: '#/components/schemas/Delivery'
+          readOnly: true
         failure_reason:
           type: string
           readOnly: true
@@ -2882,6 +2895,7 @@ components:
       - confirmed_at
       - created_at
       - currency
+      - delivery
       - description
       - expires_at
       - failure_reason
@@ -3151,6 +3165,22 @@ components:
       - pending
       - success_rate_24h
       - total_24h
+    QuoteItem:
+      type: object
+      properties:
+        titulo:
+          type: string
+        referencia:
+          type: string
+        detalhe:
+          type: string
+        valor:
+          type: integer
+      required:
+      - detalhe
+      - referencia
+      - titulo
+      - valor
     QuoteRequestRequest:
       type: object
       properties:
@@ -3158,6 +3188,10 @@ components:
           type: object
           additionalProperties:
             type: string
+        amount:
+          type: integer
+          minimum: 1
+          description: 'Centavos, nos serviços de valor livre (ex.: Credelec).'
       required:
       - fields
     QuoteResponse:
@@ -3177,6 +3211,16 @@ components:
         holder:
           type: string
           maxLength: 80
+        details:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuoteItem'
         expires_at:
           type: string
           format: date-time
@@ -3191,8 +3235,10 @@ components:
       - commission
       - commission_payer
       - description
+      - details
       - expires_at
       - id
+      - items
       - total
     Reconciliation:
       type: object
@@ -3683,14 +3729,26 @@ components:
           items:
             $ref: '#/components/schemas/ServiceField'
           readOnly: true
+        lookup:
+          type: boolean
+          readOnly: true
+          description: Há consulta à instituição antes de pagar.
+        guide:
+          type: array
+          items:
+            type: string
+          readOnly: true
+          description: Notas do processo (presencial, prazos…).
       required:
       - amount
       - category
       - description
       - fields
+      - guide
       - id
       - institution
       - integration_level
+      - lookup
       - max_amount
       - min_amount
       - name
