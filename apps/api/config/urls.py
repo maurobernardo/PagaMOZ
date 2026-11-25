@@ -25,6 +25,7 @@ from core.views import health
 from payments.api import (
     PaymentCreate,
     PaymentDetail,
+    PaymentQR,
     PortalBalances,
     PortalSettlements,
     Scenarios,
@@ -91,6 +92,7 @@ urlpatterns = [
     path("api/payments/<str:reference>", PaymentDetail.as_view(), name="payment-detail"),
     path("api/payments/<str:reference>/receipt.pdf", ReceiptPdf.as_view(), name="receipt-pdf"),
     path("api/payments/<str:reference>/3ds", ThreeDSVerify.as_view(), name="payment-3ds"),
+    path("api/payments/<str:reference>/qr.svg", PaymentQR.as_view(), name="payment-qr"),
     path("api/receipts/verify", VerifyByFile.as_view(), name="receipt-verify-file"),
     path("api/receipts/<str:code>", VerifyByCode.as_view(), name="receipt-verify"),
     path("api/webhooks/<str:method>", Webhook.as_view(), name="webhook"),

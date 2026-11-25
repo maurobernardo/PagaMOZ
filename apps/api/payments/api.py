@@ -6,7 +6,7 @@ from django.conf import settings
 from django.db import IntegrityError
 from django.db import transaction as db
 from django.db.models import Sum
-from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_field, inline_serializer
 from rest_framework import generics, permissions, serializers, status
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
@@ -66,7 +66,22 @@ class PaymentCreateSerializer(serializers.Serializer):
     def validate(self, attrs):
         if attrs["method"] == Method.CARD and not attrs.get("card"):
             raise serializers.ValidationError({"card": "Indique os dados do cartão."})
+        prefixes = WALLET_PREFIXES.get(attrs["method"])
+        phone = attrs.get("payer_phone", "")
+        if prefixes and phone and phone[4:6] not in prefixes:
+            raise serializers.ValidationError({"payer_phone": f"Use um número {'/'.join(prefixes)}."})
         return attrs
+
+
+# Prefixos de cada operadora: Vodacom (M-Pesa) 84/85, Movitel (e-Mola) 86/87, Tmcel (mKesh) 82/83.
+WALLET_PREFIXES = {Method.MPESA: ("84", "85"), Method.EMOLA: ("86", "87"), Method.MKESH: ("82", "83")}
+
+
+def bank_reference(txn) -> dict:
+    """Entidade da instituição + referência de 11 dígitos com controlo ISO 7064 mod 97-10."""
+    base = f"{int(txn.reference[3:], 36) % 10**9:09d}"
+    check = 98 - int(base + "00") % 97
+    return {"entidade": f"{20000 + txn.institution_id:05d}", "referencia": f"{base}{check:02d}", "valor": txn.amount}
 
 
 class DeliverySerializer(serializers.Serializer):
@@ -79,6 +94,7 @@ class PaymentSerializer(serializers.ModelSerializer):
     service_name = serializers.CharField(source="service.name")
     institution_name = serializers.CharField(source="institution.name")
     instructions = serializers.SerializerMethodField()
+    bank = serializers.SerializerMethodField()
     receipt_code = serializers.SerializerMethodField()
     next_action = serializers.SerializerMethodField(help_text='"3ds" quando o banco pede autenticação do cartão.')
     delivery = DeliverySerializer(read_only=True)
@@ -88,7 +104,7 @@ class PaymentSerializer(serializers.ModelSerializer):
         fields = [
             "reference", "status", "service", "service_name", "institution_name", "description",
             "amount", "commission", "commission_payer", "total", "institution_net", "currency",
-            "method", "card_brand", "card_last4", "next_action", "instructions", "receipt_code", "delivery",
+            "method", "card_brand", "card_last4", "next_action", "instructions", "bank", "receipt_code", "delivery",
             "failure_reason",
             "created_at", "expires_at", "confirmed_at", "settled_at",
         ]  # fmt: skip
@@ -100,6 +116,21 @@ class PaymentSerializer(serializers.ModelSerializer):
     def get_receipt_code(self, obj) -> str | None:
         r = getattr(obj, "receipt", None)  # OneToOne inverso: ausente -> None
         return r.display_code if r else None
+
+    @extend_schema_field(
+        {
+            "type": "object",
+            "nullable": True,
+            "properties": {
+                "entidade": {"type": "string"},
+                "referencia": {"type": "string"},
+                "valor": {"type": "integer"},
+            },
+            "required": ["entidade", "referencia", "valor"],
+        }
+    )
+    def get_bank(self, obj):
+        return bank_reference(obj) if obj.method == Method.BANK else None
 
     def get_instructions(self, obj) -> str:
         return INSTRUCTIONS[obj.method] if obj.status in (Status.CREATED, Status.PENDING) else ""
@@ -296,3 +327,25 @@ class ThreeDSVerify(APIView):
             get_provider(txn.method).schedule(txn, txn.provider_ref)  # autenticado: o adquirente autoriza
         txn.refresh_from_db()
         return Response(PaymentSerializer(txn).data)
+
+
+class PaymentQR(APIView):
+    """QR do pagamento (SVG): ao ler, abre a página de pagamento com o valor e a referência."""
+
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(responses={(200, "image/svg+xml"): bytes})
+    def get(self, request, reference):
+        from django.http import HttpResponse
+        from reportlab.graphics import renderSVG
+        from reportlab.graphics.barcode.qr import QrCodeWidget
+        from reportlab.graphics.shapes import Drawing
+
+        txn = generics.get_object_or_404(Transaction, reference=reference, method=Method.QR)
+        w = QrCodeWidget(
+            f"{settings.PUBLIC_WEB_URL.rstrip('/')}/pagamento/{txn.reference}?valor={txn.amount}", barLevel="M"
+        )
+        x0, y0, x1, y1 = w.getBounds()
+        d = Drawing(240, 240, transform=[240 / (x1 - x0), 0, 0, 240 / (y1 - y0), 0, 0])
+        d.add(w)
+        return HttpResponse(renderSVG.drawToString(d), content_type="image/svg+xml")

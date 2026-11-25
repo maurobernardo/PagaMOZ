@@ -7,7 +7,7 @@ import {
   ReceiptText, Search, Share2, Upload, UserRound, Wallet,
 } from "lucide-react";
 import { useCardForm } from "@/components/card-form";
-import { MethodIcon } from "@/components/method-icon";
+import { MethodIcon, WALLET_PREFIXES } from "@/components/method-icon";
 import { useToast } from "@/components/toast";
 import { Alert, Button, Card, Field, Row, Toolbar } from "@/components/ui";
 import { api, csrfToken, errorMessage, fieldErrors, newIdempotencyKey, type Service } from "@/lib/api";
@@ -138,7 +138,11 @@ export function PayFlow({
   async function pay(e: React.FormEvent) {
     e.preventDefault();
     if (!confirmed) return;
-    if (WALLETS.includes(method) && !isValidPhone(phone)) return setErrors({ phone: "Número inválido (ex.: 84 123 4567)." });
+    if (WALLETS.includes(method)) {
+      const pre = WALLET_PREFIXES[method] ?? [];
+      if (!isValidPhone(phone) || !pre.includes(normalizePhone(phone).slice(4, 6)))
+        return setErrors({ phone: `Use um número ${METHOD_LABEL[method]} começado por ${pre.join(" ou ")}.` });
+    }
     if (method === "cartao") {
       card.touch();
       if (!card.state.valid) return setError("Verifique os dados do cartão.");
@@ -352,7 +356,7 @@ export function PayFlow({
             {method === "cartao" ? card.ui : null}
             {isWallet && (
               <Field id="phone" label={`Número ${METHOD_LABEL[method]}`} type="tel" inputMode="tel" autoComplete="tel"
-                placeholder="84 123 4567" value={phone} error={errors.phone} onChange={(e) => setPhone(e.target.value)} />
+                placeholder={`${WALLET_PREFIXES[method]?.[0] ?? "84"} 123 4567`} hint={`Números ${WALLET_PREFIXES[method]?.join(" ou ")}`} value={phone} error={errors.phone} onChange={(e) => setPhone(e.target.value)} />
             )}
             {presenter && Object.keys(scenarios).length > 0 && (
               <div className="glass rounded-2xl p-4">

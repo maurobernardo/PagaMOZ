@@ -4,6 +4,7 @@ from datetime import timedelta
 
 import pytest
 from django.utils import timezone
+from rest_framework import serializers
 from rest_framework.test import APIClient
 
 from accounts.models import User
@@ -327,3 +328,23 @@ def test_card_three_wrong_codes_fail_payment(svc):
         r = APIClient().post(f"/api/payments/{body['reference']}/3ds", {"code": wrong}, format="json")
     assert "recusou" in r.json()["detail"]
     assert Transaction.objects.get(reference=body["reference"]).status == "FALHADA"
+
+
+def test_wallet_prefix_must_match_operator():
+    import pytest as pt
+
+    from payments.api import PaymentCreateSerializer
+
+    v = PaymentCreateSerializer().validate
+    with pt.raises(serializers.ValidationError):
+        v({"method": "emola", "payer_phone": "+258841234567"})
+    assert v({"method": "emola", "payer_phone": "+258861234567"})
+
+
+def test_bank_reference_has_valid_mod97_check():
+    from types import SimpleNamespace
+
+    from payments.api import bank_reference
+
+    b = bank_reference(SimpleNamespace(reference="PMZ7KQ2MXH4RT", institution_id=3, amount=1000))
+    assert b["entidade"] == "20003" and len(b["referencia"]) == 11 and int(b["referencia"]) % 97 == 1

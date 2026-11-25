@@ -524,6 +524,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/payments/{reference}/qr.svg": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description QR do pagamento (SVG): ao ler, abre a página de pagamento com o valor e a referência. */
+        get: operations["payments_qr.svg_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/payments/{reference}/receipt.pdf": {
         parameters: {
             query?: never;
@@ -1447,6 +1464,11 @@ export interface components {
             /** @description "3ds" quando o banco pede autenticação do cartão. */
             readonly next_action: string | null;
             readonly instructions: string;
+            readonly bank: {
+                entidade: string;
+                referencia: string;
+                valor: number;
+            } | null;
             readonly receipt_code: string | null;
             readonly delivery: components["schemas"]["Delivery"];
             readonly failure_reason: string;
@@ -2793,6 +2815,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Payment"];
+                };
+            };
+        };
+    };
+    "payments_qr.svg_retrieve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/svg+xml": string;
                 };
             };
         };

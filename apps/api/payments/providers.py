@@ -56,7 +56,7 @@ INSTRUCTIONS = {
     Method.EMOLA: "Confirme o pagamento com o seu PIN no telemóvel.",
     Method.MKESH: "Confirme o pagamento com o seu PIN no telemóvel.",
     Method.CARD: "Conclua a autenticação do cartão (3-D Secure).",
-    Method.BANK: "Pague no banco ou homebanking com a entidade 99999 e a referência indicada.",
+    Method.BANK: "Pague no balcão, ATM ou banca online (Pagamento de serviços) com a entidade e a referência.",
     Method.QR: "Leia o código QR com a app do seu banco ou carteira.",
 }
 

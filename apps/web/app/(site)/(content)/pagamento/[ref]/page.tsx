@@ -65,6 +65,34 @@ export default function PaymentStatus({ params }: { params: Promise<{ ref: strin
         <p className={`mt-6 font-display text-4xl font-bold tabular-nums ${ok ? "" : "text-ink"}`}>{formatMZN(p.total)}</p>
       </section>
 
+      {waiting && p.bank ? (
+        <section className="mt-6 rounded-[var(--radius-card)] border border-line bg-white p-6">
+          <h2 className="flex items-center gap-2 font-bold"><MethodIcon method="referencia_bancaria" className="!h-9 !w-9" /> Dados para pagar no banco</h2>
+          <p className="mt-1 text-sm text-muted">Balcão, ATM ou banca online, na opção Pagamento de serviços.</p>
+          <dl className="mt-5 grid gap-2 sm:grid-cols-3">
+            {[["Entidade", p.bank.entidade], ["Referência", p.bank.referencia.replace(/(\d{3})(?=\d)/g, "$1 ")], ["Montante", formatMZN(p.bank.valor)]].map(([l, v]) => (
+              <div key={l} className="rounded-2xl bg-canvas p-4">
+                <dt className="text-xs text-muted">{l}</dt>
+                <dd className="mt-1 flex items-center justify-between gap-2 font-mono text-lg font-bold">
+                  {v}
+                  <button type="button" aria-label={`Copiar ${l}`} className="frame-none rounded-lg p-1.5 hover:bg-white"
+                    onClick={() => { navigator.clipboard?.writeText(String(v).replace(/\s/g, "")); toast(`${l} copiada.`, "info"); }}><Copy className="h-4 w-4" /></button>
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ) : null}
+      {waiting && p.method === "qr" ? (
+        <section className="mt-6 flex flex-col items-center gap-4 rounded-[var(--radius-card)] border border-line bg-white p-6 text-center sm:flex-row sm:text-left">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={`/api/payments/${p.reference}/qr.svg`} alt={`QR do pagamento ${p.reference}`} width={180} height={180} className="rounded-2xl border border-line p-2" />
+          <div>
+            <h2 className="font-bold">Leia com a app do banco ou carteira</h2>
+            <p className="mt-1 text-sm text-muted">O QR leva o montante de {formatMZN(p.total)} e a referência {p.reference}. Fica válido enquanto o pagamento estiver pendente.</p>
+          </div>
+        </section>
+      ) : null}
       {p.next_action === "3ds" ? <ThreeDS p={p} onDone={(np) => { setP(np); toast("Autenticado pelo banco. A confirmar o pagamento…", "info"); }} /> : null}
 
       {ok && p.delivery?.codigo ? (

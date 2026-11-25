@@ -932,6 +932,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/Payment'
           description: ''
+  /api/payments/{reference}/qr.svg:
+    get:
+      operationId: payments_qr.svg_retrieve
+      description: 'QR do pagamento (SVG): ao ler, abre a página de pagamento com
+        o valor e a referência.'
+      parameters:
+      - in: path
+        name: reference
+        schema:
+          type: string
+        required: true
+      tags:
+      - payments
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            image/svg+xml:
+              schema:
+                type: string
+                format: binary
+          description: ''
   /api/payments/{reference}/receipt.pdf:
     get:
       operationId: payments_receipt.pdf_retrieve
@@ -2947,6 +2971,21 @@ components:
         instructions:
           type: string
           readOnly: true
+        bank:
+          type: object
+          nullable: true
+          properties:
+            entidade:
+              type: string
+            referencia:
+              type: string
+            valor:
+              type: integer
+          required:
+          - entidade
+          - referencia
+          - valor
+          readOnly: true
         receipt_code:
           type: string
           nullable: true
@@ -2978,6 +3017,7 @@ components:
           nullable: true
       required:
       - amount
+      - bank
       - card_brand
       - card_last4
       - commission
