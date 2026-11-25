@@ -50,6 +50,7 @@ class ServicePublicSerializer(serializers.ModelSerializer):
 
     lookup = serializers.SerializerMethodField(help_text="Há consulta à instituição antes de pagar.")
     guide = serializers.SerializerMethodField(help_text="Notas do processo (presencial, prazos…).")
+    group = serializers.SerializerMethodField(help_text="Assunto comum a várias opções (ex.: recarga por operadora).")
     variants = serializers.SerializerMethodField(help_text="Modalidades com preço próprio.")
 
     def get_lookup(self, obj) -> bool:
@@ -59,6 +60,15 @@ class ServicePublicSerializer(serializers.ModelSerializer):
     def get_variants(self, obj):
         return list((obj.connector_config or {}).get("variants", []))
 
+    @extend_schema_field({"type": "object", "nullable": True, "required": ["key", "title", "prompt", "option"],
+        "properties": {k: {"type": "string"} for k in ("key", "title", "prompt", "option")}})  # fmt: skip
+    def get_group(self, obj):
+        from .demo_data import GROUPS
+
+        cfg = obj.connector_config or {}
+        g = GROUPS.get(cfg.get("group", ""))
+        return {"key": cfg["group"], "title": g[0], "prompt": g[1], "option": cfg.get("option", "")} if g else None
+
     def get_guide(self, obj) -> list[str]:
         return list((obj.connector_config or {}).get("guide", []))
 
@@ -66,7 +76,7 @@ class ServicePublicSerializer(serializers.ModelSerializer):
         model = Service
         fields = [
             "id", "name", "slug", "description", "institution", "category", "integration_level",
-            "pricing", "amount", "min_amount", "max_amount", "fields", "lookup", "guide", "variants",
+            "pricing", "amount", "min_amount", "max_amount", "fields", "lookup", "guide", "variants", "group",
         ]  # fmt: skip
         read_only_fields = fields
 

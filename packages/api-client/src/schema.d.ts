@@ -1850,6 +1850,13 @@ export interface components {
             readonly guide: string[];
             /** @description Modalidades com preço próprio. */
             readonly variants: components["schemas"]["Variant"][];
+            /** @description Assunto comum a várias opções (ex.: recarga por operadora). */
+            readonly group: {
+                key: string;
+                title: string;
+                prompt: string;
+                option: string;
+            } | null;
         };
         Session: {
             phone: string;

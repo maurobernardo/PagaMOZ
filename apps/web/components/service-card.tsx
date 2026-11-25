@@ -1,4 +1,4 @@
-import { ArrowUpRight, Radio, Tag, Wallet } from "lucide-react";
+import { ArrowUpRight, ListChecks, Radio, Tag, Wallet } from "lucide-react";
 import Link from "next/link";
 import { CategoryIcon } from "@/components/category-icon";
 import type { Service } from "@/lib/api";
@@ -26,6 +26,34 @@ export function ServiceCard({ s }: { s: Service }) {
         <span className="mt-auto flex items-center justify-between gap-2 border-t border-line pt-4 text-sm">
           <span className="font-semibold">{price}</span>
           <span className="inline-flex items-center gap-1 font-semibold text-muted transition group-hover:text-ink">Pagar <ArrowUpRight className="h-4 w-4" /></span>
+        </span>
+      </Link>
+    </li>
+  );
+}
+
+/** Um cartão para vários serviços do mesmo assunto (ex.: recarga em qualquer operadora). */
+export function GroupCard({ s, options }: { s: Service; options: Service[] }) {
+  const g = s.group!;
+  return (
+    <li>
+      <Link href={`/servicos/grupo/${g.key}`}
+        className="group flex h-full flex-col rounded-[var(--radius-card)] border border-line bg-white p-5 transition duration-300 hover:-translate-y-1 hover:border-ink hover:shadow-2xl">
+        <div className="flex items-start justify-between gap-3">
+          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-canvas transition duration-300 group-hover:bg-ink group-hover:text-white">
+            <CategoryIcon slug={s.category} />
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-canvas px-2.5 py-1 text-[11px] font-semibold text-ink/70">
+            <ListChecks className="h-3.5 w-3.5" /> {options.length} opções
+          </span>
+        </div>
+        <span className="mt-6 font-display text-xl font-bold leading-snug">{g.title}</span>
+        <span className="mt-3 flex flex-wrap gap-1.5">
+          {options.map((o) => <span key={o.id} className="rounded-full border border-line px-2.5 py-0.5 text-xs font-semibold">{o.group?.option}</span>)}
+        </span>
+        <span className="mt-auto flex items-center justify-between gap-2 border-t border-line pt-4 text-sm">
+          <span className="font-semibold">{g.prompt}</span>
+          <span className="inline-flex items-center gap-1 font-semibold text-muted transition group-hover:text-ink">Escolher <ArrowUpRight className="h-4 w-4" /></span>
         </span>
       </Link>
     </li>

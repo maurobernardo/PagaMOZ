@@ -16,7 +16,9 @@ async function payWithMpesa(page: Page, scenario = "sucesso") {
 }
 
 test("nível 1: consultar fatura, pagar com M-Pesa e ver confirmação", async ({ page }) => {
-  await openService(page, "electricidade", /Fatura de electricidade/);
+  await openService(page, "electricidade", /Electricidade \(EDM\)/);
+  await expect(page).toHaveURL(/\/servicos\/grupo\/energia$/);
+  await page.getByRole("link", { name: /Fatura \(pós-pago\)/ }).click();
   await page.getByLabel("N.º de cliente").fill("12345678");
   await page.getByRole("button", { name: "Consultar valor" }).click();
 
@@ -98,7 +100,9 @@ test("entrar com OTP, guardar na carteira e ver histórico", async ({ page }) =>
 });
 
 test("comprovativo: descarregar PDF, verificar por código e detectar adulteração", async ({ page, request }) => {
-  await openService(page, "Credelec", /Recarga de energia Credelec/);
+  await openService(page, "Credelec", /Electricidade \(EDM\)/);
+  await expect(page).toHaveURL(/\/servicos\/grupo\/energia$/);
+  await page.getByRole("link", { name: /Credelec \(pré-pago\)/ }).click();
   await page.getByLabel("N.º do contador Credelec").fill("12345678901");
   await page.getByLabel("Valor a pagar (MT)").fill("500");
   await page.getByRole("button", { name: "Verificar e continuar" }).click();

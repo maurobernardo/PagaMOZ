@@ -3918,11 +3918,31 @@ components:
             $ref: '#/components/schemas/Variant'
           readOnly: true
           description: Modalidades com preço próprio.
+        group:
+          type: object
+          nullable: true
+          required:
+          - key
+          - title
+          - prompt
+          - option
+          properties:
+            key:
+              type: string
+            title:
+              type: string
+            prompt:
+              type: string
+            option:
+              type: string
+          readOnly: true
+          description: 'Assunto comum a várias opções (ex.: recarga por operadora).'
       required:
       - amount
       - category
       - description
       - fields
+      - group
       - guide
       - id
       - institution

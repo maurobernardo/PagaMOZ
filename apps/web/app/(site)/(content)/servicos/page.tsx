@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CategoryIcon } from "@/components/category-icon";
 import { Eyebrow } from "@/components/eyebrow";
-import { ServiceCard } from "@/components/service-card";
+import { GroupCard, ServiceCard } from "@/components/service-card";
 import { Empty } from "@/components/ui";
 import { api } from "@/lib/api";
 
@@ -66,7 +66,11 @@ export default async function Servicos({ searchParams }: { searchParams: Promise
           <Empty icon={<SearchX className="h-5 w-5" />} title="Nenhum serviço encontrado.">Experimente outra palavra ou veja todas as categorias.</Empty>
         ) : (
           <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {services.map((s) => <ServiceCard key={s.id} s={s} />)}
+            {services.map((s) => {
+              if (!s.group) return <ServiceCard key={s.id} s={s} />;
+              if (services.find((x) => x.group?.key === s.group!.key) !== s) return null; // um cartão por assunto
+              return <GroupCard key={s.group.key} s={s} options={services.filter((x) => x.group?.key === s.group!.key)} />;
+            })}
           </ul>
         )}
       </div>

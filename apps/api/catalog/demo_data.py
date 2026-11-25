@@ -29,6 +29,18 @@ def conf(profile, *guide):
     return {"profile": profile, "guide": list(guide)} if profile else {"guide": list(guide)}
 
 
+# Serviços do mesmo assunto aparecem num só cartão; o cidadão escolhe a opção (operadora, canal...).
+GROUPS = {
+    "recarga": ("Recarga de saldo", "Escolha a sua operadora"),
+    "tv": ("TV por assinatura", "Escolha o seu fornecedor"),
+    "energia": ("Electricidade (EDM)", "Escolha o tipo de contador"),
+}
+
+
+def grouped(cfg, group, option):
+    return {**cfg, "group": group, "option": option}
+
+
 CATEGORIES = [
     ("documentos", "Documentos e migração", "id-card", "Passaporte, DIRE e outros documentos"),
     ("transportes", "Transportes e trânsito", "car", "Multas e impostos sobre veículos"),
@@ -54,10 +66,14 @@ INSTITUTIONS = [
                 ABERTO,
                 None,
                 [f("contador", "N.º do contador Credelec", pattern=r"^\d{11,13}$")],
-                conf(
-                    "credelec",
-                    "Recebe o código de recarga logo após o pagamento.",
-                    "Introduza-o no teclado do contador.",
+                grouped(
+                    conf(
+                        "credelec",
+                        "Recebe o código de recarga logo após o pagamento.",
+                        "Introduza-o no teclado do contador.",
+                    ),
+                    "energia",
+                    "Credelec (pré-pago)",
                 ),
             ),
             (
@@ -67,7 +83,7 @@ INSTITUTIONS = [
                 CONSULTA,
                 None,
                 [f("cliente", "N.º de cliente", pattern=r"^\d{6,12}$")],
-                conf("edm_fatura", "São listadas todas as faturas em aberto."),
+                grouped(conf("edm_fatura", "São listadas todas as faturas em aberto."), "energia", "Fatura (pós-pago)"),
             ),
         ],
     ),
@@ -99,7 +115,7 @@ INSTITUTIONS = [
                 ABERTO,
                 None,
                 [f("numero", "Número Vodacom", "phone", pattern=r"^8[45]\d{7}$")],
-                conf("recarga"),
+                grouped(conf("recarga"), "recarga", "Vodacom"),
             ),
         ],
     ),
@@ -115,7 +131,7 @@ INSTITUTIONS = [
                 ABERTO,
                 None,
                 [f("numero", "Número Movitel", "phone", pattern=r"^8[67]\d{7}$")],
-                conf("recarga"),
+                grouped(conf("recarga"), "recarga", "Movitel"),
             ),
         ],
     ),
@@ -131,7 +147,7 @@ INSTITUTIONS = [
                 ABERTO,
                 None,
                 [f("numero", "Número Tmcel", "phone", pattern=r"^8[23]\d{7}$")],
-                conf("recarga"),
+                grouped(conf("recarga"), "recarga", "Tmcel"),
             ),
         ],
     ),
@@ -147,7 +163,7 @@ INSTITUTIONS = [
                 CONSULTA,
                 None,
                 [f("cliente", "N.º de cliente", pattern=r"^\d{6,12}$")],
-                conf("tv"),
+                grouped(conf("tv"), "tv", "TVCabo"),
             ),
         ],
     ),
@@ -163,7 +179,23 @@ INSTITUTIONS = [
                 CONSULTA,
                 None,
                 [f("smartcard", "N.º do smartcard", pattern=r"^\d{8,12}$")],
-                conf("tv"),
+                grouped(conf("tv"), "tv", "DStv"),
+            ),
+        ],
+    ),
+    (
+        "servicos-basicos",
+        "zap",
+        "ZAP Moçambique",
+        [
+            (
+                "mensalidade",
+                "Mensalidade ZAP",
+                L1,
+                CONSULTA,
+                None,
+                [f("smartcard", "N.º do cartão ZAP", pattern=r"^\d{8,12}$")],
+                grouped(conf("tv"), "tv", "ZAP"),
             ),
         ],
     ),

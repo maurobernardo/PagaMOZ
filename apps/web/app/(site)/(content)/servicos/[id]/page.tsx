@@ -32,8 +32,8 @@ export default async function ServicePage({ params, searchParams }: Props) {
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-12">
       <aside className="lg:sticky lg:top-28 lg:self-start">
         <div className="glass inline-flex rounded-full p-1.5">
-          <Link href={`/servicos?categoria=${s.category}`} className="inline-flex min-h-9 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold hover:bg-ink hover:text-white">
-            <ArrowLeft className="h-4 w-4" /> Voltar aos serviços
+          <Link href={s.group ? `/servicos/grupo/${s.group.key}` : `/servicos?categoria=${s.category}`} className="inline-flex min-h-9 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold hover:bg-ink hover:text-white">
+            <ArrowLeft className="h-4 w-4" /> {s.group ? `Mudar: ${s.group.prompt.replace(/^Escolha /, "")}` : "Voltar aos serviços"}
           </Link>
         </div>
         <div className="mt-6 rounded-[2rem] bg-ink p-7 text-white">

@@ -54,6 +54,10 @@ class Command(BaseCommand):
                     "is_demo": True,
                 },
             )
+            # Serviços que saíram do catálogo ficam inactivos (não se apagam: há pagamentos ligados).
+            Service.objects.filter(institution=inst).exclude(slug__in=[sv[0] for sv in services]).update(
+                is_active=False
+            )
             for s_slug, s_name, level, pricing, amount, fields, connector_config in services:
                 if connector_config.get("variants"):
                     opts = [{"key": v["key"], "label": v["label"]} for v in connector_config["variants"]]
@@ -71,6 +75,7 @@ class Command(BaseCommand):
                         "max_amount": 5_000_000 if pricing == "aberto" else None,
                         "fields": fields,
                         "connector_config": connector_config,
+                        "is_active": True,
                     },
                 )
                 n_services += 1
