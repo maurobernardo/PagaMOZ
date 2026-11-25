@@ -6,6 +6,7 @@ from rest_framework.routers import SimpleRouter
 
 from accounts import google
 from accounts.api import (
+    CsrfView,
     LogoutView,
     MfaSetupView,
     MfaVerifyView,
@@ -80,6 +81,7 @@ urlpatterns = [
     path("api/auth/otp/request", OtpRequestView.as_view(), name="otp-request"),
     path("api/auth/otp/verify", OtpVerifyView.as_view(), name="otp-verify"),
     path("api/auth/logout", LogoutView.as_view(), name="logout"),
+    path("api/auth/csrf", CsrfView.as_view(), name="csrf"),
     path("api/auth/portal/login", PortalLoginView.as_view(), name="portal-login"),
     path("api/auth/portal/pending", PortalPendingView.as_view(), name="portal-pending"),
     path("api/auth/google/status", google.status, name="google-status"),

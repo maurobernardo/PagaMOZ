@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/api/auth/csrf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Para a app móvel: devolve o token CSRF (também fica no cookie). */
+        get: operations["auth_csrf_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/logout": {
         parameters: {
             query?: never;
@@ -990,6 +1007,9 @@ export interface components {
          * @enum {string}
          */
         CommissionPayerEnum: "cidadao" | "instituicao";
+        Csrf: {
+            csrf: string;
+        };
         DLActionRequest: {
             action: components["schemas"]["ActionEnum"];
         };
@@ -1468,6 +1488,7 @@ export interface components {
             readonly service: number;
             service_name: string;
             institution_name: string;
+            readonly institution_slug: string;
             readonly description: string;
             readonly amount: number;
             readonly commission: number;
@@ -1956,6 +1977,25 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    auth_csrf_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Csrf"];
+                };
+            };
+        };
+    };
     auth_logout_create: {
         parameters: {
             query?: never;

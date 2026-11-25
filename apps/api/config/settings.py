@@ -2,6 +2,7 @@ from pathlib import Path
 
 import environ
 from celery.schedules import crontab
+from corsheaders.defaults import default_headers
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
@@ -127,9 +128,14 @@ MEDIA_ROOT = env("MEDIA_ROOT", default=str(BASE_DIR / "media_private"))
 DATA_UPLOAD_MAX_MEMORY_SIZE = 6 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 6 * 1024 * 1024
 
-CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:3000"])
+# 8081: a app móvel aberta na web (Expo) em desenvolvimento.
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:3000", "http://localhost:8081"])
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = (*default_headers, "idempotency-key")
 # A web chama a API pelo mesmo domínio (proxy /api do Next) -> cookies de sessão first-party.
-CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=["http://localhost:3000", "http://127.0.0.1:3000"])
+CSRF_TRUSTED_ORIGINS = env.list(
+    "CSRF_TRUSTED_ORIGINS", default=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8081"]
+)
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 14
 SESSION_COOKIE_SAMESITE = CSRF_COOKIE_SAMESITE = "Lax"
 

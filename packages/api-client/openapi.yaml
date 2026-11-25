@@ -4,6 +4,22 @@ info:
   version: 0.1.0
   description: 'Plataforma de pagamentos de serviços: protótipo de demonstração.'
 paths:
+  /api/auth/csrf:
+    get:
+      operationId: auth_csrf_retrieve
+      description: 'Para a app móvel: devolve o token CSRF (também fica no cookie).'
+      tags:
+      - auth
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Csrf'
+          description: ''
   /api/auth/logout:
     post:
       operationId: auth_logout_create
@@ -1935,6 +1951,13 @@ components:
       description: |-
         * `cidadao` - Cidadão
         * `instituicao` - Instituição
+    Csrf:
+      type: object
+      properties:
+        csrf:
+          type: string
+      required:
+      - csrf
     DLActionRequest:
       type: object
       properties:
@@ -2955,6 +2978,9 @@ components:
           type: string
         institution_name:
           type: string
+        institution_slug:
+          type: string
+          readOnly: true
         description:
           type: string
           readOnly: true
@@ -3054,6 +3080,7 @@ components:
       - failure_reason
       - institution_name
       - institution_net
+      - institution_slug
       - instructions
       - method
       - next_action

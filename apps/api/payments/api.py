@@ -93,6 +93,7 @@ class DeliverySerializer(serializers.Serializer):
 class PaymentSerializer(serializers.ModelSerializer):
     service_name = serializers.CharField(source="service.name")
     institution_name = serializers.CharField(source="institution.name")
+    institution_slug = serializers.CharField(source="institution.slug", read_only=True)
     instructions = serializers.SerializerMethodField()
     bank = serializers.SerializerMethodField()
     receipt_code = serializers.SerializerMethodField()
@@ -102,7 +103,7 @@ class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = [
-            "reference", "status", "service", "service_name", "institution_name", "description",
+            "reference", "status", "service", "service_name", "institution_name", "institution_slug", "description",
             "amount", "commission", "commission_payer", "total", "institution_net", "currency",
             "method", "card_brand", "card_last4", "next_action", "instructions", "bank", "receipt_code", "delivery",
             "failure_reason",

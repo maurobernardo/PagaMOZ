@@ -87,3 +87,8 @@ def test_otp_throttle_not_consumed_by_other_requests():
     for _ in range(15):
         c.get("/api/catalog/categories")
     assert c.post("/api/auth/otp/request", {"phone": "843333333"}, format="json").status_code == 201
+
+
+def test_csrf_endpoint_returns_token(client):
+    r = client.get("/api/auth/csrf")
+    assert r.status_code == 200 and len(r.json()["csrf"]) >= 32

@@ -277,3 +277,13 @@ class PortalPendingView(APIView):
         if user is None:
             return Response({"detail": "Sessão expirada. Entre de novo."}, status=401)
         return Response({"mfa_enrolled": user.mfa_enabled, **_demo_code(user)})
+
+
+class CsrfView(APIView):
+    """Para a app móvel: devolve o token CSRF (também fica no cookie)."""
+
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(responses=inline_serializer("Csrf", {"csrf": serializers.CharField()}))
+    def get(self, request):
+        return Response({"csrf": get_token(request)})
