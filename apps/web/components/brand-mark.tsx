@@ -14,7 +14,7 @@ export function BrandMark({ slug, name, size = 48, className = "" }: { slug: str
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img src={src} alt={name} style={box} className={`shrink-0 rounded-xl bg-white object-contain p-1 ${className}`}
-        onError={() => setSrc(src.endsWith(".svg") ? `/logos/${slug}.png` : null)} />
+        onError={() => setSrc(src.endsWith(".svg") ? `/logos/${slug}.png` : src.endsWith(".png") ? `/logos/${slug}.jpg` : null)} />
     );
   return (
     <span aria-label={name} role="img" style={box}
