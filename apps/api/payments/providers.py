@@ -73,7 +73,9 @@ class SimulatedProvider:
             # Como num adquirente real: o emissor pede autenticação 3-D Secure antes de autorizar.
             return Initiation(provider_ref=ref, instructions="Introduza o código 3-D Secure enviado pelo seu banco.",
                               challenge_code=f"{secrets.randbelow(10**6):06d}")  # fmt: skip
-        self.schedule(txn, ref)
+        if self.method not in (Method.BANK, Method.QR):
+            # Referência e QR esperam que o cidadão pague no banco/app: não há confirmação automática.
+            self.schedule(txn, ref)
         return Initiation(provider_ref=ref, instructions=INSTRUCTIONS[self.method])
 
     def schedule(self, txn, ref):

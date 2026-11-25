@@ -23,6 +23,7 @@ from connectors.api import ServicePrice, ServiceQuote
 from core.observability import metrics
 from core.views import health
 from payments.api import (
+    DemoSettle,
     PaymentCreate,
     PaymentDetail,
     PaymentQR,
@@ -93,6 +94,7 @@ urlpatterns = [
     path("api/payments/<str:reference>/receipt.pdf", ReceiptPdf.as_view(), name="receipt-pdf"),
     path("api/payments/<str:reference>/3ds", ThreeDSVerify.as_view(), name="payment-3ds"),
     path("api/payments/<str:reference>/qr.svg", PaymentQR.as_view(), name="payment-qr"),
+    path("api/payments/<str:reference>/simular", DemoSettle.as_view(), name="payment-demo-settle"),
     path("api/receipts/verify", VerifyByFile.as_view(), name="receipt-verify-file"),
     path("api/receipts/<str:code>", VerifyByCode.as_view(), name="receipt-verify"),
     path("api/webhooks/<str:method>", Webhook.as_view(), name="webhook"),

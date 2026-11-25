@@ -15,6 +15,8 @@ const WAITING = ["CRIADA", "PENDENTE"];
 export default function PaymentStatus({ params }: { params: Promise<{ ref: string }> }) {
   const { ref } = use(params);
   const toast = useToast();
+  const [presenter, setPresenter] = useState(false);
+  useEffect(() => { try { setPresenter(sessionStorage.getItem("pagamoz-apresentador") === "1"); } catch {} }, []);
   const [p, setP] = useState<Payment | null>(null);
   const [missing, setMissing] = useState(false);
 
@@ -92,6 +94,15 @@ export default function PaymentStatus({ params }: { params: Promise<{ ref: strin
             <p className="mt-1 text-sm text-muted">O QR leva o montante de {formatMZN(p.total)} e a referência {p.reference}. Fica válido enquanto o pagamento estiver pendente.</p>
           </div>
         </section>
+      ) : null}
+      {waiting && (p.bank || p.method === "qr") && presenter ? (
+        <button type="button" className="glass mt-4 inline-flex min-h-11 items-center gap-2 rounded-full px-5 text-sm font-semibold"
+          onClick={async () => {
+            const r = await api.POST("/api/payments/{reference}/simular", { params: { path: { reference: p.reference } } });
+            toast(r.data ? "Pagamento enviado pelo banco. A aguardar confirmação…" : "Não foi possível simular.", "info");
+          }}>
+          <KeyRound className="h-4 w-4 text-accent" /> Simular: {p.bank ? "pagar a referência no banco" : "ler o QR na app"} (modo apresentador)
+        </button>
       ) : null}
       {p.next_action === "3ds" ? <ThreeDS p={p} onDone={(np) => { setP(np); toast("Autenticado pelo banco. A confirmar o pagamento…", "info"); }} /> : null}
 

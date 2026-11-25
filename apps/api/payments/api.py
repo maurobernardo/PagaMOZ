@@ -349,3 +349,20 @@ class PaymentQR(APIView):
         d = Drawing(240, 240, transform=[240 / (x1 - x0), 0, 0, 240 / (y1 - y0), 0, 0])
         d.add(w)
         return HttpResponse(renderSVG.drawToString(d), content_type="image/svg+xml")
+
+
+class DemoSettle(APIView):
+    """Só em DEMO_MODE: simula o cidadão a pagar a referência no banco ou a ler o QR na app."""
+
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(request=None, responses=PaymentSerializer)
+    def post(self, request, reference):
+        if not settings.DEMO_MODE:
+            return Response(status=404)
+        txn = generics.get_object_or_404(Transaction, reference=reference, method__in=[Method.BANK, Method.QR])
+        if txn.status != Status.PENDING:
+            return Response({"detail": "Este pagamento já não está pendente."}, status=409)
+        with db.atomic():
+            get_provider(txn.method).schedule(txn, txn.provider_ref)
+        return Response(PaymentSerializer(txn).data)

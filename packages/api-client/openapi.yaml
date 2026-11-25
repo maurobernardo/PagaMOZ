@@ -980,6 +980,29 @@ paths:
                 type: string
                 format: binary
           description: ''
+  /api/payments/{reference}/simular:
+    post:
+      operationId: payments_simular_create
+      description: 'Só em DEMO_MODE: simula o cidadão a pagar a referência no banco
+        ou a ler o QR na app.'
+      parameters:
+      - in: path
+        name: reference
+        schema:
+          type: string
+        required: true
+      tags:
+      - payments
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
   /api/payments/scenarios:
     get:
       operationId: payments_scenarios_retrieve
