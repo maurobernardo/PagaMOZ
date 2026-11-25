@@ -1,7 +1,7 @@
 import { ArrowLeft, ArrowRight, ListChecks } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CategoryIcon } from "@/components/category-icon";
+import { BrandMark } from "@/components/brand-mark";
 import { Eyebrow } from "@/components/eyebrow";
 import { api } from "@/lib/api";
 import { formatMZN } from "@/lib/i18n";
@@ -30,9 +30,7 @@ export default async function Grupo({ params }: { params: Promise<{ key: string 
           <li key={s.id}>
             <Link href={`/servicos/${s.id}`}
               className="group flex min-h-20 items-center gap-4 rounded-[var(--radius-card)] border border-line bg-white p-5 transition hover:border-ink hover:shadow-xl">
-              <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-canvas transition group-hover:bg-ink group-hover:text-white">
-                <CategoryIcon slug={s.category} />
-              </span>
+              <BrandMark slug={s.institution.slug} name={s.group?.option ?? s.institution.name} size={56} className="!rounded-2xl" />
               <span className="min-w-0 flex-1">
                 <span className="block font-display text-2xl font-bold">{s.group?.option}</span>
                 <span className="block truncate text-sm text-muted">{s.institution.name === s.group?.option ? s.name : s.institution.name}{s.pricing === "fixo" && s.amount ? ` · ${formatMZN(s.amount)}` : ""}</span>

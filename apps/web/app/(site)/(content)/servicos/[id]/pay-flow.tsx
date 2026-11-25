@@ -7,6 +7,7 @@ import {
   ReceiptText, Search, Share2, Upload, UserRound, Wallet,
 } from "lucide-react";
 import { useCardForm } from "@/components/card-form";
+import { BrandMark } from "@/components/brand-mark";
 import { MethodIcon, WALLET_PREFIXES } from "@/components/method-icon";
 import { useToast } from "@/components/toast";
 import { Alert, Button, Card, Field, Row, Toolbar } from "@/components/ui";
@@ -356,7 +357,7 @@ export function PayFlow({
                   <label key={k}
                     className={`relative flex cursor-pointer flex-col gap-3 rounded-2xl border p-4 transition ${method === k ? "border-ink bg-ink text-white" : "border-line bg-white hover:border-ink/40"}`}>
                     <input type="radio" name="method" value={k} checked={method === k} onChange={() => setMethod(k)} className="sr-only" />
-                    <MethodIcon method={k} className={method === k ? "!bg-white/15 !text-white" : ""} />
+                    {WALLET_PREFIXES[k] ? <BrandMark slug={k} name={label} size={44} /> : <MethodIcon method={k} className={method === k ? "!bg-white/15 !text-white" : ""} />}
                     <span className="text-sm font-semibold leading-tight">{label}</span>
                     {method === k ? <CheckCircle2 className="absolute right-3 top-3 h-4 w-4" /> : null}
                   </label>

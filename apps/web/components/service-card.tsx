@@ -1,5 +1,8 @@
-import { ArrowUpRight, ListChecks, Radio, Tag, Wallet } from "lucide-react";
+import { ArrowUpRight, ListChecks, Radio, Smartphone, Tag, Tv, Wallet, Zap } from "lucide-react";
+
+const GROUP_ICON = { energia: Zap, tv: Tv, recarga: Smartphone } as const;
 import Link from "next/link";
+import { BrandMark } from "@/components/brand-mark";
 import { CategoryIcon } from "@/components/category-icon";
 import type { Service } from "@/lib/api";
 import { formatMZN } from "@/lib/i18n";
@@ -14,9 +17,7 @@ export function ServiceCard({ s }: { s: Service }) {
       <Link href={`/servicos/${s.id}`}
         className="group flex h-full flex-col rounded-[var(--radius-card)] border border-line bg-white p-5 transition duration-300 hover:-translate-y-1 hover:border-ink hover:shadow-2xl">
         <div className="flex items-start justify-between gap-3">
-          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-canvas transition duration-300 group-hover:bg-ink group-hover:text-white">
-            <CategoryIcon slug={s.category} />
-          </span>
+          <BrandMark slug={s.institution.slug} name={s.institution.name} size={48} className="!rounded-2xl" />
           <span className="inline-flex items-center gap-1.5 rounded-full bg-canvas px-2.5 py-1 text-[11px] font-semibold text-ink/70">
             <kind.icon className="h-3.5 w-3.5" /> {kind.label}
           </span>
@@ -40,16 +41,16 @@ export function GroupCard({ s, options }: { s: Service; options: Service[] }) {
       <Link href={`/servicos/grupo/${g.key}`}
         className="group flex h-full flex-col rounded-[var(--radius-card)] border border-line bg-white p-5 transition duration-300 hover:-translate-y-1 hover:border-ink hover:shadow-2xl">
         <div className="flex items-start justify-between gap-3">
-          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-canvas transition duration-300 group-hover:bg-ink group-hover:text-white">
-            <CategoryIcon slug={s.category} />
+          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-ink text-white">
+            {(() => { const I = GROUP_ICON[g.key as keyof typeof GROUP_ICON]; return I ? <I className="h-5 w-5" strokeWidth={1.8} /> : <CategoryIcon slug={s.category} />; })()}
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-canvas px-2.5 py-1 text-[11px] font-semibold text-ink/70">
             <ListChecks className="h-3.5 w-3.5" /> {options.length} opções
           </span>
         </div>
         <span className="mt-6 font-display text-xl font-bold leading-snug">{g.title}</span>
-        <span className="mt-3 flex flex-wrap gap-1.5">
-          {options.map((o) => <span key={o.id} className="rounded-full border border-line px-2.5 py-0.5 text-xs font-semibold">{o.group?.option}</span>)}
+        <span className="mb-5 mt-4 flex flex-wrap gap-2">
+          {options.map((o) => <span key={o.id} className="inline-flex items-center gap-2 rounded-full bg-ink py-1 pl-1 pr-3.5 text-sm font-semibold text-white"><BrandMark slug={o.institution.slug} name={o.group?.option ?? ""} size={26} className="!rounded-full !text-[10px]" />{o.group?.option}</span>)}
         </span>
         <span className="mt-auto flex items-center justify-between gap-2 border-t border-line pt-4 text-sm">
           <span className="font-semibold">{g.prompt}</span>
