@@ -245,7 +245,7 @@ export function PayFlow({
               </fieldset>
             ))}
             {textFields.map((f) => (
-              <Field key={f.name} id={f.name} label={f.label} required={f.required} error={errors[f.name]}
+              <Field key={f.name} id={f.name} label={f.label} required={f.required} error={errors[f.name]} hint={f.help}
                 type={f.type === "date" ? "date" : f.type === "phone" ? "tel" : "text"}
                 inputMode={f.pattern?.startsWith("^\\d") ? "numeric" : undefined}
                 value={values[f.name] ?? ""} onChange={(e) => setValues({ ...values, [f.name]: e.target.value })} />
@@ -254,6 +254,16 @@ export function PayFlow({
               <Field id="valor" label="Valor a pagar (MT)" inputMode="decimal" error={errors.valor}
                 hint={s.min_amount ? `Mínimo ${formatMZN(s.min_amount)}` : undefined}
                 value={amountMt} onChange={(e) => setAmountMt(e.target.value)} />
+            )}
+            {s.pricing === "aberto" && (
+              <div className="-mt-2 flex flex-wrap gap-2" aria-label="Valores rápidos">
+                {[50, 100, 200, 500, 1000].map((v) => (
+                  <button key={v} type="button" onClick={() => setAmountMt(String(v))}
+                    className={`frame-none min-h-11 rounded-full border px-4 text-sm font-semibold transition ${amountMt === String(v) ? "border-ink bg-ink text-white" : "border-line bg-white hover:border-ink"}`}>
+                    {v} MT
+                  </button>
+                ))}
+              </div>
             )}
             {fileFields.map((f) => (
               <div key={f.name}>

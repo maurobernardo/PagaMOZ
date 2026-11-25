@@ -3658,6 +3658,8 @@ components:
           default: true
         pattern:
           type: string
+        help:
+          type: string
         options:
           type: array
           items:
@@ -3685,6 +3687,8 @@ components:
           type: boolean
           default: true
         pattern:
+          type: string
+        help:
           type: string
         options:
           type: array

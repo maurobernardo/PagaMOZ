@@ -33,6 +33,7 @@ class ServiceField(serializers.Serializer):
     type = serializers.ChoiceField(["text", "number", "date", "phone", "file", "select"])
     required = serializers.BooleanField(default=True)
     pattern = serializers.CharField(required=False, allow_blank=True)
+    help = serializers.CharField(required=False, allow_blank=True)
     options = serializers.ListField(child=serializers.DictField(child=serializers.CharField()), required=False)
 
 

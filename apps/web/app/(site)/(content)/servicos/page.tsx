@@ -61,7 +61,26 @@ export default async function Servicos({ searchParams }: { searchParams: Promise
         </ul>
       </nav>
 
-      <div className="mt-8">
+      {!categoria && !q ? (
+        <section className="mt-8" aria-labelledby="o-que">
+          <h2 id="o-que" className="text-2xl font-bold">O que quer pagar?</h2>
+          <p className="mt-1 text-muted">Toque num assunto.</p>
+          <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {categories.map((c) => (
+              <li key={c.slug}>
+                <Link href={`/servicos?categoria=${c.slug}`}
+                  className="group flex h-full flex-col items-start gap-4 rounded-[var(--radius-card)] border border-line bg-white p-5 transition hover:-translate-y-1 hover:border-ink hover:shadow-xl">
+                  <span className="grid h-14 w-14 place-items-center rounded-2xl bg-ink text-white"><CategoryIcon slug={c.slug} className="h-7 w-7" /></span>
+                  <span className="font-display text-lg font-bold leading-tight">{c.name}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <h2 className="mt-12 text-2xl font-bold">Todos os serviços</h2>
+        </section>
+      ) : null}
+
+      <div className="mt-6">
         {services.length === 0 ? (
           <Empty icon={<SearchX className="h-5 w-5" />} title="Nenhum serviço encontrado.">Experimente outra palavra ou veja todas as categorias.</Empty>
         ) : (

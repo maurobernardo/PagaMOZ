@@ -1744,6 +1744,7 @@ export interface components {
             /** @default true */
             required: boolean;
             pattern?: string;
+            help?: string;
             options?: {
                 [key: string]: string;
             }[];
@@ -1755,6 +1756,7 @@ export interface components {
             /** @default true */
             required: boolean;
             pattern?: string;
+            help?: string;
             options?: {
                 [key: string]: string;
             }[];

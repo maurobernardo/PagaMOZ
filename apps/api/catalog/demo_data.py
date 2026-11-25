@@ -11,18 +11,30 @@ L1, L2, L3 = 1, 2, 3
 FIXO, CONSULTA, ABERTO = "fixo", "consulta", "aberto"
 
 
-def f(name, label, type="text", required=True, pattern=""):
+def f(name, label, type="text", required=True, pattern="", help=""):
     d = {"name": name, "label": label, "type": type, "required": required}
     if pattern:
         d["pattern"] = pattern
+    if help:
+        d["help"] = help  # "onde encontro isto?", em linguagem simples
     return d
 
 
-MATRICULA = f("matricula", "Matrícula do veículo", pattern=r"^[A-Za-z]{3}[- ]?\d{3}[- ]?[A-Za-z]{2}$")
-NUIT = f("nuit", "NUIT", pattern=r"^\d{9}$")
+MATRICULA = f(
+    "matricula",
+    "Matrícula do veículo",
+    pattern=r"^[A-Za-z]{3}[- ]?\d{3}[- ]?[A-Za-z]{2}$",
+    help="Está na chapa do carro e no livrete. Ex.: AFG-123-MC.",
+)
+NUIT = f("nuit", "NUIT", pattern=r"^\d{9}$", help="Número de 9 algarismos do cartão NUIT.")
 NOME = f("nome_completo", "Nome completo (como no BI)")
 DATA_NASC = f("data_nascimento", "Data de nascimento", "date")
-BI = f("bi", "N.º do Bilhete de Identidade", pattern=r"^[0-9A-Za-z]{8,14}$")
+BI = f(
+    "bi",
+    "N.º do Bilhete de Identidade",
+    pattern=r"^[0-9A-Za-z]{8,14}$",
+    help="Está na frente do BI, por baixo da fotografia.",
+)
 
 
 def conf(profile, *guide):
@@ -65,7 +77,14 @@ INSTITUTIONS = [
                 L1,
                 ABERTO,
                 None,
-                [f("contador", "N.º do contador Credelec", pattern=r"^\d{11,13}$")],
+                [
+                    f(
+                        "contador",
+                        "N.º do contador Credelec",
+                        pattern=r"^\d{11,13}$",
+                        help="Está escrito no contador e nos talões de recargas anteriores.",
+                    )
+                ],
                 grouped(
                     conf(
                         "credelec",
@@ -82,7 +101,7 @@ INSTITUTIONS = [
                 L1,
                 CONSULTA,
                 None,
-                [f("cliente", "N.º de cliente", pattern=r"^\d{6,12}$")],
+                [f("cliente", "N.º de cliente", pattern=r"^\d{6,12}$", help="Está no topo da última fatura.")],
                 grouped(conf("edm_fatura", "São listadas todas as faturas em aberto."), "energia", "Fatura (pós-pago)"),
             ),
         ],
@@ -98,7 +117,7 @@ INSTITUTIONS = [
                 L1,
                 CONSULTA,
                 None,
-                [f("cliente", "N.º de cliente", pattern=r"^\d{5,12}$")],
+                [f("cliente", "N.º de cliente", pattern=r"^\d{5,12}$", help="Está no topo da última fatura da água.")],
                 conf("agua_fatura", "Maputo, Matola, Boane e Marracuene."),
             ),
         ],
@@ -162,7 +181,7 @@ INSTITUTIONS = [
                 L1,
                 CONSULTA,
                 None,
-                [f("cliente", "N.º de cliente", pattern=r"^\d{6,12}$")],
+                [f("cliente", "N.º de cliente", pattern=r"^\d{6,12}$", help="Está no topo da última fatura.")],
                 grouped(conf("tv"), "tv", "TVCabo"),
             ),
         ],
@@ -178,7 +197,14 @@ INSTITUTIONS = [
                 L1,
                 CONSULTA,
                 None,
-                [f("smartcard", "N.º do smartcard", pattern=r"^\d{8,12}$")],
+                [
+                    f(
+                        "smartcard",
+                        "N.º do smartcard",
+                        pattern=r"^\d{8,12}$",
+                        help="Está no cartão dentro do descodificador.",
+                    )
+                ],
                 grouped(conf("tv"), "tv", "DStv"),
             ),
         ],
@@ -194,7 +220,14 @@ INSTITUTIONS = [
                 L1,
                 CONSULTA,
                 None,
-                [f("smartcard", "N.º do cartão ZAP", pattern=r"^\d{8,12}$")],
+                [
+                    f(
+                        "smartcard",
+                        "N.º do cartão ZAP",
+                        pattern=r"^\d{8,12}$",
+                        help="Está no cartão dentro do descodificador.",
+                    )
+                ],
                 grouped(conf("tv"), "tv", "ZAP"),
             ),
         ],
@@ -210,7 +243,10 @@ INSTITUTIONS = [
                 L2,
                 CONSULTA,
                 None,
-                [NUIT, f("referencia", "Referência da GARE", pattern=r"^\d{8,20}$")],
+                [
+                    NUIT,
+                    f("referencia", "Referência da GARE", pattern=r"^\d{8,20}$", help="Está impressa na guia GARE."),
+                ],
                 conf("at_gare", "Gere a GARE no e-Tributação e indique aqui a referência.", "IVA, IRPS, IRPC e ISPC."),
             ),
         ],
@@ -228,7 +264,7 @@ INSTITUTIONS = [
                 None,
                 [
                     f("nuit", "NUIT do contribuinte", pattern=r"^\d{9}$"),
-                    f("guia", "N.º da guia de pagamento", pattern=r"^\d{6,15}$"),
+                    f("guia", "N.º da guia de pagamento", pattern=r"^\d{6,15}$", help="Está no topo da guia do INSS."),
                 ],
                 conf("inss_guia", "A guia é confirmada no sistema do INSS antes do pagamento."),
             ),
@@ -327,7 +363,7 @@ INSTITUTIONS = [
                 L1,
                 CONSULTA,
                 None,
-                [f("n_estudante", "N.º de estudante", pattern=r"^\d{5,10}$")],
+                [f("n_estudante", "N.º de estudante", pattern=r"^\d{5,10}$", help="Está no cartão de estudante.")],
                 conf("uem_propinas", "Mostra as prestações em dívida, com multa se estiverem em atraso."),
             ),
         ],
@@ -343,7 +379,7 @@ INSTITUTIONS = [
                 L2,
                 CONSULTA,
                 None,
-                [f("factura", "N.º da factura", pattern=r"^\d{5,12}$")],
+                [f("factura", "N.º da factura", pattern=r"^\d{5,12}$", help="Está no topo da factura do hospital.")],
                 conf("hospital"),
             ),
         ],
@@ -359,7 +395,14 @@ INSTITUTIONS = [
                 L1,
                 CONSULTA,
                 None,
-                [f("apolice", "N.º da apólice", pattern=r"^[0-9A-Za-z/-]{5,20}$")],
+                [
+                    f(
+                        "apolice",
+                        "N.º da apólice",
+                        pattern=r"^[0-9A-Za-z/-]{5,20}$",
+                        help="Está no contrato ou no cartão do seguro.",
+                    )
+                ],
                 conf("apolice"),
             ),
         ],
