@@ -10,7 +10,7 @@ export function AuthFrame({ eyebrow, icon, title, sub, children, footer }: {
   return (
     <div className="flex min-h-dvh flex-col bg-canvas">
       <header className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-5 pt-6 sm:px-8">
-        <Link href="/" aria-label="PagaMOZ — início"><Logo /></Link>
+        <Link href="/" aria-label="PagaMOZ, início"><Logo /></Link>
         <div className="glass inline-flex rounded-full p-1.5">
           <Link href="/" className="inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold transition hover:bg-ink hover:text-white">
             <ArrowLeft className="h-4 w-4" /> Voltar ao site

@@ -52,7 +52,7 @@ export default function Dashboard() {
               <p className="mt-8 text-xs uppercase tracking-[0.16em] text-white/50">Creditado nos últimos 30 dias</p>
               <p className="mt-1 font-display text-3xl font-bold tabular-nums">{formatMZN(b.liquidado_30d)}</p>
               <div className="mt-6 flex items-end justify-between text-sm">
-                <span className="font-mono tracking-widest text-white/80">{acct || "—"}</span>
+                <span className="font-mono tracking-widest text-white/80">{acct || "-"}</span>
                 <span className="font-semibold">{bank}</span>
               </div>
             </div>

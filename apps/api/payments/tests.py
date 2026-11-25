@@ -280,3 +280,50 @@ def test_settlement_batch_and_portal(svc, django_capture_on_commit_callbacks):
     Membership.objects.create(user=u2, institution=other, role="admin")
     c.force_authenticate(u2)
     assert c.get("/api/portal/aguas/balances").status_code == 404
+
+
+# ---------- Cartão com 3-D Secure ----------
+
+CARD = {"token": "tok_" + "a1B2c3D4e5F6g7H8", "brand": "visa", "last4": "4242", "exp_month": 12, "exp_year": 2099,
+        "holder": "ANA MACHAVA"}  # fmt: skip
+
+
+def card_pay(svc, key, card=CARD, cb=None):
+    body = {"service": svc.id, "fields": {"contrato": "123456"}, "amount": 100_000, "method": "cartao", "card": card}
+    return APIClient().post("/api/payments", body, format="json", HTTP_IDEMPOTENCY_KEY=key)
+
+
+def test_card_never_accepts_full_number_or_cvv(svc):
+    r = card_pay(svc, "card-pan-01", card={**CARD, "number": "4242424242424242", "cvv": "123"})
+    assert r.status_code == 400 and "nunca" in str(r.json())
+    assert card_pay(svc, "card-exp-01", card={**CARD, "exp_year": 2020}).status_code == 400
+    no_card = {"service": svc.id, "fields": {"contrato": "123456"}, "amount": 1000, "method": "cartao"}
+    assert (
+        APIClient().post("/api/payments", no_card, format="json", HTTP_IDEMPOTENCY_KEY="card-none-1").status_code == 400
+    )
+
+
+def test_card_requires_3ds_then_confirms(svc, django_capture_on_commit_callbacks):
+    r = card_pay(svc, "card-3ds-01")
+    assert r.status_code == 201
+    body = r.json()
+    assert body["next_action"] == "3ds" and body["status"] == "PENDENTE" and body["card_last4"] == "4242"
+    ref, code = body["reference"], body["demo_3ds_code"]
+    c = APIClient()
+    wrong = "000000" if code != "000000" else "111111"
+    assert "Restam 2" in c.post(f"/api/payments/{ref}/3ds", {"code": wrong}, format="json").json()["detail"]
+    with django_capture_on_commit_callbacks(execute=True):
+        ok = c.post(f"/api/payments/{ref}/3ds", {"code": code}, format="json")
+    assert ok.status_code == 200
+    t = Transaction.objects.get(reference=ref)
+    assert t.status == "CONFIRMADA" and t.card_brand == "visa" and not t.three_ds_hash
+    assert c.post(f"/api/payments/{ref}/3ds", {"code": code}, format="json").status_code == 409
+
+
+def test_card_three_wrong_codes_fail_payment(svc):
+    body = card_pay(svc, "card-3ds-02").json()
+    wrong = "000000" if body["demo_3ds_code"] != "000000" else "111111"
+    for _ in range(3):
+        r = APIClient().post(f"/api/payments/{body['reference']}/3ds", {"code": wrong}, format="json")
+    assert "recusou" in r.json()["detail"]
+    assert Transaction.objects.get(reference=body["reference"]).status == "FALHADA"

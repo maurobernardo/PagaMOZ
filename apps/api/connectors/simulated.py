@@ -1,7 +1,7 @@
 """Perfis do conector simulado: imitam o que cada tipo de instituição devolve.
 
 Cada perfil é determinístico pelos dados introduzidos (a mesma referência dá sempre a mesma resposta),
-para a demonstração ser repetível. Valores e titulares são gerados — não são dados reais de ninguém.
+para a demonstração ser repetível. Valores e titulares são gerados: não são dados reais de ninguém.
 """
 
 import hashlib
@@ -113,7 +113,7 @@ def credelec(service, payload, amount):
     meter = payload.get("contador", "")
     return QuoteData(
         amount=amount,
-        description=f"Recarga Credelec — contador {meter}",
+        description=f"Recarga Credelec: contador {meter}",
         holder=mask(person(r)),
         details=[
             ["Contador", meter],
@@ -145,7 +145,7 @@ def faturas(prefix: str, lo: int, hi: int, label: str):
         ref = first_value(payload)
         return QuoteData(
             amount=total,
-            description=f"{label} — cliente {ref}",
+            description=f"{label}: cliente {ref}",
             holder=mask(person(r)),
             details=[["N.º de cliente", ref], ["Local de consumo", r.choice(BAIRROS)], ["Faturas em aberto", str(n)]],
             items=items,
@@ -163,7 +163,7 @@ def at_gare(service, payload, amount):
     valor = money(r, 1500, 85000, 5)
     return QuoteData(
         amount=valor,
-        description=f"{imposto} — período {MESES[periodo.month - 1]}/{periodo.year}",
+        description=f"{imposto}: período {MESES[periodo.month - 1]}/{periodo.year}",
         holder=mask(person(r)),
         details=[
             ["NUIT", payload.get("nuit", "")],
@@ -193,7 +193,7 @@ def inatter_multas(service, payload, amount):
         )
     return QuoteData(
         amount=sum(i["valor"] for i in items),
-        description=f"Multas de trânsito — {payload.get('matricula', '')}",
+        description=f"Multas de trânsito: {payload.get('matricula', '')}",
         holder=mask(person(r)),
         items=items,
         details=[
@@ -228,7 +228,7 @@ def iav(service, payload, amount):
     ano = timezone.localdate().year
     return QuoteData(
         amount=money(r, 800, 6500, 50),
-        description=f"IAV {ano} — {payload.get('matricula', '')}",
+        description=f"IAV {ano}: {payload.get('matricula', '')}",
         holder=mask(person(r)),
         details=[
             ["Matrícula", payload.get("matricula", "")],
@@ -244,7 +244,7 @@ def ipra(service, payload, amount):
     ano = timezone.localdate().year
     return QuoteData(
         amount=money(r, 1200, 30000, 10),
-        description=f"IPRA {ano} — artigo {payload.get('artigo', '')}",
+        description=f"IPRA {ano}: artigo {payload.get('artigo', '')}",
         holder=mask(person(r)),
         details=[["Artigo matricial", payload.get("artigo", "")], ["Bairro", r.choice(BAIRROS)], ["Ano", str(ano)]],
         external_ref=f"CMM{r.randint(10**7, 10**8 - 1)}",
@@ -269,7 +269,7 @@ def uem_propinas(service, payload, amount):
         )
     return QuoteData(
         amount=sum(i["valor"] for i in items),
-        description=f"Propinas — estudante {payload.get('n_estudante', '')}",
+        description=f"Propinas: estudante {payload.get('n_estudante', '')}",
         holder=mask(person(r)),
         items=items,
         details=[
@@ -287,7 +287,7 @@ def recarga(service, payload, amount):
     numero = payload.get("numero", "")
     return QuoteData(
         amount=amount,
-        description=f"Recarga {service.name.split()[-1]} — {numero}",
+        description=f"Recarga {service.name.split()[-1]}: {numero}",
         details=[["Número", numero], ["Saldo actual", "não divulgado pela operadora"]],
         external_ref=f"RC{r.randint(10**7, 10**8 - 1)}",
     )
@@ -302,7 +302,7 @@ def tv(service, payload, amount):
     venc = timezone.localdate().replace(day=1) + timedelta(days=r.randint(3, 27))
     return QuoteData(
         amount=v,
-        description=f"{service.name} — pacote {pacote}",
+        description=f"{service.name}: pacote {pacote}",
         holder=mask(person(r)),
         details=[["Cliente", first_value(payload)], ["Pacote", pacote], ["Renova até", venc.strftime("%d/%m/%Y")]],
         external_ref=f"TV{r.randint(10**7, 10**8 - 1)}",
@@ -313,7 +313,7 @@ def apolice(service, payload, amount):
     r = rng_for(service, payload)
     return QuoteData(
         amount=money(r, 900, 15000, 10),
-        description=f"Prémio de seguro — apólice {payload.get('apolice', '')}",
+        description=f"Prémio de seguro: apólice {payload.get('apolice', '')}",
         holder=mask(person(r)),
         details=[
             ["Apólice", payload.get("apolice", "")],

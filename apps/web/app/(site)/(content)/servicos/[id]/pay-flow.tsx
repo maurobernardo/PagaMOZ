@@ -6,6 +6,7 @@ import {
   ArrowLeft, ArrowRight, BadgeCheck, Bookmark, CheckCircle2, CircleAlert, ClipboardList, FileCheck2, FlaskConical, Lock, Pencil,
   ReceiptText, Search, Share2, Upload, UserRound, Wallet,
 } from "lucide-react";
+import { useCardForm } from "@/components/card-form";
 import { MethodIcon } from "@/components/method-icon";
 import { useToast } from "@/components/toast";
 import { Alert, Button, Card, Field, Row, Toolbar } from "@/components/ui";
@@ -35,12 +36,14 @@ export function PayFlow({
   scenarios: Record<string, string>;
 }) {
   const router = useRouter();
-  const textFields = s.fields.filter((f) => f.type !== "file");
+  const textFields = s.fields.filter((f) => f.type !== "file" && f.type !== "select");
+  const selectFields = s.fields.filter((f) => f.type === "select");
+  const card = useCardForm();
   const fileFields = s.fields.filter((f) => f.type === "file");
 
   const [step, setStep] = useState<Step>("dados");
   const [values, setValues] = useState<Record<string, string>>(() =>
-    Object.fromEntries(textFields.map((f) => [f.name, prefill[f.name] ?? ""])),
+    Object.fromEntries(s.fields.filter((f) => f.type !== "file").map((f) => [f.name, prefill[f.name] ?? (f.type === "select" ? s.variants[0]?.key ?? "" : "")])),
   );
   const [amountMt, setAmountMt] = useState(prefill.valor ?? "");
   const [files, setFiles] = useState<Record<string, File>>({});
@@ -109,13 +112,17 @@ export function PayFlow({
         const res = await fetch("/api/requests", { method: "POST", body: fd, headers: { "X-CSRFToken": csrfToken() } });
         const body = await res.json().catch(() => ({}));
         if (!res.ok) return void (setErrors(fieldErrors(body)), setError(errorMessage(body)));
-        const p = await api.POST("/api/catalog/services/{id}/price", { params: { path: { id: s.id } }, body: {} });
+        const p = await api.POST("/api/catalog/services/{id}/price", {
+          params: { path: { id: s.id } },
+          body: s.variants.length ? { variant: values.modalidade } : {},
+        });
         if (!p.data) return setError(errorMessage(p.error));
-        setConfirmed({ ...p.data, request: body.code, description: `Pedido ${body.code}` });
+        const v = s.variants.find((x) => x.key === values.modalidade);
+        setConfirmed({ ...p.data, request: body.code, description: `Pedido ${body.code}${v ? ` · modalidade ${v.label.toLowerCase()}` : ""}` });
       } else {
         const p = await api.POST("/api/catalog/services/{id}/price", {
           params: { path: { id: s.id } },
-          body: s.pricing === "aberto" ? { amount: cents } : {},
+          body: s.pricing === "aberto" ? { amount: cents } : s.variants.length ? { variant: values.modalidade } : {},
         });
         if (!p.data) return setError(errorMessage(p.error));
         setConfirmed({ ...p.data, description: s.name });
@@ -132,6 +139,10 @@ export function PayFlow({
     e.preventDefault();
     if (!confirmed) return;
     if (WALLETS.includes(method) && !isValidPhone(phone)) return setErrors({ phone: "Número inválido (ex.: 84 123 4567)." });
+    if (method === "cartao") {
+      card.touch();
+      if (!card.state.valid) return setError("Verifique os dados do cartão.");
+    }
     setErrors({});
     setError("");
     setBusy(true);
@@ -146,6 +157,7 @@ export function PayFlow({
           amount: s.pricing === "aberto" && !confirmed.quote ? confirmed.amount : undefined,
           quote: confirmed.quote,
           request: confirmed.request,
+          card: method === "cartao" && card.state.summary ? card.state.summary : undefined,
           payer_phone: WALLETS.includes(method) ? normalizePhone(phone) : undefined,
           scenario: presenter && Object.keys(scenarios).length ? (scenario as never) : undefined,
         },
@@ -153,6 +165,12 @@ export function PayFlow({
       if (!r.data) {
         idemKey.current = "";
         return setError(errorMessage(r.error));
+      }
+      const demo = (r.data as { demo_3ds_code?: string }).demo_3ds_code;
+      try {
+        if (demo) sessionStorage.setItem(`pagamoz-3ds:${r.data.reference}`, demo);
+      } catch {
+        /* sem armazenamento: o código de demonstração não aparece */
       }
       router.push(`/pagamento/${r.data.reference}`);
     } catch {
@@ -203,6 +221,25 @@ export function PayFlow({
       {step === "dados" && (
         <Card className="animate-rise">
           <form onSubmit={submitData} noValidate className="space-y-5">
+            {selectFields.map((f) => (
+              <fieldset key={f.name}>
+                <legend className="text-sm font-semibold">{f.label}</legend>
+                <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {s.variants.map((v) => (
+                    <label key={v.key}
+                      className={`flex cursor-pointer items-start justify-between gap-3 rounded-2xl border p-4 transition ${values[f.name] === v.key ? "border-ink bg-ink text-white" : "border-line bg-white hover:border-ink/40"}`}>
+                      <input type="radio" name={f.name} value={v.key} checked={values[f.name] === v.key} className="sr-only"
+                        onChange={() => setValues({ ...values, [f.name]: v.key })} />
+                      <span>
+                        <span className="block font-semibold">{v.label}</span>
+                        {v.hint ? <span className={`text-sm ${values[f.name] === v.key ? "text-white/65" : "text-muted"}`}>{v.hint}</span> : null}
+                      </span>
+                      <span className="shrink-0 font-display font-bold tabular-nums">{formatMZN(v.amount)}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            ))}
             {textFields.map((f) => (
               <Field key={f.name} id={f.name} label={f.label} required={f.required} error={errors[f.name]}
                 type={f.type === "date" ? "date" : f.type === "phone" ? "tel" : "text"}
@@ -312,6 +349,7 @@ export function PayFlow({
                 ))}
               </div>
             </fieldset>
+            {method === "cartao" ? card.ui : null}
             {isWallet && (
               <Field id="phone" label={`Número ${METHOD_LABEL[method]}`} type="tel" inputMode="tel" autoComplete="tel"
                 placeholder="84 123 4567" value={phone} error={errors.phone} onChange={(e) => setPhone(e.target.value)} />
@@ -321,7 +359,7 @@ export function PayFlow({
                 <label htmlFor="scenario" className="flex items-center gap-2 text-sm font-semibold"><FlaskConical className="h-4 w-4 text-accent" /> Cenário de demonstração (modo apresentador)</label>
                 <select id="scenario" value={scenario} onChange={(e) => setScenario(e.target.value)}
                   className="mt-2 block min-h-11 w-full rounded-xl border border-line bg-white px-3 text-sm">
-                  {Object.entries(scenarios).map(([k, d]) => <option key={k} value={k}>{k} — {d}</option>)}
+                  {Object.entries(scenarios).map(([k, d]) => <option key={k} value={k}>{k}: {d}</option>)}
                 </select>
               </div>
             )}

@@ -48,7 +48,8 @@ test("pagamento recusado pelo provedor mostra falha e permite repetir", async ({
 });
 
 test("nível 3: pedido com anexo, pagamento e acompanhamento", async ({ page }) => {
-  await openService(page, "passaporte", /Passaporte — modalidade normal/);
+  await openService(page, "passaporte", /Passaporte/);
+  await page.getByText("Urgente", { exact: true }).click();
   await page.getByLabel("Nome completo (como no BI)").fill("Ana Machava");
   await page.getByLabel("Data de nascimento").fill("1990-01-01");
   await page.getByLabel("N.º do Bilhete de Identidade").fill("110100123456A");
@@ -58,7 +59,7 @@ test("nível 3: pedido com anexo, pagamento e acompanhamento", async ({ page }) 
     buffer: Buffer.from("%PDF-1.4\n% demo\n"),
   });
   await page.getByRole("button", { name: "Continuar" }).click();
-  await expect(page.getByText(/Pedido PED[0-9A-Z]{10}/)).toBeVisible();
+  await expect(page.getByText(/Pedido PED[0-9A-Z]{10} · modalidade urgente/)).toBeVisible();
   const code = (await page.getByText(/Pedido PED/).innerText()).match(/PED[0-9A-Z]{10}/)![0];
 
   await payWithMpesa(page);

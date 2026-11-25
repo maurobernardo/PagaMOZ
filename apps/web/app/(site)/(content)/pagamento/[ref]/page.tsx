@@ -4,6 +4,7 @@ import { CheckCircle2, Clock3, Copy, Download, KeyRound, LayoutGrid, RotateCcw, 
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import { MethodIcon } from "@/components/method-icon";
+import { ThreeDS } from "@/components/three-ds";
 import { useToast } from "@/components/toast";
 import { Alert, Badge, Row, Skeleton } from "@/components/ui";
 import { api, type Payment } from "@/lib/api";
@@ -59,10 +60,12 @@ export default function PaymentStatus({ params }: { params: Promise<{ ref: strin
         </span>
         <h1 className="mt-5 text-3xl font-bold">{ok ? "Pagamento confirmado" : waiting ? "A aguardar confirmação" : st.label}</h1>
         <p className={`mx-auto mt-2 max-w-sm ${ok ? "text-white/65" : "text-muted"}`}>
-          {ok ? `${p.institution_name} recebeu o seu pagamento.` : waiting ? p.instructions : p.failure_reason || "O pagamento não foi concluído. Não foi cobrado."}
+          {ok ? `${p.institution_name} recebeu o seu pagamento.` : waiting && p.next_action === "3ds" ? "O seu banco pede confirmação do pagamento." : waiting ? p.instructions : p.failure_reason || "O pagamento não foi concluído. Não foi cobrado."}
         </p>
         <p className={`mt-6 font-display text-4xl font-bold tabular-nums ${ok ? "" : "text-ink"}`}>{formatMZN(p.total)}</p>
       </section>
+
+      {p.next_action === "3ds" ? <ThreeDS p={p} onDone={(np) => { setP(np); toast("Autenticado pelo banco. A confirmar o pagamento…", "info"); }} /> : null}
 
       {ok && p.delivery?.codigo ? (
         <section className="mt-4 rounded-[2rem] border-2 border-ink bg-white p-6 text-center">

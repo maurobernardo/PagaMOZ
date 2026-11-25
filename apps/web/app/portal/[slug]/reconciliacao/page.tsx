@@ -78,7 +78,7 @@ export default function Reconciliacao() {
                     <p className="font-mono text-xs text-muted">{i.reference || i.provider_ref}</p>
                     <p className="mt-1 text-sm">{i.detail}</p>
                     <p className="text-sm text-muted">
-                      Plataforma {i.platform_amount != null ? formatMZN(i.platform_amount) : "—"} · Provedor {i.provider_amount != null ? formatMZN(i.provider_amount) : "—"}
+                      Plataforma {i.platform_amount != null ? formatMZN(i.platform_amount) : "-"} · Provedor {i.provider_amount != null ? formatMZN(i.provider_amount) : "-"}
                     </p>
                     {i.resolution_note ? <p className="mt-1 text-sm italic text-muted">“{i.resolution_note}”</p> : null}
                   </div>

@@ -1,5 +1,5 @@
 from django.db.models import Count, Q
-from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_field, extend_schema_view
 from rest_framework import generics, mixins, permissions, serializers, viewsets
 
 from audit.models import record
@@ -30,9 +30,17 @@ class InstitutionPublicSerializer(serializers.ModelSerializer):
 class ServiceField(serializers.Serializer):
     name = serializers.SlugField()
     label = serializers.CharField(max_length=80)
-    type = serializers.ChoiceField(["text", "number", "date", "phone", "file"])
+    type = serializers.ChoiceField(["text", "number", "date", "phone", "file", "select"])
     required = serializers.BooleanField(default=True)
     pattern = serializers.CharField(required=False, allow_blank=True)
+    options = serializers.ListField(child=serializers.DictField(child=serializers.CharField()), required=False)
+
+
+class Variant(serializers.Serializer):
+    key = serializers.CharField()
+    label = serializers.CharField()
+    amount = serializers.IntegerField()
+    hint = serializers.CharField(required=False, allow_blank=True)
 
 
 class ServicePublicSerializer(serializers.ModelSerializer):
@@ -42,9 +50,14 @@ class ServicePublicSerializer(serializers.ModelSerializer):
 
     lookup = serializers.SerializerMethodField(help_text="Há consulta à instituição antes de pagar.")
     guide = serializers.SerializerMethodField(help_text="Notas do processo (presencial, prazos…).")
+    variants = serializers.SerializerMethodField(help_text="Modalidades com preço próprio.")
 
     def get_lookup(self, obj) -> bool:
         return obj.pricing == "consulta" or bool((obj.connector_config or {}).get("profile"))
+
+    @extend_schema_field(Variant(many=True))
+    def get_variants(self, obj):
+        return list((obj.connector_config or {}).get("variants", []))
 
     def get_guide(self, obj) -> list[str]:
         return list((obj.connector_config or {}).get("guide", []))
@@ -53,7 +66,7 @@ class ServicePublicSerializer(serializers.ModelSerializer):
         model = Service
         fields = [
             "id", "name", "slug", "description", "institution", "category", "integration_level",
-            "pricing", "amount", "min_amount", "max_amount", "fields", "lookup", "guide",
+            "pricing", "amount", "min_amount", "max_amount", "fields", "lookup", "guide", "variants",
         ]  # fmt: skip
         read_only_fields = fields
 

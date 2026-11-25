@@ -26,7 +26,7 @@ export default function Overview() {
         <Kpi label="Volume hoje" value={formatMZN(today.gross)} sub={`${today.count} pagamentos`} />
         <Kpi label="Volume 30 dias" value={formatMZN(month.gross)} sub={`${month.count} pagamentos`} />
         <Kpi label="Comissão 30 dias" value={formatMZN(d.commission_30d)} sub="receita da plataforma" />
-        <Kpi label="Taxa de sucesso 24h" value={d.success_rate_24h == null ? "—" : `${(d.success_rate_24h * 100).toFixed(1)}%`}
+        <Kpi label="Taxa de sucesso 24h" value={d.success_rate_24h == null ? "-" : `${(d.success_rate_24h * 100).toFixed(1)}%`}
           sub={`Em trânsito nos provedores: ${formatMZN(d.in_transit)}`} />
       </div>
 

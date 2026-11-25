@@ -1,7 +1,7 @@
 """Padrão de conectores: cada serviço fala com a instituição através de um ServiceConnector.
 
 Só o `SimulatedConnector` existe. Adaptadores reais entram em `connectors/adapters/<nome>.py`
-depois de haver documentação oficial da API da instituição — nunca endpoints inventados.
+depois de haver documentação oficial da API da instituição: nunca endpoints inventados.
 """
 
 import hashlib
@@ -86,7 +86,7 @@ class SimulatedConnector:
         amount -= amount % 100  # valores redondos ao metical
         holder = f"{FIRST[h % len(FIRST)]} {LAST[(h // 7) % len(LAST)]}"
         return QuoteData(
-            amount=max(amount, lo), description=f"{service.name} — {key.split('|')[-1]}",
+            amount=max(amount, lo), description=f"{service.name}: {key.split('|')[-1]}",
             holder=_mask(holder), external_ref=f"SIMREF{h % 10**8:08d}",
             valid_minutes=cfg.get("valid_minutes", 30),
         )  # fmt: skip

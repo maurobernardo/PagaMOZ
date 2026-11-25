@@ -26,6 +26,7 @@ SCENARIOS = {
 class Initiation:
     provider_ref: str
     instructions: str  # o que o cidadão tem de fazer (ex. confirmar PIN no telemóvel)
+    challenge_code: str = ""  # cartão: código 3-D Secure "enviado pelo banco emissor"
 
 
 class PaymentProvider(Protocol):
@@ -67,9 +68,18 @@ class SimulatedProvider:
         self.method = method
 
     def initiate(self, txn):
+        ref = f"SIM-{self.method[:3].upper()}-{secrets.token_hex(6)}"
+        if self.method == Method.CARD:
+            # Como num adquirente real: o emissor pede autenticação 3-D Secure antes de autorizar.
+            return Initiation(provider_ref=ref, instructions="Introduza o código 3-D Secure enviado pelo seu banco.",
+                              challenge_code=f"{secrets.randbelow(10**6):06d}")  # fmt: skip
+        self.schedule(txn, ref)
+        return Initiation(provider_ref=ref, instructions=INSTRUCTIONS[self.method])
+
+    def schedule(self, txn, ref):
+        """Agenda a resposta do provedor (webhook assinado) conforme o cenário."""
         from .tasks import deliver_simulated_webhook  # evita import circular
 
-        ref = f"SIM-{self.method[:3].upper()}-{secrets.token_hex(6)}"
         scenario = txn.demo_scenario or "sucesso"
         delay = {"sucesso": 3, "atraso": 30}.get(scenario, 2)
         if scenario != "timeout":
@@ -83,7 +93,6 @@ class SimulatedProvider:
             # Só depois do commit: a transacção já está PENDENTE quando o webhook chega.
             for e, d in events:
                 db.on_commit(lambda e=e, d=d: deliver_simulated_webhook.apply_async((self.method, e), countdown=d))
-        return Initiation(provider_ref=ref, instructions=INSTRUCTIONS[self.method])
 
     def check_status(self, txn):
         return None  # simulador só fala por webhook; reconciliação (Fase 6) usa o "ficheiro" do provedor

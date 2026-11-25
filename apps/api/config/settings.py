@@ -97,7 +97,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# Sem REDIS_URL, as tarefas Celery correm em linha (eager) — suficiente para dev local.
+# Sem REDIS_URL, as tarefas Celery correm em linha (eager): suficiente para dev local.
 REDIS_URL = env("REDIS_URL", default="")
 CELERY_BROKER_URL = REDIS_URL or "memory://"
 CELERY_RESULT_BACKEND = REDIS_URL or None
@@ -153,7 +153,7 @@ REST_FRAMEWORK = {
 }
 SPECTACULAR_SETTINGS = {
     "TITLE": "PagaMOZ API",
-    "DESCRIPTION": "Plataforma de pagamentos de serviços — protótipo de demonstração.",
+    "DESCRIPTION": "Plataforma de pagamentos de serviços: protótipo de demonstração.",
     "VERSION": "0.1.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,

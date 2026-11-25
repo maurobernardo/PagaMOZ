@@ -45,7 +45,7 @@ export default function Auditoria() {
                 <td className="px-3 py-2 whitespace-nowrap">{formatDateTime(e.created_at)}</td>
                 <td className="px-3 py-2 font-mono text-xs">{e.action}</td>
                 <td className="px-3 py-2">{e.actor_phone ?? "sistema"}</td>
-                <td className="px-3 py-2">{e.institution_name ?? "—"}</td>
+                <td className="px-3 py-2">{e.institution_name ?? "-"}</td>
                 <td className="px-3 py-2 text-xs">{e.target_type} {e.target_id}</td>
                 <td className="max-w-xs px-3 py-2 font-mono text-xs break-all text-muted">{JSON.stringify(e.data)}</td>
               </tr>

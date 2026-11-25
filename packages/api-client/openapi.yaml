@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: PagaMOZ API
   version: 0.1.0
-  description: Plataforma de pagamentos de serviços — protótipo de demonstração.
+  description: 'Plataforma de pagamentos de serviços: protótipo de demonstração.'
 paths:
   /api/auth/logout:
     post:
@@ -557,8 +557,8 @@ paths:
   /api/catalog/services/{id}/price:
     post:
       operationId: catalog_services_price_create
-      description: Decomposição do valor (comissão, total) antes de pagar — serviços
-        de valor fixo ou aberto.
+      description: 'Decomposição do valor (comissão, total) antes de pagar: serviços
+        de valor fixo ou aberto.'
       parameters:
       - in: path
         name: id
@@ -887,6 +887,41 @@ paths:
         required: true
       tags:
       - payments
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+  /api/payments/{reference}/3ds:
+    post:
+      operationId: payments_3ds_create
+      description: Confirma o código 3-D Secure. Três tentativas erradas recusam o
+        pagamento, como num emissor real.
+      parameters:
+      - in: path
+        name: reference
+        schema:
+          type: string
+        required: true
+      tags:
+      - payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThreeDSRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ThreeDSRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ThreeDSRequestRequest'
+        required: true
       security:
       - cookieAuth: []
       - {}
@@ -1770,6 +1805,48 @@ components:
     BlankEnum:
       enum:
       - ''
+    BrandEnum:
+      enum:
+      - visa
+      - mastercard
+      type: string
+      description: |-
+        * `visa` - visa
+        * `mastercard` - mastercard
+    CardSummaryRequest:
+      type: object
+      description: 'O que o browser envia depois de tokenizar: nunca o número completo
+        nem o CVV.'
+      properties:
+        token:
+          type: string
+          minLength: 1
+          pattern: ^tok_[A-Za-z0-9]{16,40}$
+        brand:
+          $ref: '#/components/schemas/BrandEnum'
+        last4:
+          type: string
+          minLength: 1
+          pattern: ^\d{4}$
+        exp_month:
+          type: integer
+          maximum: 12
+          minimum: 1
+        exp_year:
+          type: integer
+          maximum: 2100
+          minimum: 2000
+        holder:
+          type: string
+          minLength: 1
+          maxLength: 60
+      required:
+      - brand
+      - exp_month
+      - exp_year
+      - holder
+      - last4
+      - token
     Category:
       type: object
       properties:
@@ -2856,6 +2933,17 @@ components:
           allOf:
           - $ref: '#/components/schemas/MethodEnum'
           readOnly: true
+        card_brand:
+          type: string
+          readOnly: true
+        card_last4:
+          type: string
+          readOnly: true
+        next_action:
+          type: string
+          nullable: true
+          readOnly: true
+          description: '"3ds" quando o banco pede autenticação do cartão.'
         instructions:
           type: string
           readOnly: true
@@ -2890,6 +2978,8 @@ components:
           nullable: true
       required:
       - amount
+      - card_brand
+      - card_last4
       - commission
       - commission_payer
       - confirmed_at
@@ -2903,6 +2993,7 @@ components:
       - institution_net
       - instructions
       - method
+      - next_action
       - receipt_code
       - reference
       - service
@@ -2951,6 +3042,8 @@ components:
           type: string
           minLength: 1
           description: Código do pedido (serviços de nível 3).
+        card:
+          $ref: '#/components/schemas/CardSummaryRequest'
       required:
       - method
       - service
@@ -3112,6 +3205,10 @@ components:
         amount:
           type: integer
           minimum: 1
+        variant:
+          type: string
+          minLength: 1
+          description: 'Modalidade escolhida (ex.: normal, urgente).'
     PriceResponse:
       type: object
       properties:
@@ -3498,6 +3595,12 @@ components:
           default: true
         pattern:
           type: string
+        options:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
       required:
       - label
       - name
@@ -3520,6 +3623,13 @@ components:
           default: true
         pattern:
           type: string
+        options:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
+              minLength: 1
       required:
       - label
       - name
@@ -3739,6 +3849,12 @@ components:
             type: string
           readOnly: true
           description: Notas do processo (presencial, prazos…).
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/Variant'
+          readOnly: true
+          description: Modalidades com preço próprio.
       required:
       - amount
       - category
@@ -3754,6 +3870,7 @@ components:
       - name
       - pricing
       - slug
+      - variants
     Session:
       type: object
       properties:
@@ -3903,6 +4020,15 @@ components:
           maxLength: 500
       required:
       - status
+    ThreeDSRequestRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          pattern: ^\d{6}$
+      required:
+      - code
     TypeEnum:
       enum:
       - text
@@ -3910,6 +4036,7 @@ components:
       - date
       - phone
       - file
+      - select
       type: string
       description: |-
         * `text` - text
@@ -3917,6 +4044,22 @@ components:
         * `date` - date
         * `phone` - phone
         * `file` - file
+        * `select` - select
+    Variant:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        amount:
+          type: integer
+        hint:
+          type: string
+      required:
+      - amount
+      - key
+      - label
     Verification:
       type: object
       properties:

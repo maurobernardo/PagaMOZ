@@ -85,7 +85,7 @@ def _esc(v) -> str:
 
 
 def metrics(request):
-    """Formato Prometheus. Protegido por token (METRICS_TOKEN) — não expor publicamente."""
+    """Formato Prometheus. Protegido por token (METRICS_TOKEN): não expor publicamente."""
     token = settings.METRICS_TOKEN
     if not token or request.headers.get("Authorization") != f"Bearer {token}":
         return HttpResponse(status=404)

@@ -353,7 +353,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description Decomposição do valor (comissão, total) antes de pagar — serviços de valor fixo ou aberto. */
+        /** @description Decomposição do valor (comissão, total) antes de pagar: serviços de valor fixo ou aberto. */
         post: operations["catalog_services_price_create"];
         delete?: never;
         options?: never;
@@ -501,6 +501,23 @@ export interface paths {
         get: operations["payments_retrieve"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/payments/{reference}/3ds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Confirma o código 3-D Secure. Três tentativas erradas recusam o pagamento, como num emissor real. */
+        post: operations["payments_3ds_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -909,6 +926,21 @@ export interface components {
         };
         /** @enum {unknown} */
         BlankEnum: "";
+        /**
+         * @description * `visa` - visa
+         *     * `mastercard` - mastercard
+         * @enum {string}
+         */
+        BrandEnum: "visa" | "mastercard";
+        /** @description O que o browser envia depois de tokenizar: nunca o número completo nem o CVV. */
+        CardSummaryRequest: {
+            token: string;
+            brand: components["schemas"]["BrandEnum"];
+            last4: string;
+            exp_month: number;
+            exp_year: number;
+            holder: string;
+        };
         Category: {
             readonly id: number;
             readonly name: string;
@@ -1410,6 +1442,10 @@ export interface components {
             readonly institution_net: number;
             readonly currency: string;
             readonly method: components["schemas"]["MethodEnum"];
+            readonly card_brand: string;
+            readonly card_last4: string;
+            /** @description "3ds" quando o banco pede autenticação do cartão. */
+            readonly next_action: string | null;
             readonly instructions: string;
             readonly receipt_code: string | null;
             readonly delivery: components["schemas"]["Delivery"];
@@ -1447,6 +1483,7 @@ export interface components {
             quote?: string;
             /** @description Código do pedido (serviços de nível 3). */
             request?: string;
+            card?: components["schemas"]["CardSummaryRequest"];
         };
         /**
          * @description * `CRIADA` - Created
@@ -1504,6 +1541,8 @@ export interface components {
         };
         PriceRequestRequest: {
             amount?: number;
+            /** @description Modalidade escolhida (ex.: normal, urgente). */
+            variant?: string;
         };
         PriceResponse: {
             amount: number;
@@ -1666,6 +1705,9 @@ export interface components {
             /** @default true */
             required: boolean;
             pattern?: string;
+            options?: {
+                [key: string]: string;
+            }[];
         };
         ServiceFieldRequest: {
             name: string;
@@ -1674,6 +1716,9 @@ export interface components {
             /** @default true */
             required: boolean;
             pattern?: string;
+            options?: {
+                [key: string]: string;
+            }[];
         };
         ServicePortal: {
             readonly id: number;
@@ -1764,6 +1809,8 @@ export interface components {
             readonly lookup: boolean;
             /** @description Notas do processo (presencial, prazos…). */
             readonly guide: string[];
+            /** @description Modalidades com preço próprio. */
+            readonly variants: components["schemas"]["Variant"][];
         };
         Session: {
             phone: string;
@@ -1812,15 +1859,25 @@ export interface components {
             /** @default  */
             note: string;
         };
+        ThreeDSRequestRequest: {
+            code: string;
+        };
         /**
          * @description * `text` - text
          *     * `number` - number
          *     * `date` - date
          *     * `phone` - phone
          *     * `file` - file
+         *     * `select` - select
          * @enum {string}
          */
-        TypeEnum: "text" | "number" | "date" | "phone" | "file";
+        TypeEnum: "text" | "number" | "date" | "phone" | "file" | "select";
+        Variant: {
+            key: string;
+            label: string;
+            amount: number;
+            hint?: string;
+        };
         Verification: {
             resultado: components["schemas"]["ResultadoEnum"];
             mensagem: string;
@@ -2702,6 +2759,33 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Payment"];
+                };
+            };
+        };
+    };
+    payments_3ds_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ThreeDSRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ThreeDSRequestRequest"];
+                "multipart/form-data": components["schemas"]["ThreeDSRequestRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {

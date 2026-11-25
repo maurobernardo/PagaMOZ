@@ -55,6 +55,9 @@ class Command(BaseCommand):
                 },
             )
             for s_slug, s_name, level, pricing, amount, fields, connector_config in services:
+                if connector_config.get("variants"):
+                    opts = [{"key": v["key"], "label": v["label"]} for v in connector_config["variants"]]
+                    fields = [{**fl, "options": opts} if fl["type"] == "select" else fl for fl in fields]
                 Service.objects.update_or_create(
                     institution=inst,
                     slug=s_slug,

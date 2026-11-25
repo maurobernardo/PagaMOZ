@@ -1,4 +1,4 @@
-"""TOTP (RFC 6238) com stdlib — compatível com Google Authenticator, Microsoft Authenticator, Aegis…"""
+"""TOTP (RFC 6238) com stdlib: compatível com Google Authenticator, Microsoft Authenticator, Aegis…"""
 
 import base64
 import hashlib

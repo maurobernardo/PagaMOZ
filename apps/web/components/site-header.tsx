@@ -22,7 +22,7 @@ export function SiteHeader() {
     <header className={`${dark ? "absolute" : "sticky"} inset-x-0 top-0 z-40 px-3 pt-3 sm:px-6 sm:pt-4`}>
       <nav aria-label="Principal"
         className={`mx-auto flex max-w-6xl items-center gap-2 rounded-full py-2 pl-4 pr-2 ${dark ? "glass-dark" : "glass !bg-white/85 shadow-[var(--shadow-soft)]"}`}>
-        <Link href="/" aria-label="PagaMOZ — início" className="mr-auto"><Logo inverted={dark} /></Link>
+        <Link href="/" aria-label="PagaMOZ, início" className="mr-auto"><Logo inverted={dark} /></Link>
         <ul className="hidden items-center gap-1 text-sm font-semibold md:flex">
           {LINKS.map(({ href, label, icon: I }) => {
             const active = path.startsWith(href);
@@ -95,7 +95,7 @@ export function SiteFooter() {
           <div className="col-span-2 md:col-span-1">
             <Logo inverted />
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-white/55">
-              O dinheiro vai directamente para a conta da instituição. O PagaMOZ confirma, regista e prova — não guarda fundos.
+              O dinheiro vai directamente para a conta da instituição. O PagaMOZ confirma, regista e prova. Não guarda fundos.
             </p>
             <div className="glass-dark mt-6 inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold text-white/70">
               <MapPin className="h-3.5 w-3.5 text-accent" /> Feito para Moçambique · Maputo
@@ -133,7 +133,7 @@ export function SiteFooter() {
 
       <div className="relative border-t border-white/10">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-5 py-6 text-xs text-white/45 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-          <p>© {new Date().getFullYear()} PagaMOZ · Protótipo — instituições e pagamentos fictícios.</p>
+          <p>© {new Date().getFullYear()} PagaMOZ · Protótipo com pagamentos simulados.</p>
           <p className="inline-flex items-center gap-2"><FlaskConical className="h-3.5 w-3.5 text-accent" /> Ambiente de demonstração</p>
         </div>
       </div>

@@ -73,7 +73,15 @@ class Transaction(models.Model):
     )
     institution_ref = models.CharField(max_length=64, blank=True)  # recibo da instituição (confirm_payment)
     institution_notified_at = models.DateTimeField(null=True, blank=True)
-    delivery = models.JSONField(default=dict, blank=True)  # entregue pela instituição (código Credelec, recibo…)
+    delivery = models.JSONField(default=dict, blank=True)
+    # Cartão: só marca e últimos 4 dígitos (o número e o CVV nunca chegam ao servidor).
+    card_brand = models.CharField(max_length=12, blank=True)
+    card_last4 = models.CharField(max_length=4, blank=True)
+    # 3-D Secure: hash do código enviado pelo emissor; None quando não há desafio pendente.
+    three_ds_hash = models.CharField(max_length=64, blank=True)
+    three_ds_attempts = models.PositiveSmallIntegerField(
+        default=0
+    )  # entregue pela instituição (código Credelec, recibo…)
     settlement = models.ForeignKey(
         "settlement.SettlementBatch", null=True, blank=True, on_delete=models.PROTECT, related_name="transactions"
     )

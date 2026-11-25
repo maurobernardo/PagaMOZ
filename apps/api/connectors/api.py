@@ -85,6 +85,7 @@ class ServiceQuote(APIView):
 
 class PriceRequest(serializers.Serializer):
     amount = serializers.IntegerField(required=False, min_value=1)
+    variant = serializers.CharField(required=False, help_text="Modalidade escolhida (ex.: normal, urgente).")
 
 
 class PriceResponse(serializers.Serializer):
@@ -96,7 +97,7 @@ class PriceResponse(serializers.Serializer):
 
 
 class ServicePrice(APIView):
-    """Decomposição do valor (comissão, total) antes de pagar — serviços de valor fixo ou aberto."""
+    """Decomposição do valor (comissão, total) antes de pagar: serviços de valor fixo ou aberto."""
 
     permission_classes = [permissions.AllowAny]
 
@@ -108,6 +109,7 @@ class ServicePrice(APIView):
         s = PriceRequest(data=request.data)
         s.is_valid(raise_exception=True)
         try:
-            return Response(price(service, resolve_amount(service, s.validated_data.get("amount"))))
+            amount = resolve_amount(service, s.validated_data.get("amount"), s.validated_data.get("variant"))
+            return Response(price(service, amount))
         except PaymentError as e:
             return Response({"detail": e.args[0]}, status=400)

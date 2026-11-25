@@ -52,7 +52,17 @@ def price(service, amount: int) -> dict:
             "institution_net": net}  # fmt: skip
 
 
-def resolve_amount(service, requested: int | None) -> int:
+def variants(service) -> list[dict]:
+    """Modalidades com preço próprio (ex.: passaporte normal/urgente), em connector_config.variants."""
+    return list((service.connector_config or {}).get("variants", []))
+
+
+def resolve_amount(service, requested: int | None, variant: str | None = None) -> int:
+    if service.pricing == "fixo" and variants(service):
+        chosen = next((v for v in variants(service) if v["key"] == variant), None)
+        if chosen is None:
+            raise PaymentError("Escolha a modalidade.")
+        return chosen["amount"]
     if service.pricing == "fixo":
         return service.amount
     if service.pricing == "aberto":
@@ -78,6 +88,8 @@ def validate_fields(service, payload: dict) -> dict:
             continue
         if f.get("pattern") and not re.fullmatch(f["pattern"], v):
             errors[f["name"]] = "Formato inválido."
+        if f["type"] == "select" and v not in {o["key"] for o in f.get("options", [])}:
+            errors[f["name"]] = "Opção inválida."
         clean[f["name"]] = v
     if errors:
         raise PaymentError(errors)
@@ -170,7 +182,7 @@ def resolve_source(service, data: dict) -> dict:
         live = [S.CREATED, S.PENDING, S.CONFIRMED, S.SETTLED, S.DISPUTED]
         if req.payments.filter(status__in=live).exists():
             raise PaymentError("Já existe um pagamento em curso para este pedido.")
-        return {"amount": resolve_amount(service, data.get("amount")), "payload": req.form,
+        return {"amount": resolve_amount(service, data.get("amount"), req.form.get("modalidade")), "payload": req.form,
                 "description": service.name, "service_request": req}  # fmt: skip
 
     if service.pricing == "consulta" or (service.pricing == "aberto" and data.get("quote")):
@@ -181,5 +193,6 @@ def resolve_source(service, data: dict) -> dict:
         q.save(update_fields=["used_at"])
         return {"amount": q.amount, "payload": q.payload, "description": q.description, "quote": q}
 
-    return {"amount": resolve_amount(service, data.get("amount")), "payload": validate_fields(service, data["fields"]),
+    fields = validate_fields(service, data["fields"])
+    return {"amount": resolve_amount(service, data.get("amount"), fields.get("modalidade")), "payload": fields,
             "description": service.name}  # fmt: skip

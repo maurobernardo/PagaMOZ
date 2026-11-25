@@ -43,7 +43,7 @@ export default function Reconciliacao() {
                 </div>
                 <p className="mt-1 text-sm text-ink/80">{i.detail}</p>
                 <p className="text-sm text-muted">
-                  Plataforma: {i.platform_amount != null ? formatMZN(i.platform_amount) : "—"} · Provedor: {i.provider_amount != null ? formatMZN(i.provider_amount) : "—"}
+                  Plataforma: {i.platform_amount != null ? formatMZN(i.platform_amount) : "-"} · Provedor: {i.provider_amount != null ? formatMZN(i.provider_amount) : "-"}
                 </p>
               </Card>
             </li>

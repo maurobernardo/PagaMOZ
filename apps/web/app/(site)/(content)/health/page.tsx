@@ -7,8 +7,8 @@ export default async function Health() {
   const rows: [string, string][] = [
     ["web", "ok"],
     ["api", data ? data.status : "erro"],
-    ["base de dados", data?.database ?? "—"],
-    ["fila", data?.queue ?? "—"],
+    ["base de dados", data?.database ?? "-"],
+    ["fila", data?.queue ?? "-"],
   ];
   return (
     <main className="mx-auto max-w-xl px-4 py-12">

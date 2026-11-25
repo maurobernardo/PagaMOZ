@@ -53,7 +53,7 @@ class Service(Commission):
         constraints = [models.UniqueConstraint(fields=["institution", "slug"], name="uniq_service_slug")]
 
     def __str__(self):
-        return f"{self.name} — {self.institution}"
+        return f"{self.name}: {self.institution}"
 
     def clean(self):
         if self.pricing == self.Pricing.FIXED and not self.amount:

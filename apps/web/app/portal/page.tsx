@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, KeyRound, ShieldCheck, Smartphone } from "lucide-react";
+import { Building2, KeyRound, Scale, ShieldCheck, Smartphone, Wallet } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { GOOGLE_ERRORS, GoogleButton, OrDivider } from "@/components/google-button";
@@ -116,6 +116,17 @@ function PortalLogin() {
             <Field id="password" label="Palavra-passe" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
             <Button type="submit" disabled={busy || !ready} className="w-full !min-h-12">{busy ? "A verificar…" : "Continuar"}</Button>
           </form>
+          <ul className="mt-8 grid grid-cols-3 gap-2 border-t border-line pt-6 text-center text-xs">
+            {[[Wallet, "Recebe directo na sua conta"], [Scale, "Reconciliação diária"], [ShieldCheck, "Auditoria completa"]].map(([I, t]) => {
+              const Icon = I as typeof Wallet;
+              return (
+                <li key={String(t)} className="rounded-2xl bg-canvas px-2 py-3">
+                  <Icon className="mx-auto h-4 w-4" />
+                  <span className="mt-1.5 block font-semibold leading-tight">{String(t)}</span>
+                </li>
+              );
+            })}
+          </ul>
         </>
       )}
 

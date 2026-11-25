@@ -9,7 +9,7 @@ const body = Manrope({ subsets: ["latin"], variable: "--font-body", display: "sw
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono-face", display: "swap", weight: ["500", "700"] });
 
 export const metadata: Metadata = {
-  title: { default: "PagaMOZ — pague serviços sem ir ao balcão", template: "%s · PagaMOZ" },
+  title: { default: "PagaMOZ: pague serviços sem ir ao balcão", template: "%s · PagaMOZ" },
   description: "Pague água, energia, impostos, propinas e documentos num só lugar e receba um comprovativo verificável.",
   applicationName: "PagaMOZ",
 };

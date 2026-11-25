@@ -7,7 +7,7 @@ type Tone = "ok" | "bad" | "info";
 type Toast = { id: number; tone: Tone; text: string };
 const Ctx = createContext<(text: string, tone?: Tone) => void>(() => {});
 
-/** toast("Guardado.") / toast("Falhou.", "bad") — feedback curto, anunciado a leitores de ecrã. */
+/** toast("Guardado.") / toast("Falhou.", "bad"): feedback curto, anunciado a leitores de ecrã. */
 export const useToast = () => useContext(Ctx);
 
 const ICON = { ok: CheckCircle2, bad: XCircle, info: Info };

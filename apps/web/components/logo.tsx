@@ -1,5 +1,5 @@
 /**
- * Logótipo PagaMOZ: um "P" branco num quadrado preto, com um visto vermelho na barriga —
+ * Logótipo PagaMOZ: um "P" branco num quadrado preto, com um visto vermelho na barriga -
  * lê-se como letra e como carimbo de "pago". O visto vermelho é o único vermelho fixo da marca.
  */
 export function LogoMark({ className = "h-9 w-9", inverted = false }: { className?: string; inverted?: boolean }) {

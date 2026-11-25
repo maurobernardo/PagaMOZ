@@ -1,4 +1,4 @@
-"""Catálogo de demonstração com instituições reais de Moçambique (só o nome — sem logótipos nem identidade).
+"""Catálogo de demonstração com instituições reais de Moçambique (só o nome: sem logótipos nem identidade).
 
 Fontes e o que está por verificar: docs/pesquisa-instituicoes.md.
 Respostas das instituições (titulares, faturas, valores em dívida) vêm do conector simulado (connectors/simulated.py).
@@ -45,7 +45,7 @@ INSTITUTIONS = [
     (
         "servicos-basicos",
         "edm",
-        "EDM — Electricidade de Moçambique",
+        "Electricidade de Moçambique (EDM)",
         [
             (
                 "credelec",
@@ -186,7 +186,7 @@ INSTITUTIONS = [
     (
         "impostos",
         "inss",
-        "INSS — Instituto Nacional de Segurança Social",
+        "Instituto Nacional de Segurança Social (INSS)",
         [
             (
                 "contribuicoes",
@@ -205,7 +205,7 @@ INSTITUTIONS = [
     (
         "transportes",
         "inatter",
-        "INATTER — Instituto Nacional dos Transportes Terrestres",
+        "Instituto Nacional dos Transportes Terrestres (INATTER)",
         [
             (
                 "multas",
@@ -242,37 +242,36 @@ INSTITUTIONS = [
     (
         "documentos",
         "senami",
-        "SENAMI — Serviço Nacional de Migração",
+        "Serviço Nacional de Migração (SENAMI)",
         [
             (
-                "passaporte-normal",
-                "Passaporte — modalidade normal",
+                "passaporte",
+                "Passaporte",
                 L3,
                 FIXO,
-                240_000,
-                [NOME, DATA_NASC, BI, f("anexo_bi", "Cópia do BI", "file")],
-                conf(
-                    None,
-                    "Taxa do Diploma Ministerial n.º 18/2024.",
-                    "Depois de pago, dirija-se ao posto indicado para a recolha biométrica.",
-                ),
-            ),
-            (
-                "passaporte-urgente",
-                "Passaporte — modalidade urgente",
-                L3,
-                FIXO,
-                277_500,
-                [NOME, DATA_NASC, BI, f("anexo_bi", "Cópia do BI", "file")],
-                conf(
-                    None,
-                    "Taxa do Diploma Ministerial n.º 18/2024.",
-                    "Depois de pago, dirija-se ao posto indicado para a recolha biométrica.",
-                ),
+                240_000,  # modalidade mais barata, para mostrar "desde"
+                [
+                    f("modalidade", "Modalidade", "select"),
+                    NOME,
+                    DATA_NASC,
+                    BI,
+                    f("anexo_bi", "Cópia do BI", "file"),
+                ],
+                {
+                    **conf(
+                        None,
+                        "Taxas do Diploma Ministerial n.º 18/2024.",
+                        "Depois de pago, dirija-se ao posto indicado para a recolha biométrica.",
+                    ),
+                    "variants": [
+                        {"key": "normal", "label": "Normal", "amount": 240_000, "hint": "Prazo regular de emissão"},
+                        {"key": "urgente", "label": "Urgente", "amount": 277_500, "hint": "Emissão prioritária"},
+                    ],
+                },
             ),
             (
                 "dire-cplp",
-                "DIRE — cidadãos da CPLP",
+                "DIRE para cidadãos da CPLP",
                 L3,
                 FIXO,
                 2_931_000,
@@ -281,7 +280,7 @@ INSTITUTIONS = [
                     f("passaporte", "N.º do passaporte", pattern=r"^[0-9A-Za-z]{6,12}$"),
                     f("anexo_passaporte", "Cópia do passaporte", "file"),
                 ],
-                conf(None, "Residência temporária, permanente ou vitalícia — Diploma Ministerial n.º 18/2024."),
+                conf(None, "Residência temporária, permanente ou vitalícia (Diploma Ministerial n.º 18/2024)."),
             ),
         ],
     ),
@@ -320,7 +319,7 @@ INSTITUTIONS = [
     (
         "outros",
         "emose",
-        "EMOSE — Empresa Moçambicana de Seguros",
+        "Empresa Moçambicana de Seguros (EMOSE)",
         [
             (
                 "premio",

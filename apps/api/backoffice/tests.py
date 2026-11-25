@@ -96,7 +96,7 @@ def test_cross_institution_transactions_and_filter(demo):
     one = c.get("/api/backoffice/transactions?institution=edm").json()
     assert all_ == Transaction.objects.count()
     assert one["count"] == Transaction.objects.filter(institution__slug="edm").count() < all_
-    assert {t["institution_name"] for t in one["results"]} == {"EDM — Electricidade de Moçambique"}
+    assert {t["institution_name"] for t in one["results"]} == {"Electricidade de Moçambique (EDM)"}
 
 
 def test_dead_letter_retry_and_resolve(demo):

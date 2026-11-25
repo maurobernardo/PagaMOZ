@@ -86,7 +86,7 @@ export default function Instituicoes() {
                       if (v && /^\d+$/.test(v)) patch(i.slug, { commission_bps: Number(v) }, "comissão alterada");
                       else if (v) toast("Use só números inteiros (ex.: 150).", "bad");
                     }}>
-                      {i.commission_bps != null ? `${(i.commission_bps / 100).toFixed(2).replace(".", ",")}%` : "—"}
+                      {i.commission_bps != null ? `${(i.commission_bps / 100).toFixed(2).replace(".", ",")}%` : "-"}
                     </button>
                   </td>
                   <td className="px-3 py-2">{i.settlement_bank} {i.settlement_account_masked}</td>

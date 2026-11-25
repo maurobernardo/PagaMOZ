@@ -17,7 +17,7 @@ async function load(id: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const s = await load((await params).id);
-  return { title: s ? `${s.name} — ${s.institution.name}` : "Serviço" };
+  return { title: s ? `${s.name} · ${s.institution.name}` : "Serviço" };
 }
 
 export default async function ServicePage({ params, searchParams }: Props) {

@@ -44,7 +44,7 @@ class VerificationSerializer(serializers.Serializer):
 
 
 def verification(r: Receipt) -> dict:
-    """Só o que está impresso no próprio comprovativo — sem dados pessoais."""
+    """Só o que está impresso no próprio comprovativo: sem dados pessoais."""
     if not r.integrity_ok():
         result, msg = "adulterado", "O registo deste comprovativo não confere. Contacte a instituição."
     else:

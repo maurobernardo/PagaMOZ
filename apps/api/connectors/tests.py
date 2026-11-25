@@ -1,4 +1,4 @@
-"""Fase 3 — um serviço de cada nível de ponta a ponta, mais casos de abuso."""
+"""Fase 3: um serviço de cada nível de ponta a ponta, mais casos de abuso."""
 
 import io
 import json
@@ -104,7 +104,7 @@ def test_lookup_not_found_and_unavailable():
     r = c.post(url, {"fields": {"cliente": "12349999"}}, format="json")
     assert r.status_code == 503 and r.headers["Retry-After"]
     assert c.post(url, {"fields": {"cliente": "abc"}}, format="json").status_code == 400
-    fixed = svc("senami", "passaporte-normal")
+    fixed = svc("senami", "passaporte")
     assert c.post(f"/api/catalog/services/{fixed.id}/quote", {"fields": {}}, format="json").status_code == 400
 
 
@@ -115,7 +115,7 @@ def test_level2_reference_payment(django_capture_on_commit_callbacks):
     s = svc("inatter", "multas")
     c = APIClient()
     q = c.post(f"/api/catalog/services/{s.id}/quote", {"fields": {"matricula": "AFG-123-MC"}}, format="json").json()
-    r = pay(c, django_capture_on_commit_callbacks, "lvl2-0001", service=s.id, quote=q["id"], method="cartao")
+    r = pay(c, django_capture_on_commit_callbacks, "lvl2-0001", service=s.id, quote=q["id"], method="emola")
     t = Transaction.objects.get(reference=r.json()["reference"])
     assert t.status == "CONFIRMADA" and t.payload == {"matricula": "AFG-123-MC"} and t.institution_notified_at
     assert t.delivery["titulo"] == "Multas liquidadas"
@@ -125,13 +125,14 @@ def test_level2_reference_payment(django_capture_on_commit_callbacks):
 
 
 def create_request(c, s, files=None, **fields):
-    form = {"nome_completo": "Ana Demo", "data_nascimento": "1990-01-01", "bi": "110100123456A", **fields}
+    form = {"modalidade": "normal", "nome_completo": "Ana Demo", "data_nascimento": "1990-01-01", "bi": "110100123456A",
+            **fields}  # fmt: skip
     files = files if files is not None else {"anexo_bi": SimpleUploadedFile("bi.pdf", PDF, "application/pdf")}
     return c.post("/api/requests", {"service": s.id, "fields": json.dumps(form), **files}, format="multipart")
 
 
 def test_level3_request_pay_and_institution_workflow(django_capture_on_commit_callbacks):
-    s = svc("senami", "passaporte-normal")
+    s = svc("senami", "passaporte")
     c = APIClient()
     r = create_request(c, s)
     assert r.status_code == 201, r.json()
@@ -165,7 +166,7 @@ def test_level3_request_pay_and_institution_workflow(django_capture_on_commit_ca
 
 
 def test_level3_tenant_isolation_and_roles():
-    s = svc("senami", "passaporte-normal")
+    s = svc("senami", "passaporte")
     code = create_request(APIClient(), s).json()["code"]
     outsider = portal("inatter")
     assert outsider.get(f"/api/portal/senami/requests/{code}").status_code == 404
@@ -180,7 +181,7 @@ def test_level3_tenant_isolation_and_roles():
 
 
 def test_level3_rejects_bad_files():
-    s = svc("senami", "passaporte-normal")
+    s = svc("senami", "passaporte")
     c = APIClient()
     fake = SimpleUploadedFile("bi.pdf", b"MZ\x90\x00 executavel", "application/pdf")
     assert create_request(c, s, files={"anexo_bi": fake}).status_code == 400
@@ -211,8 +212,8 @@ def test_institution_notification_dead_letter(monkeypatch, django_capture_on_com
 
 def test_price_breakdown_before_paying():
     c = APIClient()
-    fixed = svc("senami", "passaporte-normal")
-    r = c.post(f"/api/catalog/services/{fixed.id}/price", {}, format="json").json()
+    fixed = svc("senami", "passaporte")
+    r = c.post(f"/api/catalog/services/{fixed.id}/price", {"variant": "normal"}, format="json").json()
     assert r["amount"] == fixed.amount and r["total"] >= r["amount"]
     open_ = svc("edm", "credelec")
     assert c.post(f"/api/catalog/services/{open_.id}/price", {}, format="json").status_code == 400
@@ -261,6 +262,14 @@ def test_invoices_and_fines_are_itemised_and_total_matches():
         assert again["items"] == q["items"]  # mesma referência, mesma resposta
 
 
-def test_real_fees_for_passport_from_ministerial_diploma():
-    assert svc("senami", "passaporte-normal").amount == 240_000
-    assert svc("senami", "passaporte-urgente").amount == 277_500
+def test_passport_modalities_set_the_price(django_capture_on_commit_callbacks):
+    s = svc("senami", "passaporte")
+    c = APIClient()
+    price = lambda v: c.post(f"/api/catalog/services/{s.id}/price", {"variant": v}, format="json")  # noqa: E731
+    assert price("normal").json()["amount"] == 240_000  # Diploma Ministerial 18/2024
+    assert price("urgente").json()["amount"] == 277_500
+    assert price("vip").status_code == 400
+    code = create_request(c, s, modalidade="urgente").json()["code"]
+    r = pay(c, django_capture_on_commit_callbacks, "pass-urg-1", service=s.id, request=code)
+    assert r.json()["amount"] == 277_500
+    assert create_request(c, s, modalidade="vip").status_code == 400

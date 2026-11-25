@@ -23,21 +23,23 @@ def verify_url(code: str) -> str:
 
 def _content(txn: Transaction, code: str, issued) -> dict:
     local = timezone.localtime(txn.confirmed_at or issued)
-    # Minimização: nada de telefone, NUIT, nome ou dados do formulário — só o necessário para provar o pagamento.
+    # Minimização: nada de telefone, NUIT, nome ou dados do formulário: só o necessário para provar o pagamento.
     return {
         "codigo": f"{code[:5]}-{code[5:]}",
         "referencia": txn.reference,
         "instituicao": txn.institution.name,
         "servico": txn.service.name,
         "detalhe": txn.description if txn.description != txn.service.name else "",
-        "metodo": Method(txn.method).label,
+        "metodo": f"{txn.card_brand.capitalize()} •••• {txn.card_last4}"
+        if txn.card_last4
+        else Method(txn.method).label,
         "data_hora": local.strftime("%d/%m/%Y %H:%M") + " (Maputo)",
         "valor": txn.amount,
         "comissao": txn.commission,
         "comissao_paga_por": PAYER.get(txn.commission_payer, txn.commission_payer),
         "total": txn.total,
         "estado": "PAGO",
-        # O que a instituição entregou (ex.: código Credelec) — faz parte do que se prova.
+        # O que a instituição entregou (ex.: código Credelec): faz parte do que se prova.
         "entrega": [txn.delivery.get("titulo", ""), txn.delivery.get("codigo", "")]
         if txn.delivery.get("codigo")
         else [],

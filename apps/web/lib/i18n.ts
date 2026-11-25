@@ -7,7 +7,7 @@ const mzn = new Intl.NumberFormat("pt-PT", { minimumFractionDigits: 2, maximumFr
 
 /** 123456 centavos -> "1 234,56 MT" */
 export const formatMZN = (centavos: number | null | undefined) =>
-  centavos == null ? "—" : `${mzn.format(centavos / 100)} MT`;
+  centavos == null ? "-" : `${mzn.format(centavos / 100)} MT`;
 
 export const formatDateTime = (d: Date | string) =>
   new Intl.DateTimeFormat("pt-PT", { dateStyle: "medium", timeStyle: "short", timeZone }).format(new Date(d));
