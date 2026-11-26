@@ -1,0 +1,51 @@
+# Produção no VPS: Postgres + Redis + API (gunicorn) + Celery + Caddy (HTTPS automático).
+# Uso: no VPS, em infra/prod:  cp .env.example .env  (preencher)  &&  docker compose up -d --build
+x-api: &api
+  build: ../../apps/api
+  env_file: .env
+  environment:
+    DATABASE_URL: postgres://pagamoz:${POSTGRES_PASSWORD}@db:5432/pagamoz
+    REDIS_URL: redis://redis:6379/0
+    RECEIPT_LOGO_DIR: /logos
+    MEDIA_ROOT: /data/media
+  volumes:
+    - ../../apps/web/public/logos:/logos:ro
+    - media:/data/media
+    - static:/app/staticfiles
+  depends_on:
+    db: { condition: service_healthy }
+    redis: { condition: service_healthy }
+  restart: unless-stopped
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment: { POSTGRES_USER: pagamoz, POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}", POSTGRES_DB: pagamoz }
+    volumes: [pg:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD", "pg_isready", "-U", "pagamoz"], interval: 5s, retries: 10 }
+    restart: unless-stopped
+  redis:
+    image: redis:7-alpine
+    healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 5s, retries: 10 }
+    restart: unless-stopped
+  api:
+    <<: *api
+    command: sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn config.wsgi -b 0.0.0.0:8000 -w 3 --timeout 60"
+  worker:
+    <<: *api
+    command: celery -A config worker -l info
+  beat:
+    <<: *api
+    command: celery -A config beat -l info
+  caddy:
+    image: caddy:2-alpine
+    ports: ["80:80", "443:443"]
+    environment: { API_DOMAIN: "${API_DOMAIN}" }
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - static:/srv/static:ro
+      - caddy:/data
+    depends_on: [api]
+    restart: unless-stopped
+
+volumes: { pg: {}, media: {}, static: {}, caddy: {} }

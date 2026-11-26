@@ -128,6 +128,7 @@ USE_I18N = True
 USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+RECEIPT_LOGO_DIR = env("RECEIPT_LOGO_DIR", default=str(BASE_DIR.parent / "web" / "public" / "logos"))
 # Anexos são privados: guardados fora de qualquer pasta servida; só saem pelo portal com RBAC.
 MEDIA_ROOT = env("MEDIA_ROOT", default=str(BASE_DIR / "media_private"))
 DATA_UPLOAD_MAX_MEMORY_SIZE = 6 * 1024 * 1024

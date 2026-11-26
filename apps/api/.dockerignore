@@ -1,0 +1,8 @@
+.venv
+.env
+db.sqlite3*
+media_private
+__pycache__
+.pytest_cache
+.ruff_cache
+staticfiles
