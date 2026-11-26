@@ -1,3 +1,5 @@
+import base64
+import io
 from datetime import timedelta
 
 from django.conf import settings
@@ -5,7 +7,9 @@ from django.contrib.auth import login, logout
 from django.middleware.csrf import get_token
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema, inline_serializer
+from PIL import Image, ImageOps
 from rest_framework import generics, permissions, serializers, viewsets
+from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
@@ -287,3 +291,46 @@ class CsrfView(APIView):
     @extend_schema(responses=inline_serializer("Csrf", {"csrf": serializers.CharField()}))
     def get(self, request):
         return Response({"csrf": get_token(request)})
+
+
+class AvatarView(APIView):
+    """POST multipart `avatar` (JPG/PNG/WebP até 5 MB) guarda a foto de perfil; DELETE remove-a."""
+
+    parser_classes = [MultiPartParser]
+
+    @extend_schema(
+        request={
+            "multipart/form-data": {"type": "object", "properties": {"avatar": {"type": "string", "format": "binary"}}}
+        },
+        responses=inline_serializer("Avatar", {"avatar": serializers.CharField()}),
+    )
+    def post(self, request):
+        f = request.FILES.get("avatar")
+        if f is None or f.size > 5 * 1024 * 1024:
+            return Response({"detail": "Escolha uma imagem até 5 MB."}, status=400)
+        try:
+            request.user.avatar = avatar_data_url(f)
+        except (OSError, ValueError, Image.DecompressionBombError):
+            return Response({"detail": "Esta imagem não pode ser lida."}, status=400)
+        request.user.save(update_fields=["avatar"])
+        return Response({"avatar": request.user.avatar})
+
+    @extend_schema(responses={204: None})
+    def delete(self, request):
+        request.user.avatar = ""
+        request.user.save(update_fields=["avatar"])
+        return Response(status=204)
+
+
+def avatar_data_url(f) -> str:
+    """Abre (só imagens reais), corta ao centro em quadrado, reduz a 256 px e devolve WebP em data URL."""
+    im = Image.open(f)
+    if im.format not in ("JPEG", "PNG", "WEBP", "MPO", "HEIF"):
+        raise ValueError("formato")
+    im = ImageOps.exif_transpose(im).convert("RGB")
+    side = min(im.size)
+    im = im.crop(((im.width - side) // 2, (im.height - side) // 2, (im.width + side) // 2, (im.height + side) // 2))
+    im = im.resize((256, 256), Image.LANCZOS)
+    buf = io.BytesIO()
+    im.save(buf, "WEBP", quality=80)
+    return "data:image/webp;base64," + base64.b64encode(buf.getvalue()).decode()

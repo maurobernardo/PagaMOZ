@@ -8,7 +8,8 @@ import { Alert, Card, H2, Header, Loading, P, Progress, Ring, RoundButton, Segme
 import { api, errorMessage, type Payment } from "../lib/api";
 import { formatDateTime, formatMZN, PAYMENT_STATUS } from "../lib/format";
 import { t } from "../lib/i18n";
-import { initials, prettyPhone, useMe } from "../lib/me";
+import { prettyPhone, shortName, useMe } from "../lib/me";
+import { Avatar } from "../components/avatar";
 import { C, F, shadow } from "../theme";
 
 type Filter = "all" | "ok" | "wait" | "bad";
@@ -63,10 +64,8 @@ export default function Perfil() {
       <ScrollView contentContainerStyle={{ padding: 18, gap: 16, paddingBottom: 60 }}>
         {/* Quem é */}
         <View style={{ alignItems: "center", gap: 6, paddingVertical: 6 }}>
-          <View style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: C.ink, alignItems: "center", justifyContent: "center", ...shadow() }}>
-            <Text style={{ fontFamily: F.display, fontSize: 30, color: C.white }}>{initials(me)}</Text>
-          </View>
-          <Text style={{ fontFamily: F.display, fontSize: 24, letterSpacing: -0.5, color: C.ink }}>{me.name || prettyPhone(me.phone)}</Text>
+          <Avatar me={me} size={92} />
+          <Text style={{ fontFamily: F.display, fontSize: 24, letterSpacing: -0.5, color: C.ink }}>{shortName(me)}</Text>
           <Text style={{ fontFamily: F.body, fontSize: 14, color: C.muted }}>{prettyPhone(me.phone)}{me.email ? ` · ${me.email}` : ""}</Text>
           {where ? (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: C.surface, borderRadius: 99, paddingHorizontal: 12, paddingVertical: 6, ...shadow() }}>

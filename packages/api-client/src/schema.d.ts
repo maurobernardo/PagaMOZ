@@ -429,6 +429,24 @@ export interface paths {
         patch: operations["me_partial_update"];
         trace?: never;
     };
+    "/api/me/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description POST multipart `avatar` (JPG/PNG/WebP até 5 MB) guarda a foto de perfil; DELETE remove-a. */
+        post: operations["me_avatar_create"];
+        /** @description POST multipart `avatar` (JPG/PNG/WebP até 5 MB) guarda a foto de perfil; DELETE remove-a. */
+        delete: operations["me_avatar_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/obligations": {
         parameters: {
             query?: never;
@@ -972,6 +990,9 @@ export interface components {
             readonly data: unknown;
             readonly ip: string | null;
         };
+        Avatar: {
+            avatar: string;
+        };
         Balances: {
             a_liquidar: number;
             liquidado: number;
@@ -1184,6 +1205,7 @@ export interface components {
             email?: string;
             province?: components["schemas"]["ProvinceEnum"] | components["schemas"]["BlankEnum"];
             district?: string;
+            readonly avatar: string;
             readonly memberships: components["schemas"]["Membership"][];
             readonly is_staff: boolean;
         };
@@ -2670,6 +2692,50 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Me"];
                 };
+            };
+        };
+    };
+    me_avatar_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    avatar?: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Avatar"];
+                };
+            };
+        };
+    };
+    me_avatar_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

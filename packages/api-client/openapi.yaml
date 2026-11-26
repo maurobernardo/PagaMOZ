@@ -696,6 +696,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/Me'
           description: ''
+  /api/me/avatar:
+    post:
+      operationId: me_avatar_create
+      description: POST multipart `avatar` (JPG/PNG/WebP até 5 MB) guarda a foto de
+        perfil; DELETE remove-a.
+      tags:
+      - me
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                avatar:
+                  type: string
+                  format: binary
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Avatar'
+          description: ''
+    delete:
+      operationId: me_avatar_destroy
+      description: POST multipart `avatar` (JPG/PNG/WebP até 5 MB) guarda a foto de
+        perfil; DELETE remove-a.
+      tags:
+      - me
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/me/obligations:
     get:
       operationId: me_obligations_list
@@ -1880,6 +1916,13 @@ components:
       - ip
       - target_id
       - target_type
+    Avatar:
+      type: object
+      properties:
+        avatar:
+          type: string
+      required:
+      - avatar
     Balances:
       type: object
       properties:
@@ -2425,6 +2468,9 @@ components:
         district:
           type: string
           maxLength: 60
+        avatar:
+          type: string
+          readOnly: true
         memberships:
           type: array
           items:
@@ -2434,6 +2480,7 @@ components:
           type: boolean
           readOnly: true
       required:
+      - avatar
       - is_staff
       - memberships
       - name

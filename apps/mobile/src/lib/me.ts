@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { api, ApiError } from "./api";
 
-export type Me = { phone: string; name: string; first_name?: string; last_name?: string; email?: string; province?: string; district?: string };
+export type Me = { phone: string; name: string; first_name?: string; last_name?: string; email?: string; province?: string; district?: string; avatar?: string };
 
 /** Sessão actual (null = sem conta; undefined = a carregar). Recarrega ao voltar ao ecrã. */
 export function useMe() {
@@ -23,3 +23,10 @@ export const initials = (m: Me) =>
   ((m.first_name?.[0] ?? "") + (m.last_name?.[0] ?? "")).toUpperCase() || m.phone.slice(-2);
 
 export const prettyPhone = (p: string) => p.replace(/^\+258(\d{2})(\d{3})(\d{4})$/, "$1 $2 $3");
+
+/** "Ana Maria" + "dos Santos Machava" -> "Ana Machava": primeiro nome e apelido, nunca o nome todo. */
+export const shortName = (m: Me) => {
+  const first = (m.first_name ?? "").trim().split(/\s+/)[0] ?? "";
+  const last = (m.last_name ?? "").trim().split(/\s+/).pop() ?? "";
+  return [first, last].filter(Boolean).join(" ") || prettyPhone(m.phone);
+};

@@ -1,6 +1,8 @@
 import { router, useFocusEffect } from "expo-router";
-import { ArrowRight, Bell, ChevronRight, Moon, Receipt, Search, Settings, Sun, Wallet } from "lucide-react-native";
-import { HeroArt } from "../../components/hero-art";
+import { ArrowRight, Bell, ChevronRight, Moon, Receipt, Search, Sun, UserRound, Wallet } from "lucide-react-native";
+import { Avatar } from "../../components/avatar";
+import { shortName, type Me as FullMe } from "../../lib/me";
+import { Image } from "expo-image";
 import { useCallback, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -12,7 +14,7 @@ import { formatMZN, PAYMENT_STATUS } from "../../lib/format";
 import { t } from "../../lib/i18n";
 import { C, F, R, shadow } from "../../theme";
 
-type Me = { phone: string; first_name?: string };
+type Me = FullMe;
 
 function greeting() {
   const h = (new Date().getUTCHours() + 2) % 24; // Maputo
@@ -37,7 +39,6 @@ export default function Home() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [code, setCode] = useState("");
   const [codeErr, setCodeErr] = useState("");
-  const [heroW, setHeroW] = useState(0);
 
   const loadMe = useCallback(() => {
     api<Me>("/api/me")
@@ -62,25 +63,30 @@ export default function Home() {
   return (
     <ScrollView style={{ backgroundColor: C.canvas }} contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 120, gap: 18 }} keyboardShouldPersistTaps="handled"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { refresh(); loadMe(); }} tintColor={C.ink} />}>
-      {/* Topo ilustrado: logótipo, sino, saudação */}
-      <View onLayout={(e) => setHeroW(e.nativeEvent.layout.width)} style={{ marginHorizontal: -18, paddingTop: top + 8, paddingHorizontal: 18, paddingBottom: 64, backgroundColor: C.soft, overflow: "hidden" }}>
-        {heroW ? <HeroArt width={heroW} height={top + 230} /> : null}
+      {/* Topo com fotografia (pagamento com telemóvel), escurecida para o texto branco se ler bem */}
+      <View style={{ marginHorizontal: -18, paddingTop: top, paddingHorizontal: 18, paddingBottom: 62, backgroundColor: C.hero, overflow: "hidden", borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}>
+        <Image source={require("../../../assets/hero.webp")} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} contentFit="cover" accessibilityIgnoresInvertColors />
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <LogoMark size={34} />
-          <View style={{ flexDirection: "row", gap: 10 }}>
-            <RoundButton icon={Bell} label={t("Notificações")} onPress={() => router.push("/notificacoes")} />
-            <RoundButton icon={Settings} label={t("Definições")} onPress={() => router.push("/conta")} />
+          <LogoMark size={32} color={C.onHero} />
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <RoundButton dark icon={Bell} label={t("Notificações")} onPress={() => router.push("/notificacoes")} />
+            {me ? (
+              <Pressable accessibilityRole="button" accessibilityLabel={t("Perfil")} onPress={() => router.push("/perfil")}
+                style={{ borderRadius: 24, borderWidth: 2, borderColor: "rgba(255,255,255,0.85)" }}>
+                <Avatar me={me} size={40} />
+              </Pressable>
+            ) : (
+              <RoundButton dark icon={UserRound} label={t("Entrar")} onPress={() => router.push("/cadastro?entrar=1")} />
+            )}
           </View>
         </View>
-        <View style={{ marginTop: 26, gap: 2 }}>
-          <Text style={{ fontFamily: F.body, fontSize: 18, color: C.ink }}>{greeting()},</Text>
+        <View style={{ marginTop: 18, gap: 2 }}>
+          <Text style={{ fontFamily: F.body, fontSize: 17, color: "rgba(255,255,255,0.8)" }}>{greeting()},</Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <Text style={{ fontFamily: F.display, fontSize: 34, letterSpacing: -1, color: C.ink }} numberOfLines={1}>
-              {me?.first_name || (me ? me.phone.replace(/^\+258(\d{2})(\d{3})(\d{4})$/, "$1 $2 $3") : "PagaMOZ")}
-            </Text>
-            {sunny ? <Sun size={26} color={C.ink} /> : <Moon size={24} color={C.ink} />}
+            <Text style={{ fontFamily: F.display, fontSize: 32, letterSpacing: -1, color: C.onHero }} numberOfLines={1}>{me ? shortName(me) : "PagaMOZ"}</Text>
+            {sunny ? <Sun size={24} color={C.onHero} /> : <Moon size={22} color={C.onHero} />}
           </View>
-          <Text style={{ fontFamily: F.body, fontSize: 15, lineHeight: 21, color: C.muted, maxWidth: 260 }}>{t("O que vamos pagar hoje? Sem filas, com comprovativo na hora.")}</Text>
+          <Text style={{ fontFamily: F.body, fontSize: 15, lineHeight: 21, color: "rgba(255,255,255,0.75)", maxWidth: 270 }}>{t("O que vamos pagar hoje? Sem filas, com comprovativo na hora.")}</Text>
         </View>
       </View>
 

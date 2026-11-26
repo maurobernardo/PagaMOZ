@@ -110,3 +110,19 @@ def test_profile_rejects_district_from_other_province(client, django_user_model)
     client.force_login(django_user_model.objects.create_user("+258842222222"))
     r = client.patch("/api/me", {"province": "Gaza", "district": "Matola"}, content_type="application/json")
     assert r.status_code == 400
+
+
+def test_avatar_upload_is_resized_and_rejects_non_images(client, django_user_model):
+    import io
+
+    from django.core.files.uploadedfile import SimpleUploadedFile
+    from PIL import Image
+
+    client.force_login(django_user_model.objects.create_user("+258843333333"))
+    buf = io.BytesIO()
+    Image.new("RGB", (800, 500), "red").save(buf, "PNG")
+    r = client.post("/api/me/avatar", {"avatar": SimpleUploadedFile("a.png", buf.getvalue(), "image/png")})
+    assert r.status_code == 200 and r.json()["avatar"].startswith("data:image/webp;base64,")
+    assert client.get("/api/me").json()["avatar"].startswith("data:image/webp")
+    bad = SimpleUploadedFile("a.png", b"<script>", "image/png")
+    assert client.post("/api/me/avatar", {"avatar": bad}).status_code == 400

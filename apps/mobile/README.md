@@ -44,3 +44,7 @@ npx expo export --platform android
 
 Gerados a partir do logótipo da web (o "P" com o visto vermelho) em `assets/`.
 Os logótipos das marcas estão em `assets/logos` (cópia de `apps/web/public/logos`).
+
+## Fotografia do início
+
+assets/hero.webp: "Paying with cash and phone during a transaction in a modern setting.jpg", de Shixart1985, CC BY 2.0 (Wikimedia Commons). Recortada, a preto e branco, escurecida e desfocada.

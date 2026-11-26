@@ -74,6 +74,8 @@ const EN: Record<string, string> = {
   "Ver perfil, gráficos e histórico": "See profile, charts and history", "Criar conta ou entrar": "Create account or sign in",
   "Guarde o histórico e os comprovativos.": "Keep your history and receipts.",
   "Entre para receber o estado dos seus pagamentos aqui.": "Sign in to get your payment updates here.", "Sem notificações por agora.": "No notifications for now.",
+  "Fotografia do início": "Home photo", "Mudar foto": "Change photo", "Escolher foto": "Choose photo", "Tirar foto": "Take photo", "Remover": "Remove",
+  "Autorize o acesso às fotos nas definições do telemóvel.": "Allow photo access in your phone settings.",
   // definições
   "Aparência": "Appearance", "Tema": "Theme", "Automático": "Automatic", "Claro": "Light", "Escuro": "Dark",
   "Idioma": "Language", "Português": "Portuguese", "Notificações": "Notifications",

@@ -12,7 +12,8 @@ import { Alert, Group, ListRow, PageTitle, Segmented, Toggle } from "../../compo
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChevronRight, Pencil, UserPlus } from "lucide-react-native";
 import { Pressable } from "react-native";
-import { initials, prettyPhone } from "../../lib/me";
+import { shortName } from "../../lib/me";
+import { Avatar } from "../../components/avatar";
 import { R, shadow } from "../../theme";
 import { api, WEB } from "../../lib/api";
 import { t } from "../../lib/i18n";
@@ -61,11 +62,9 @@ export default function Definicoes() {
         {me ? (
           <Pressable accessibilityRole="button" onPress={() => router.push("/perfil")}
             style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: C.surface, borderRadius: R.card, padding: 16, transform: [{ scale: pressed ? 0.985 : 1 }], ...shadow() })}>
-            <View style={{ width: 58, height: 58, borderRadius: 29, backgroundColor: C.ink, alignItems: "center", justifyContent: "center" }}>
-              <Text style={{ fontFamily: F.display, fontSize: 21, color: C.white }}>{initials(me)}</Text>
-            </View>
+            <Avatar me={me} size={58} />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: F.display, fontSize: 18, color: C.ink }} numberOfLines={1}>{me.name || prettyPhone(me.phone)}</Text>
+              <Text style={{ fontFamily: F.display, fontSize: 18, color: C.ink }} numberOfLines={1}>{shortName(me)}</Text>
               <Text style={{ fontFamily: F.body, fontSize: 13, color: C.muted }}>{t("Ver perfil, gráficos e histórico")}</Text>
             </View>
             <ChevronRight size={20} color={C.ink} />
@@ -131,6 +130,7 @@ export default function Definicoes() {
 
         <Group title={t("Sobre")}>
           <ListRow first icon={Info} title="PagaMOZ" sub={`${t("Versão")} ${Constants.expoConfig?.version ?? "1.0.0"}`} />
+          <ListRow icon={Info} title={t("Fotografia do início")} sub="Shixart1985, CC BY 2.0 (Wikimedia Commons), editada" />
         </Group>
 
         {me ? (

@@ -37,6 +37,8 @@ class User(AbstractUser):
     # Perfil do cidadão (opcional): onde vive, para lembretes e serviços locais.
     province = models.CharField("província", max_length=40, blank=True)
     district = models.CharField("distrito", max_length=60, blank=True)
+    # Foto de perfil já reduzida (256 px, WebP) como data URL: pequena e sem servir ficheiros privados.
+    avatar = models.TextField("foto", blank=True)
     # MFA (TOTP) para portal/backoffice.
     mfa_secret = EncryptedCharField(blank=True)  # cifrado em repouso (core.crypto)
     mfa_enabled = models.BooleanField(default=False)

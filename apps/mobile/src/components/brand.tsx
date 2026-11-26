@@ -33,8 +33,8 @@ export function BrandMark({ slug, name, size = 48, round = false }: { slug: stri
   const src = LOGOS[slug];
   if (src)
     return (
-      <View style={{ width: size, height: size, borderRadius: radius, backgroundColor: "#ffffff", borderWidth: 1, borderColor: C.line, padding: size * 0.1, overflow: "hidden" }}>
-        <Image source={src} style={{ flex: 1 }} contentFit="contain" accessibilityLabel={name} />
+      <View style={{ width: size, height: size, borderRadius: radius, backgroundColor: "#ffffff", borderWidth: 1, borderColor: C.line, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+        <Image source={src} style={{ width: size * (round ? 0.68 : 0.8), height: size * (round ? 0.68 : 0.8) }} contentFit="contain" accessibilityLabel={name} />
       </View>
     );
   const initials = name.replace(/\(.*?\)/g, "").split(/[\s-]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();

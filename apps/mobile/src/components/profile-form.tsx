@@ -4,6 +4,7 @@ import { View } from "react-native";
 import { api, errorMessage, fieldErrors } from "../lib/api";
 import { t } from "../lib/i18n";
 import { DISTRICTS, PROVINCES, type Me } from "../lib/me";
+import { AvatarPicker } from "./avatar";
 import { Picker } from "./picker";
 import { Alert, Button, Card, Field } from "./ui";
 
@@ -16,6 +17,7 @@ export function ProfileForm({ initial, onSaved, cta }: { initial: Partial<Me>; o
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [avatar, setAvatar] = useState(initial.avatar ?? "");
 
   async function save() {
     const errs: Record<string, string> = {};
@@ -40,6 +42,9 @@ export function ProfileForm({ initial, onSaved, cta }: { initial: Partial<Me>; o
 
   return (
     <View style={{ gap: 16 }}>
+      {initial.phone ? (
+        <AvatarPicker me={{ ...(initial as Me), ...f, avatar }} onChange={setAvatar} onError={setError} />
+      ) : null}
       {error ? <Alert>{error}</Alert> : null}
       <Card style={{ gap: 14 }}>
         <Field label={t("Nome")} value={f.first_name} onChangeText={(v) => setF({ ...f, first_name: v })} autoComplete="given-name" error={errors.first_name} />

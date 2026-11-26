@@ -133,6 +133,7 @@ class MeSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False, allow_blank=True)
     province = serializers.ChoiceField([*PROVINCES, ""], required=False)
     district = serializers.CharField(max_length=60, required=False, allow_blank=True)
+    avatar = serializers.CharField(read_only=True)
     memberships = MembershipSerializer(many=True, read_only=True)
     is_staff = serializers.BooleanField(read_only=True)
 
