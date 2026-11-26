@@ -76,7 +76,7 @@ const FOOTER = [
 
 export function SiteFooter() {
   return (
-    <footer className="relative mt-20 overflow-hidden bg-ink text-white">
+    <footer className="theme-flip relative mt-20 overflow-hidden bg-ink text-white">
 
       <div className="relative mx-auto max-w-6xl px-5 sm:px-8">
         {/* Convite */}
@@ -145,7 +145,7 @@ export function SiteFooter() {
       </div>
 
       {/* Assinatura */}
-      <p aria-hidden className="pointer-events-none relative select-none text-center font-display text-[24vw] font-extrabold leading-[0.78] tracking-[-0.06em] text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.14)] sm:text-[19vw]">
+      <p aria-hidden className="pointer-events-none relative select-none text-center font-display text-[24vw] font-extrabold leading-[0.78] tracking-[-0.06em] text-transparent [-webkit-text-stroke:1px_color-mix(in_srgb,var(--color-white)_14%,transparent)] sm:text-[19vw]">
         pagamoz
       </p>
 
