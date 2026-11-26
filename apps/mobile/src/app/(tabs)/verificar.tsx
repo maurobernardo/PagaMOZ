@@ -36,7 +36,7 @@ export default function Verificar() {
   const good = v?.resultado === "valido";
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.canvas }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <ScrollView contentContainerStyle={{ paddingTop: top + 16, paddingHorizontal: 18, paddingBottom: 120, gap: 16 }} keyboardShouldPersistTaps="handled">
+      <ScrollView contentInsetAdjustmentBehavior="never" contentContainerStyle={{ paddingTop: top + 16, paddingHorizontal: 18, paddingBottom: 120, gap: 16 }} keyboardShouldPersistTaps="handled">
         <Eyebrow icon={ShieldCheck}>PagaMOZ</Eyebrow>
         <PageTitle title={t("Verificar comprovativo")} sub={t("Confirme se um comprovativo é verdadeiro e se o pagamento continua válido. Não precisa de conta.")} />
         <Card style={{ gap: 14 }}>

@@ -52,6 +52,13 @@ ALIASES: dict[str, list[str]] = {
     "uem": ["uem", "universidade", "eduardo mondlane", "propina", "propinas", "matricula", "faculdade"],
     "hcm": ["hcm", "hospital", "central", "consulta", "saude", "factura hospitalar"],
     "emose": ["emose", "seguro", "seguros", "apolice"],
+    "startimes": ["startimes", "star times", "televisao", "tv", "canais"],
+    "gotv": ["gotv", "go tv", "televisao", "tv", "canais", "iuc"],
+    "ucm": ["ucm", "catolica", "universidade catolica", "propina", "propinas", "faculdade"],
+    "up-maputo": ["up", "pedagogica", "universidade pedagogica", "propina", "propinas"],
+    "isctem": ["isctem", "propina", "propinas", "instituto superior"],
+    "unizambeze": ["unizambeze", "zambeze", "universidade zambeze", "propina", "propinas"],
+    "ujc": ["ujc", "joaquim chissano", "chissano", "propina", "propinas"],
 }
 
 

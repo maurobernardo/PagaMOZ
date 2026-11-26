@@ -76,7 +76,7 @@ export default function Definicoes() {
 
   return (
     <View style={{ flex: 1, backgroundColor: C.canvas }}>
-      <ScrollView contentContainerStyle={{ paddingTop: top + 16, paddingHorizontal: 18, gap: 22, paddingBottom: 120 }}>
+      <ScrollView contentInsetAdjustmentBehavior="never" contentContainerStyle={{ paddingTop: top + 16, paddingHorizontal: 18, gap: 22, paddingBottom: 120 }}>
         <PageTitle title={t("Definições")} />
         {msg ? <Alert tone="info">{msg}</Alert> : null}
 

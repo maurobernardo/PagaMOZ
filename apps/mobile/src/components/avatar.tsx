@@ -4,6 +4,7 @@ import { Camera } from "lucide-react-native";
 import { useState } from "react";
 import { ActivityIndicator, Platform, Pressable, Text, View } from "react-native";
 import { api, errorMessage } from "../lib/api";
+import { toJpeg } from "../lib/image";
 import { t } from "../lib/i18n";
 import { initials, type Me } from "../lib/me";
 import { C, F } from "../theme";
@@ -34,7 +35,7 @@ export function AvatarPicker({ me, onChange, onError }: { me: Me; onChange: (ava
     try {
       const fd = new FormData();
       if (Platform.OS === "web") fd.append("avatar", await (await fetch(a.uri)).blob(), "foto.jpg");
-      else fd.append("avatar", { uri: a.uri, name: a.fileName ?? "foto.jpg", type: a.mimeType ?? "image/jpeg" } as unknown as Blob);
+      else fd.append("avatar", (await toJpeg(a.uri, 512)) as unknown as Blob);
       const res = await api<{ avatar: string }>("/api/me/avatar", { form: fd });
       onChange(res.avatar);
     } catch (e) {

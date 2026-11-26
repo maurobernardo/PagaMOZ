@@ -29,6 +29,7 @@ export default function Servicos() {
 
   return (
     <FlatList
+      contentInsetAdjustmentBehavior="never"
       style={{ backgroundColor: C.canvas }}
       data={entries}
       keyExtractor={(e) => (e.kind === "group" ? `g-${e.key}` : `s-${e.s.id}`)}

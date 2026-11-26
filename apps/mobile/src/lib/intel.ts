@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Platform } from "react-native";
 import { api, errorMessage } from "./api";
+import { toJpeg } from "./image";
 
 export type MethodHealth = { method: string; ok: number; failed: number; rate: number | null; state: "bom" | "instavel" | "falhas" | "sem_dados"; recommended: boolean };
 
@@ -44,7 +45,7 @@ export async function scanBill(camera: boolean): Promise<string | null> {
   if (r.canceled || !a) return null;
   const fd = new FormData();
   if (Platform.OS === "web") fd.append("image", await (await fetch(a.uri)).blob(), "fatura.jpg");
-  else fd.append("image", { uri: a.uri, name: "fatura.jpg", type: a.mimeType ?? "image/jpeg" } as unknown as Blob);
+  else fd.append("image", (await toJpeg(a.uri, 1600)) as unknown as Blob);
   try {
     const res = await api<{ service: number | null; fields: Record<string, string>; amount: number | null; confidence: number }>("/api/intel/scan", { form: fd });
     if (!res.service) return "Não reconhecemos esta fatura. Tente com mais luz e a fatura inteira na foto.";

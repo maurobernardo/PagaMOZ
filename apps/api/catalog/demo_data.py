@@ -46,6 +46,7 @@ GROUPS = {
     "recarga": ("Recarga de saldo", "Escolha a sua operadora"),
     "tv": ("TV por assinatura", "Escolha o seu fornecedor"),
     "energia": ("Electricidade (EDM)", "Escolha o tipo de contador"),
+    "propinas": ("Propinas", "Escolha a sua universidade"),
 }
 
 
@@ -233,6 +234,52 @@ INSTITUTIONS = [
         ],
     ),
     (
+        "servicos-basicos",
+        "startimes",
+        "StarTimes Moçambique",
+        [
+            (
+                "mensalidade",
+                "Mensalidade StarTimes",
+                L1,
+                CONSULTA,
+                None,
+                [
+                    f(
+                        "smartcard",
+                        "N.º do cartão StarTimes",
+                        pattern=r"^\d{8,12}$",
+                        help="Está no cartão dentro do descodificador.",
+                    )
+                ],
+                grouped(conf("tv"), "tv", "StarTimes"),
+            ),
+        ],
+    ),
+    (
+        "servicos-basicos",
+        "gotv",
+        "GOtv Moçambique",
+        [
+            (
+                "mensalidade",
+                "Mensalidade GOtv",
+                L1,
+                CONSULTA,
+                None,
+                [
+                    f(
+                        "iuc",
+                        "N.º IUC do descodificador",
+                        pattern=r"^\d{8,12}$",
+                        help="Está na etiqueta por baixo do descodificador GOtv.",
+                    )
+                ],
+                grouped(conf("tv"), "tv", "GOtv"),
+            ),
+        ],
+    ),
+    (
         "impostos",
         "at",
         "Autoridade Tributária de Moçambique",
@@ -364,7 +411,91 @@ INSTITUTIONS = [
                 CONSULTA,
                 None,
                 [f("n_estudante", "N.º de estudante", pattern=r"^\d{5,10}$", help="Está no cartão de estudante.")],
-                conf("uem_propinas", "Mostra as prestações em dívida, com multa se estiverem em atraso."),
+                grouped(
+                    conf("uem_propinas", "Mostra as prestações em dívida, com multa se estiverem em atraso."),
+                    "propinas",
+                    "UEM",
+                ),
+            ),
+        ],
+    ),
+    (
+        "educacao",
+        "ucm",
+        "Universidade Católica de Moçambique (UCM)",
+        [
+            (
+                "propinas",
+                "Propinas",
+                L1,
+                CONSULTA,
+                None,
+                [f("n_estudante", "N.º de estudante", pattern=r"^\d{5,10}$", help="Está no cartão de estudante.")],
+                grouped(conf("uem_propinas", "Mostra as prestações em dívida."), "propinas", "UCM"),
+            ),
+        ],
+    ),
+    (
+        "educacao",
+        "up-maputo",
+        "Universidade Pedagógica de Maputo (UP-Maputo)",
+        [
+            (
+                "propinas",
+                "Propinas",
+                L1,
+                CONSULTA,
+                None,
+                [f("n_estudante", "N.º de estudante", pattern=r"^\d{5,10}$", help="Está no cartão de estudante.")],
+                grouped(conf("uem_propinas", "Mostra as prestações em dívida."), "propinas", "UP-Maputo"),
+            ),
+        ],
+    ),
+    (
+        "educacao",
+        "isctem",
+        "Instituto Superior de Ciências e Tecnologia de Moçambique (ISCTEM)",
+        [
+            (
+                "propinas",
+                "Propinas",
+                L1,
+                CONSULTA,
+                None,
+                [f("n_estudante", "N.º de estudante", pattern=r"^\d{5,10}$", help="Está no cartão de estudante.")],
+                grouped(conf("uem_propinas", "Mostra as prestações em dívida."), "propinas", "ISCTEM"),
+            ),
+        ],
+    ),
+    (
+        "educacao",
+        "unizambeze",
+        "Universidade Zambeze (UniZambeze)",
+        [
+            (
+                "propinas",
+                "Propinas",
+                L1,
+                CONSULTA,
+                None,
+                [f("n_estudante", "N.º de estudante", pattern=r"^\d{5,10}$", help="Está no cartão de estudante.")],
+                grouped(conf("uem_propinas", "Mostra as prestações em dívida."), "propinas", "UniZambeze"),
+            ),
+        ],
+    ),
+    (
+        "educacao",
+        "ujc",
+        "Universidade Joaquim Chissano (UJC)",
+        [
+            (
+                "propinas",
+                "Propinas",
+                L1,
+                CONSULTA,
+                None,
+                [f("n_estudante", "N.º de estudante", pattern=r"^\d{5,10}$", help="Está no cartão de estudante.")],
+                grouped(conf("uem_propinas", "Mostra as prestações em dívida."), "propinas", "UJC"),
             ),
         ],
     ),

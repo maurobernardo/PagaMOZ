@@ -82,7 +82,8 @@ export default function Home() {
 
   const sunny = (new Date().getUTCHours() + 2) % 24 < 18;
   return (
-    <ScrollView style={{ backgroundColor: C.canvas }} contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 120, gap: 18 }} keyboardShouldPersistTaps="handled"
+    <View style={{ flex: 1, backgroundColor: C.canvas }}>
+    <ScrollView contentInsetAdjustmentBehavior="never" style={{ backgroundColor: C.canvas }} contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 140, gap: 18 }} keyboardShouldPersistTaps="handled"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { refresh(); loadMe(); }} tintColor={C.ink} />}>
       {/* Topo com fotografia (pagamento com telemóvel), escurecida para o texto branco se ler bem */}
       <View style={{ marginHorizontal: -18, paddingTop: top, paddingHorizontal: 18, paddingBottom: 56, backgroundColor: C.hero, overflow: "hidden", borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}>
@@ -145,15 +146,6 @@ export default function Home() {
 
       {offline ? <Alert tone="info">{t("Sem internet: a mostrar a última lista guardada. Pagar precisa de rede.")}</Alert> : null}
       {scanMsg ? <Alert>{scanMsg}</Alert> : null}
-      {/* Assistente: escrever o pedido em linguagem normal */}
-      <Pressable accessibilityRole="button" onPress={() => router.push("/assistente")}
-        style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: C.surface, borderRadius: R.pill, paddingVertical: 10, paddingLeft: 10, paddingRight: 16, transform: [{ scale: pressed ? 0.985 : 1 }], ...shadow() })}>
-        <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: C.ink, alignItems: "center", justifyContent: "center" }}>
-          <Sparkles size={17} color={C.white} />
-        </View>
-        <Text style={{ flex: 1, fontFamily: F.body, fontSize: 15, color: C.muted }} numberOfLines={1}>{t("«Paga 500 de Credelec»…")}</Text>
-        <Text style={{ fontFamily: F.semi, fontSize: 13, color: C.ink }}>{t("Assistente")}</Text>
-      </Pressable>
       {/* Cartão sobreposto */}
       <Pressable accessibilityRole="button" onPress={() => router.push(last ? `/pagamento/${last.reference}` : "/servicos")}
         style={({ pressed }) => ({ marginTop: -46, backgroundColor: C.surface, borderRadius: R.card, padding: 16, flexDirection: "row", alignItems: "center", gap: 14, transform: [{ scale: pressed ? 0.985 : 1 }], ...shadow() })}>
@@ -244,5 +236,12 @@ export default function Home() {
         {codeErr ? <Text style={{ fontFamily: F.semi, fontSize: 13, color: "#ff8a8f" }}>{codeErr}</Text> : null}
       </View>
     </ScrollView>
+    {/* Assistente: botão flutuante, sempre à mão */}
+    <Pressable accessibilityRole="button" accessibilityLabel={t("Assistente")} onPress={() => router.push("/assistente")}
+      style={({ pressed }) => ({ position: "absolute", right: 18, bottom: 24, flexDirection: "row", alignItems: "center", gap: 8, height: 56, paddingHorizontal: 20, borderRadius: 28, backgroundColor: C.ink, transform: [{ scale: pressed ? 0.95 : 1 }], shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 8 })}>
+      <Sparkles size={20} color={C.white} />
+      <Text style={{ fontFamily: F.semi, fontSize: 15, color: C.white }}>{t("Assistente")}</Text>
+    </Pressable>
+    </View>
   );
 }
