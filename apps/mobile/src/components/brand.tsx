@@ -33,6 +33,11 @@ const LOGOS: Record<string, number> = {
   "ujc": require("../../assets/logos/ujc.webp"),
   "up-maputo": require("../../assets/logos/up-maputo.webp"),
   "unizambeze": require("../../assets/logos/unizambeze.webp"),
+  "cmb": require("../../assets/logos/cmb.webp"),
+  "hcb": require("../../assets/logos/hcb.webp"),
+  "hcn": require("../../assets/logos/hcn.webp"),
+  "hollard": require("../../assets/logos/hollard.webp"),
+  "cmcm": require("../../assets/logos/cmcm.webp"),
   visa: require("../../assets/logos/visa.svg"), vodacom: require("../../assets/logos/vodacom.svg"), zap: require("../../assets/logos/zap.png"),
 };
 
