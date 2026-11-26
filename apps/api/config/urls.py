@@ -20,6 +20,7 @@ from accounts.api import (
     PortalPendingView,
     PushTokenView,
 )
+from accounts.invite import SetPasswordView
 from backoffice import api as bo
 from catalog.api import CategoryList, Me, PortalServiceViewSet, PublicServiceViewSet
 from connectors.api import ServicePrice, ServiceQuote
@@ -70,6 +71,8 @@ urlpatterns = [
     path("api/backoffice/overview", bo.Overview.as_view()),
     path("api/backoffice/institutions", bo.InstitutionList.as_view()),
     path("api/backoffice/institutions/<slug:slug>", bo.InstitutionDetail.as_view()),
+    path("api/backoffice/institutions/<slug:slug>/members", bo.InstitutionAdmins.as_view()),
+    path("api/backoffice/users/<int:pk>/invite", bo.ResendInvite.as_view()),
     path("api/backoffice/transactions", bo.Transactions.as_view()),
     path("api/backoffice/discrepancies", bo.Discrepancies.as_view()),
     path("api/backoffice/reconciliation/run", bo.RunReconciliation.as_view()),
@@ -87,6 +90,7 @@ urlpatterns = [
     path("api/auth/otp/verify", OtpVerifyView.as_view(), name="otp-verify"),
     path("api/auth/logout", LogoutView.as_view(), name="logout"),
     path("api/auth/csrf", CsrfView.as_view(), name="csrf"),
+    path("api/auth/set-password", SetPasswordView.as_view(), name="set-password"),
     path("api/me/avatar", AvatarView.as_view(), name="me-avatar"),
     path("api/me/push-token", PushTokenView.as_view(), name="me-push-token"),
     path("api/intel/methods", intel.MethodHealth.as_view(), name="intel-methods"),

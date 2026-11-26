@@ -23,7 +23,7 @@ function PortalLogin() {
   const router = useRouter();
   const params = useSearchParams();
   const [step, setStep] = useState<Step>("password");
-  const [phone, setPhone] = useState("");
+  const [who, setWho] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [secret, setSecret] = useState("");
@@ -58,10 +58,11 @@ function PortalLogin() {
 
   async function login(e: React.FormEvent) {
     e.preventDefault();
-    if (!isValidPhone(phone)) return setError("Número inválido. Exemplo: 84 000 0001.");
+    const isEmail = who.includes("@");
+    if (isEmail ? !/^\S+@\S+\.\S+$/.test(who.trim()) : !isValidPhone(who)) return setError("Escreva o seu email (ou o telefone, ex.: 84 000 0001).");
     setBusy(true);
     setError("");
-    const r = await api.POST("/api/auth/portal/login", { body: { phone: normalizePhone(phone), password } });
+    const r = await api.POST("/api/auth/portal/login", { body: { login: isEmail ? who.trim().toLowerCase() : normalizePhone(who), password } as never });
     setBusy(false);
     if (!r.data) return setError(errorMessage(r.error));
     if (r.data.mfa_enrolled) {
@@ -112,8 +113,8 @@ function PortalLogin() {
           <GoogleButton flow="portal" />
           <OrDivider />
           <form onSubmit={login} className="space-y-5" noValidate>
-            <Field id="phone" label="Telefone" type="tel" autoComplete="username" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="84 000 0001" />
-            <Field id="password" label="Palavra-passe" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <Field id="who" label="Email" type="text" inputMode="email" autoComplete="username" value={who} onChange={(e) => setWho(e.target.value)} placeholder="nome@instituicao.co.mz" />
+            <Field id="password" label="Senha" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
             <Button type="submit" disabled={busy || !ready} className="w-full !min-h-12">{busy ? "A verificar…" : "Continuar"}</Button>
           </form>
           <ul className="mt-8 grid grid-cols-3 gap-2 border-t border-line pt-6 text-center text-xs">

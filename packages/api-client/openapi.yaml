@@ -174,6 +174,47 @@ paths:
               schema:
                 $ref: '#/components/schemas/PortalPending'
           description: ''
+  /api/auth/set-password:
+    get:
+      operationId: auth_set_password_retrieve
+      description: 'GET ?uid&token: o link ainda vale? POST: define a senha (e o link
+        deixa de valer).'
+      tags:
+      - auth
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InviteInfo'
+          description: ''
+    post:
+      operationId: auth_set_password_create
+      description: 'GET ?uid&token: o link ainda vale? POST: define a senha (e o link
+        deixa de valer).'
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetPasswordRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SetPasswordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SetPasswordRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
   /api/backoffice/audit:
     get:
       operationId: backoffice_audit_list
@@ -373,6 +414,62 @@ paths:
               schema:
                 $ref: '#/components/schemas/InstitutionAdmin'
           description: ''
+  /api/backoffice/institutions/{slug}/members:
+    get:
+      operationId: backoffice_institutions_members_list
+      description: O super admin junta o administrador (ou outra pessoa) a uma instituição;
+        recebe o link de convite.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - backoffice
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Member'
+          description: ''
+    post:
+      operationId: backoffice_institutions_members_create
+      description: O super admin junta o administrador (ou outra pessoa) a uma instituição;
+        recebe o link de convite.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - backoffice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InviteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InviteRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+          description: ''
   /api/backoffice/overview:
     get:
       operationId: backoffice_overview_retrieve
@@ -493,6 +590,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedStaffTransactionList'
+          description: ''
+  /api/backoffice/users/{id}/invite:
+    post:
+      operationId: backoffice_users_invite_create
+      description: Novo link para quem ainda não definiu a senha (ou se esqueceu dela).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - backoffice
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invite'
           description: ''
   /api/catalog/categories:
     get:
@@ -1493,7 +1611,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/InviteRequest'
-        required: true
       security:
       - cookieAuth: []
       responses:
@@ -2937,20 +3054,44 @@ components:
         * `1` - Consulta + pagamento em tempo real
         * `2` - Referência de pagamento
         * `3` - Pedido assistido
+    Invite:
+      type: object
+      properties:
+        invite_link:
+          type: string
+        emailed:
+          type: boolean
+      required:
+      - emailed
+      - invite_link
+    InviteInfo:
+      type: object
+      properties:
+        email:
+          type: string
+        name:
+          type: string
+      required:
+      - email
+      - name
     InviteRequest:
       type: object
       properties:
+        email:
+          oneOf:
+          - type: string
+            format: email
+          - type: string
+            maxLength: 0
         phone:
           type: string
-          minLength: 1
         name:
           type: string
           maxLength: 80
         role:
-          $ref: '#/components/schemas/RoleEnum'
-      required:
-      - phone
-      - role
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          default: admin
     KindEnum:
       enum:
       - falta_no_provedor
@@ -3017,12 +3158,21 @@ components:
         phone:
           type: string
           readOnly: true
+          default: ''
+        email:
+          type: string
+          readOnly: true
         name:
           type: string
           readOnly: true
         role:
-          $ref: '#/components/schemas/RoleEnum'
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          readOnly: true
         mfa_enabled:
+          type: boolean
+          readOnly: true
+        has_password:
           type: boolean
           readOnly: true
         created_at:
@@ -3031,6 +3181,8 @@ components:
           readOnly: true
       required:
       - created_at
+      - email
+      - has_password
       - id
       - mfa_enabled
       - name
@@ -3848,17 +4000,22 @@ components:
       - revenue
     PortalLoginRequest:
       type: object
+      description: Email ou telefone (o campo antigo "phone" continua a ser aceite).
       properties:
+        login:
+          type: string
+          minLength: 1
+          maxLength: 254
         phone:
           type: string
           minLength: 1
+          maxLength: 20
         password:
           type: string
           minLength: 1
           maxLength: 128
       required:
       - password
-      - phone
     PortalLoginStep:
       type: object
       properties:
@@ -3882,6 +4039,8 @@ components:
       properties:
         phone:
           type: string
+        email:
+          type: string
         is_staff:
           type: boolean
         memberships:
@@ -3889,6 +4048,7 @@ components:
           items:
             $ref: '#/components/schemas/Membership'
       required:
+      - email
       - is_staff
       - memberships
       - phone
@@ -4801,6 +4961,24 @@ components:
           type: string
       required:
       - phone
+    SetPasswordRequest:
+      type: object
+      properties:
+        uid:
+          type: string
+          minLength: 1
+        token:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+          maxLength: 128
+      required:
+      - password
+      - token
+      - uid
     Settlement:
       type: object
       properties:

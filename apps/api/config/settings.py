@@ -25,6 +25,14 @@ GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="")
 GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET", default="")
 PORTAL_REQUIRE_MFA = env.bool("PORTAL_REQUIRE_MFA", default=True)
 PUBLIC_WEB_URL = env("PUBLIC_WEB_URL", default="http://localhost:3000")  # vai no QR do comprovativo
+# Convites e "esqueci-me da senha": link válido 3 dias. Email opcional (ex.: Gmail com "palavra-passe de app").
+PASSWORD_RESET_TIMEOUT = 60 * 60 * 24 * 3
+EMAIL_HOST = env("EMAIL_HOST", default="")
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USER or "PagaMOZ <no-reply@pagamoz.local>")
 
 INSTALLED_APPS = [
     "django.contrib.admin",

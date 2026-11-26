@@ -409,26 +409,62 @@ class PortalResolveDiscrepancy(PortalView):
 
 
 class MemberSerializer(serializers.ModelSerializer):
-    phone = serializers.CharField(source="user.phone", read_only=True)
+    phone = serializers.CharField(source="user.phone", read_only=True, default="")
+    email = serializers.CharField(source="user.email", read_only=True)
+    has_password = serializers.BooleanField(source="user.has_usable_password", read_only=True)
     name = serializers.CharField(source="user.get_full_name", read_only=True)
     mfa_enabled = serializers.BooleanField(source="user.mfa_enabled", read_only=True)
 
     class Meta:
         model = Membership
-        fields = ["id", "phone", "name", "role", "mfa_enabled", "created_at"]
-        read_only_fields = ["id", "phone", "name", "mfa_enabled", "created_at"]
+        fields = ["id", "phone", "email", "name", "role", "mfa_enabled", "has_password", "created_at"]
+        read_only_fields = fields
 
 
 class InviteSerializer(serializers.Serializer):
-    phone = PhoneField()
+    email = serializers.EmailField(required=False, allow_blank=True)
+    phone = PhoneField(required=False, allow_blank=True)
     name = serializers.CharField(max_length=80, required=False, allow_blank=True)
-    role = serializers.ChoiceField(R.choices)
+    role = serializers.ChoiceField(R.choices, default=R.ADMIN)
+
+    def validate(self, d):
+        d["email"] = (d.get("email") or "").strip().lower()
+        if not d["email"] and not d.get("phone"):
+            raise serializers.ValidationError({"email": "Indique o email (ou o telefone)."})
+        return d
+
+
+def add_member(request, inst, d):
+    """Junta alguém à equipa. Conta nova (ou sem senha) recebe um convite para definir a própria senha."""
+    from accounts.invite import invite_link, send_invite
+
+    user = None
+    if d["email"]:
+        user = User.objects.filter(email__iexact=d["email"]).first()
+    if user is None and d.get("phone"):
+        user = User.objects.filter(phone=d["phone"]).first()
+    if user is None:
+        first, _, last = (d.get("name") or "").strip().partition(" ")
+        user = User.objects.create_user(d.get("phone") or None, email=d["email"], first_name=first, last_name=last)
+    elif d["email"] and not user.email:
+        user.email = d["email"]
+        user.save(update_fields=["email"])
+    try:
+        with db.atomic():  # savepoint: o pedido continua utilizável depois do conflito
+            m = Membership.objects.create(user=user, institution=inst, role=d["role"])
+    except IntegrityError:
+        return None, {"detail": "Esta pessoa já faz parte da equipa."}
+    record("member.add", request=request, institution=inst, target=m, login=user.email or user.phone, role=m.role)
+    extra = {}
+    if not user.has_usable_password():
+        extra = {"invite_link": invite_link(user), "emailed": send_invite(user, inst.name)}
+    return m, extra
 
 
 class PortalMembers(PortalView):
     @extend_schema(responses=MemberSerializer(many=True))
     def get(self, request, institution_slug):
-        qs = self.institution().memberships.select_related("user").order_by("role", "user__phone")
+        qs = self.institution().memberships.select_related("user").order_by("role", "user__email", "user__phone")
         return Response(MemberSerializer(qs, many=True).data)
 
     @extend_schema(request=InviteSerializer, responses={201: MemberSerializer})
@@ -436,18 +472,10 @@ class PortalMembers(PortalView):
         inst = self.institution()
         s = InviteSerializer(data=request.data)
         s.is_valid(raise_exception=True)
-        d = s.validated_data
-        user = User.objects.filter(phone=d["phone"]).first() or User.objects.create_user(
-            d["phone"], first_name=d.get("name", "")
-        )
-        try:
-            with db.atomic():  # savepoint: o pedido continua utilizável depois do conflito
-                m = Membership.objects.create(user=user, institution=inst, role=d["role"])
-        except IntegrityError:
-            return Response({"detail": "Esta pessoa já faz parte da equipa."}, status=409)
-        record("member.add", request=request, institution=inst, target=m, phone=user.phone, role=m.role)
-        # ponytail: convite sem canal (SMS/e-mail); o admin da plataforma define a palavra-passe inicial.
-        return Response(MemberSerializer(m).data, status=201)
+        m, extra = add_member(request, inst, s.validated_data)
+        if m is None:
+            return Response(extra, status=409)
+        return Response({**MemberSerializer(m).data, **extra}, status=201)
 
 
 class RoleChange(serializers.Serializer):
@@ -478,7 +506,9 @@ class PortalMember(PortalView):
         m = self._get(pk)
         if self._last_admin(m):
             return Response({"detail": "Tem de existir pelo menos um administrador."}, status=409)
-        record("member.remove", request=request, institution=m.institution, target=m, phone=m.user.phone)
+        record(
+            "member.remove", request=request, institution=m.institution, target=m, login=m.user.email or m.user.phone
+        )
         m.delete()
         return Response(status=204)
 

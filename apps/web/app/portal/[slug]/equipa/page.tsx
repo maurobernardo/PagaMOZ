@@ -6,7 +6,6 @@ import { filterInput } from "@/components/table";
 import { useToast } from "@/components/toast";
 import { Badge, Button, Card, Field, Skeleton, useDialog } from "@/components/ui";
 import { api, errorMessage } from "@/lib/api";
-import { isValidPhone, normalizePhone } from "@/lib/i18n";
 import { useLoad, usePortal } from "../portal-context";
 
 const ROLES = { admin: "Administrador", financeiro: "Financeiro", operador: "Operador" } as const;
@@ -17,7 +16,8 @@ export default function Equipa() {
   const admin = canWrite(["admin"]);
   const toast = useToast();
   const dialog = useDialog();
-  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [link, setLink] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState<Role>("operador");
   const [err, setErr] = useState("");
@@ -26,12 +26,13 @@ export default function Equipa() {
 
   async function invite(e: React.FormEvent) {
     e.preventDefault();
-    if (!isValidPhone(phone)) return setErr("Número inválido. Ex.: 84 123 4567.");
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) return setErr("Escreva um email válido.");
     setErr("");
-    const r = await api.POST("/api/portal/{institution_slug}/members", { ...p, body: { phone: normalizePhone(phone), name, role } });
+    const r = await api.POST("/api/portal/{institution_slug}/members", { ...p, body: { email: email.trim().toLowerCase(), name, role } as never });
     if (!r.data) return toast(errorMessage(r.error), "bad");
-    toast(`${name || normalizePhone(phone)} adicionado como ${ROLES[role]}.`);
-    setPhone("");
+    toast(`${name || email} adicionado como ${ROLES[role]}.`);
+    setLink((r.data as unknown as { invite_link?: string }).invite_link ?? "");
+    setEmail("");
     setName("");
     reload();
   }
@@ -58,7 +59,7 @@ export default function Equipa() {
         {!data ? <Skeleton className="m-4 h-40" /> : (
           <ul className="divide-y divide-line">
             {data.map((m) => {
-              const who = m.name || m.phone;
+              const who = m.name || m.email || m.phone;
               return (
                 <li key={m.id} className="flex flex-wrap items-center gap-4 px-4 py-4">
                   <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-ink font-display text-sm font-bold text-white">
@@ -66,7 +67,7 @@ export default function Equipa() {
                   </span>
                   <span className="min-w-0 flex-1 basis-40">
                     <span className="block truncate font-semibold">{who}</span>
-                    <span className="text-sm text-muted">{m.phone}</span>
+                    <span className="text-sm text-muted">{m.email || m.phone}{m.has_password ? "" : " · convite por aceitar"}</span>
                   </span>
                   <span className="flex items-center gap-2">
                     {m.mfa_enabled ? (
@@ -96,7 +97,7 @@ export default function Equipa() {
           <span className="grid h-12 w-12 place-items-center rounded-2xl bg-canvas"><UserPlus className="h-5 w-5" /></span>
           <h2 className="mt-4 text-xl font-bold">Adicionar membro</h2>
           <form onSubmit={invite} className="mt-5 space-y-4" noValidate>
-            <Field id="m-phone" label="Telefone" type="tel" value={phone} error={err} onChange={(e) => setPhone(e.target.value)} placeholder="84 123 4567" />
+            <Field id="m-email" label="Email" type="email" value={email} error={err} onChange={(e) => setEmail(e.target.value)} placeholder="nome@instituicao.co.mz" />
             <Field id="m-name" label="Nome (opcional)" value={name} onChange={(e) => setName(e.target.value)} />
             <fieldset>
               <legend className="text-sm font-semibold">Perfil</legend>
@@ -111,6 +112,16 @@ export default function Equipa() {
             </fieldset>
             <Button type="submit" className="w-full">Adicionar à equipa</Button>
           </form>
+          {link ? (
+            <div className="mt-4 rounded-2xl bg-canvas p-3 text-sm">
+              <p className="font-semibold">Envie este link para a pessoa definir a senha (3 dias, uma vez):</p>
+              <p className="mt-2 break-all font-mono text-xs">{link}</p>
+              <div className="mt-2 flex gap-3">
+                <button type="button" className="font-semibold underline" onClick={() => { navigator.clipboard.writeText(link); toast("Link copiado."); }}>Copiar</button>
+                <a className="font-semibold underline" target="_blank" rel="noreferrer" href={`https://wa.me/?text=${encodeURIComponent("Defina a sua senha do portal PagaMOZ: " + link)}`}>WhatsApp</a>
+              </div>
+            </div>
+          ) : null}
           <p className="mt-4 text-xs leading-relaxed text-muted">Operador trata pedidos. Financeiro vê transacções, devolve pagamentos e reconcilia. Administrador faz tudo, incluindo catálogo e equipa.</p>
         </Card>
       ) : null}

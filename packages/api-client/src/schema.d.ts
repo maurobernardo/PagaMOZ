@@ -137,6 +137,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/set-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GET ?uid&token: o link ainda vale? POST: define a senha (e o link deixa de valer). */
+        get: operations["auth_set_password_retrieve"];
+        put?: never;
+        /** @description GET ?uid&token: o link ainda vale? POST: define a senha (e o link deixa de valer). */
+        post: operations["auth_set_password_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/backoffice/audit": {
         parameters: {
             query?: never;
@@ -233,6 +251,24 @@ export interface paths {
         patch: operations["backoffice_institutions_partial_update"];
         trace?: never;
     };
+    "/api/backoffice/institutions/{slug}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description O super admin junta o administrador (ou outra pessoa) a uma instituição; recebe o link de convite. */
+        get: operations["backoffice_institutions_members_list"];
+        put?: never;
+        /** @description O super admin junta o administrador (ou outra pessoa) a uma instituição; recebe o link de convite. */
+        post: operations["backoffice_institutions_members_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/backoffice/overview": {
         parameters: {
             query?: never;
@@ -307,6 +343,23 @@ export interface paths {
         get: operations["backoffice_transactions_list"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backoffice/users/{id}/invite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Novo link para quem ainda não definiu a senha (ou se esqueceu dela). */
+        post: operations["backoffice_users_invite_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1460,9 +1513,19 @@ export interface components {
          * @enum {integer}
          */
         IntegrationLevelEnum: 1 | 2 | 3;
+        Invite: {
+            invite_link: string;
+            emailed: boolean;
+        };
+        InviteInfo: {
+            email: string;
+            name: string;
+        };
         InviteRequest: {
-            phone: string;
+            email?: string;
+            phone?: string;
             name?: string;
+            /** @default admin */
             role: components["schemas"]["RoleEnum"];
         };
         /**
@@ -1487,10 +1550,13 @@ export interface components {
         };
         Member: {
             readonly id: number;
+            /** @default  */
             readonly phone: string;
+            readonly email: string;
             readonly name: string;
-            role: components["schemas"]["RoleEnum"];
+            readonly role: components["schemas"]["RoleEnum"];
             readonly mfa_enabled: boolean;
+            readonly has_password: boolean;
             /** Format: date-time */
             readonly created_at: string;
         };
@@ -1889,8 +1955,10 @@ export interface components {
             };
             late: unknown[];
         };
+        /** @description Email ou telefone (o campo antigo "phone" continua a ser aceite). */
         PortalLoginRequest: {
-            phone: string;
+            login?: string;
+            phone?: string;
             password: string;
         };
         PortalLoginStep: {
@@ -1903,6 +1971,7 @@ export interface components {
         };
         PortalSession: {
             phone: string;
+            email: string;
             is_staff: boolean;
             memberships: components["schemas"]["Membership"][];
         };
@@ -2277,6 +2346,11 @@ export interface components {
         Session: {
             phone: string;
         };
+        SetPasswordRequest: {
+            uid: string;
+            token: string;
+            password: string;
+        };
         Settlement: {
             readonly id: number;
             /** Format: date */
@@ -2561,6 +2635,49 @@ export interface operations {
             };
         };
     };
+    auth_set_password_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteInfo"];
+                };
+            };
+        };
+    };
+    auth_set_password_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetPasswordRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["SetPasswordRequest"];
+                "multipart/form-data": components["schemas"]["SetPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     backoffice_audit_list: {
         parameters: {
             query?: {
@@ -2750,6 +2867,54 @@ export interface operations {
             };
         };
     };
+    backoffice_institutions_members_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Member"][];
+                };
+            };
+        };
+    };
+    backoffice_institutions_members_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["InviteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["InviteRequest"];
+                "multipart/form-data": components["schemas"]["InviteRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Member"];
+                };
+            };
+        };
+    };
     backoffice_overview_retrieve: {
         parameters: {
             query?: never;
@@ -2859,6 +3024,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaginatedStaffTransactionList"];
+                };
+            };
+        };
+    };
+    backoffice_users_invite_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Invite"];
                 };
             };
         };
@@ -3810,7 +3996,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
                 "application/json": components["schemas"]["InviteRequest"];
                 "application/x-www-form-urlencoded": components["schemas"]["InviteRequest"];

@@ -40,7 +40,10 @@ def normalize_phone(raw: str) -> str:
 
 class PhoneField(serializers.CharField):
     def to_internal_value(self, data):
-        phone = normalize_phone(super().to_internal_value(data))
+        raw = super().to_internal_value(data)
+        if not raw:
+            return ""
+        phone = normalize_phone(raw)
         phone_validator(phone)
         return phone
 
@@ -167,8 +170,24 @@ LOCK_SECONDS = 15 * 60
 
 
 class PortalLogin(serializers.Serializer):
-    phone = PhoneField()
+    """Email ou telefone (o campo antigo "phone" continua a ser aceite)."""
+
+    login = serializers.CharField(max_length=254, required=False)
+    phone = serializers.CharField(max_length=20, required=False)
     password = serializers.CharField(max_length=128)
+
+    def validate(self, d):
+        raw = (d.get("login") or d.get("phone") or "").strip()
+        if not raw:
+            raise serializers.ValidationError({"login": "Escreva o email ou o telefone."})
+        d["login"] = raw.lower() if "@" in raw else normalize_phone(raw)
+        return d
+
+
+def find_staff_user(login_id: str) -> User | None:
+    if "@" in login_id:
+        return User.objects.filter(email__iexact=login_id, is_active=True).first()
+    return User.objects.filter(phone=login_id, is_active=True).first()
 
 
 class MfaCode(serializers.Serializer):
@@ -190,21 +209,24 @@ class PortalLoginView(APIView):
     @extend_schema(request=PortalLogin, responses=inline_serializer("PortalLoginStep", {
         "mfa_enrolled": serializers.BooleanField(), "demo_code": serializers.CharField(required=False)}))  # fmt: skip
     def post(self, request):
-        from django.contrib.auth import authenticate
         from django.core.cache import cache
 
         s = PortalLogin(data=request.data)
         s.is_valid(raise_exception=True)
-        phone = s.validated_data["phone"]
-        key = f"portal-login-fail:{phone}"
+        login_id = s.validated_data["login"]
+        key = f"portal-login-fail:{login_id}"
         if cache.get(key, 0) >= LOCK_AFTER:
             return Response({"detail": "Conta bloqueada temporariamente por tentativas falhadas. Tente em 15 minutos."},
                             status=429)  # fmt: skip
-        user = authenticate(request, phone=phone, password=s.validated_data["password"])
-        if user is None or not (user.memberships.exists() or user.is_staff):
+        user = find_staff_user(login_id)
+        if (
+            user is None
+            or not user.check_password(s.validated_data["password"])
+            or not (user.memberships.exists() or user.is_staff)
+        ):
             cache.set(key, cache.get(key, 0) + 1, LOCK_SECONDS)
-            record("auth.portal_login_failed", request=request, phone=phone)
-            return Response({"detail": "Telefone ou palavra-passe incorrectos."}, status=400)
+            record("auth.portal_login_failed", request=request, login=login_id)
+            return Response({"detail": "Email/telefone ou senha incorrectos."}, status=400)
         cache.delete(key)
         request.session.cycle_key()
         request.session["pre_mfa_user"] = user.pk
@@ -235,7 +257,11 @@ class MfaSetupView(APIView):
         user.mfa_secret = new_secret()
         user.save(update_fields=["mfa_secret"])
         return Response(
-            {"secret": user.mfa_secret, "otpauth_uri": uri(user.mfa_secret, user.phone), **_demo_code(user)}
+            {
+                "secret": user.mfa_secret,
+                "otpauth_uri": uri(user.mfa_secret, user.email or user.phone),
+                **_demo_code(user),
+            }
         )
 
 
@@ -246,7 +272,7 @@ class MfaVerifyView(APIView):
     throttle_classes = [OtpThrottle]
 
     @extend_schema(request=MfaCode, responses=inline_serializer("PortalSession", {
-        "phone": serializers.CharField(), "is_staff": serializers.BooleanField(),
+        "phone": serializers.CharField(), "email": serializers.CharField(), "is_staff": serializers.BooleanField(),
         "memberships": MembershipSerializer(many=True)}))  # fmt: skip
     def post(self, request):
         from .totp import verify
@@ -267,7 +293,9 @@ class MfaVerifyView(APIView):
         record("auth.portal_login", actor=user, request=request)
         get_token(request)
         memberships = MembershipSerializer(user.memberships.select_related("institution"), many=True).data
-        return Response({"phone": user.phone, "is_staff": user.is_staff, "memberships": memberships})
+        return Response(
+            {"phone": user.phone or "", "email": user.email, "is_staff": user.is_staff, "memberships": memberships}
+        )
 
 
 class PortalPendingView(APIView):

@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.core.validators import RegexValidator
 from django.db import models
+from django.db.models.functions import Lower
 from django.utils import timezone
 
 from core.crypto import EncryptedCharField
@@ -18,21 +19,26 @@ phone_validator = RegexValidator(r"^\+258[28]\d{8}$", "Use o formato +258XXXXXXX
 class UserManager(BaseUserManager):
     use_in_migrations = True
 
-    def create_user(self, phone, password=None, **extra):
-        user = self.model(phone=phone, **extra)
+    def create_user(self, phone=None, password=None, **extra):
+        if extra.get("email"):
+            extra["email"] = extra["email"].strip().lower()
+        user = self.model(phone=phone or None, **extra)
         user.set_password(password)  # None -> unusable password (login por OTP)
         user.full_clean(exclude=["password"])
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, phone, password=None, **extra):
+    def create_superuser(self, phone=None, password=None, **extra):
         extra.update(is_staff=True, is_superuser=True)
         return self.create_user(phone, password, **extra)
 
 
 class User(AbstractUser):
     username = None
-    phone = models.CharField("telefone", max_length=13, unique=True, validators=[phone_validator])
+    # Cidadãos entram pelo telefone; equipas das instituições e da plataforma podem ter só email.
+    phone = models.CharField(
+        "telefone", max_length=13, unique=True, null=True, blank=True, validators=[phone_validator]
+    )
     email = models.EmailField(blank=True)
     # Perfil do cidadão (opcional): onde vive, para lembretes e serviços locais.
     province = models.CharField("província", max_length=40, blank=True)
@@ -44,12 +50,17 @@ class User(AbstractUser):
     mfa_enabled = models.BooleanField(default=False)
     mfa_last_counter = models.BigIntegerField(default=0)  # anti-reutilização do mesmo código
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(Lower("email"), condition=~models.Q(email=""), name="user_email_unique_ci")
+        ]
+
     USERNAME_FIELD = "phone"
     REQUIRED_FIELDS: list[str] = []
     objects = UserManager()
 
     def __str__(self):
-        return self.get_full_name() or self.phone
+        return self.get_full_name() or self.phone or self.email
 
 
 def _hash_code(phone: str, code: str) -> str:

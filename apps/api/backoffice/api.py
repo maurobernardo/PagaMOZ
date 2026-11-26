@@ -15,7 +15,17 @@ from audit.models import AuditLog, record
 from institutions.models import Institution
 from ledger.models import Account, balance, trial_balance
 from payments.models import DeadLetter, Method, Status, Transaction
-from portal.api import FILTERS, PAID, PortalTransactionSerializer, _since, _sum, filtered
+from portal.api import (
+    FILTERS,
+    PAID,
+    InviteSerializer,
+    MemberSerializer,
+    PortalTransactionSerializer,
+    _since,
+    _sum,
+    add_member,
+    filtered,
+)
 from reconciliation.models import Discrepancy, ReconciliationRun
 from reconciliation.services import run_daily_reconciliation
 
@@ -130,6 +140,47 @@ class InstitutionDetail(generics.RetrieveUpdateAPIView):
         inst = serializer.save()
         record("institution.update", request=self.request, institution=inst, target=inst,
                changes={f: [str(before[f]), str(getattr(inst, f))] for f in before})  # fmt: skip
+
+
+class InstitutionAdmins(APIView):
+    """O super admin junta o administrador (ou outra pessoa) a uma instituição; recebe o link de convite."""
+
+    permission_classes = [IsPlatformStaff]
+
+    @extend_schema(responses=MemberSerializer(many=True))
+    def get(self, request, slug):
+        inst = get_object_or_404(Institution, slug=slug)
+        return Response(MemberSerializer(inst.memberships.select_related("user"), many=True).data)
+
+    @extend_schema(request=InviteSerializer, responses={201: MemberSerializer})
+    def post(self, request, slug):
+        inst = get_object_or_404(Institution, slug=slug)
+        s = InviteSerializer(data=request.data)
+        s.is_valid(raise_exception=True)
+        m, extra = add_member(request, inst, s.validated_data)
+        if m is None:
+            return Response(extra, status=409)
+        return Response({**MemberSerializer(m).data, **extra}, status=201)
+
+
+class ResendInvite(APIView):
+    """Novo link para quem ainda não definiu a senha (ou se esqueceu dela)."""
+
+    permission_classes = [IsPlatformStaff]
+
+    @extend_schema(
+        request=None,
+        responses=inline_serializer(
+            "Invite", {"invite_link": serializers.CharField(), "emailed": serializers.BooleanField()}
+        ),
+    )
+    def post(self, request, pk):
+        from accounts.invite import invite_link, send_invite
+        from accounts.models import User
+
+        user = get_object_or_404(User, pk=pk, is_active=True)
+        record("auth.invite_resent", request=request, target=user)
+        return Response({"invite_link": invite_link(user), "emailed": send_invite(user)})
 
 
 # ---------- Transacções (todas as instituições) ----------

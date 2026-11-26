@@ -9,13 +9,15 @@ import { useLoad } from "@/lib/use-load";
 
 type Inst = Schemas["InstitutionAdmin"];
 const STATUS = { activa: ["Activa", "ok"], onboarding: ["Em adesão", "wait"], suspensa: ["Suspensa", "bad"] } as const;
-const EMPTY = { name: "", slug: "", nuit: "", settlement_bank: "", settlement_account_masked: "", commission_bps: "150" };
+const EMPTY = { name: "", slug: "", nuit: "", settlement_bank: "", settlement_account_masked: "", commission_bps: "150", admin_email: "", admin_name: "" };
+type Invite = { who: string; inst: string; link?: string; emailed?: boolean };
 
 export default function Instituicoes() {
   const toast = useToast();
   const dialog = useDialog();
   const [form, setForm] = useState(EMPTY);
   const [showNew, setShowNew] = useState(false);
+  const [invite, setInvite] = useState<Invite | null>(null);
   const { data, reload } = useLoad(() => api.GET("/api/backoffice/institutions"), []);
 
   async function patch(slug: string, body: Partial<Inst>, what: string) {
@@ -25,13 +27,25 @@ export default function Instituicoes() {
     reload();
   }
 
+  /** Junta o administrador à instituição e mostra o link para ele definir a senha. */
+  async function addAdmin(slug: string, instName: string, email: string, name: string) {
+    const r = await api.POST("/api/backoffice/institutions/{slug}/members", { params: { path: { slug } }, body: { email, name, role: "admin" } as never });
+    if (!r.data) return toast(errorMessage(r.error), "bad");
+    const d = r.data as unknown as { invite_link?: string; emailed?: boolean };
+    setInvite({ who: email, inst: instName, link: d.invite_link, emailed: d.emailed });
+    reload();
+  }
+
   async function create(e: React.FormEvent) {
     e.preventDefault();
+    if (!/^\S+@\S+\.\S+$/.test(form.admin_email)) return toast("Escreva o email do administrador da instituição.", "bad");
+    const { admin_email, admin_name, ...inst } = form;
     const r = await api.POST("/api/backoffice/institutions", {
-      body: { ...form, commission_bps: Number(form.commission_bps), commission_payer: "instituicao", status: "onboarding" } as never,
+      body: { ...inst, commission_bps: Number(form.commission_bps), commission_payer: "instituicao", status: "onboarding" } as never,
     });
     if (!r.data) return toast(errorMessage(r.error), "bad");
     toast(`${r.data.name} criada em adesão.`);
+    await addAdmin(r.data.slug, r.data.name, admin_email, admin_name);
     setForm(EMPTY);
     setShowNew(false);
     reload();
@@ -58,8 +72,31 @@ export default function Instituicoes() {
             <Field id="b" label="Banco de liquidação" value={form.settlement_bank} onChange={(e) => setForm({ ...form, settlement_bank: e.target.value })} />
             <Field id="a" label="Conta (só ficam os últimos 4 dígitos)" value={form.settlement_account_masked}
               onChange={(e) => setForm({ ...form, settlement_account_masked: e.target.value })} />
-            <Button type="submit" className="sm:col-span-2">Criar em adesão</Button>
+            <Field id="ae" label="Email do administrador da instituição" type="email" value={form.admin_email}
+              onChange={(e) => setForm({ ...form, admin_email: e.target.value })} />
+            <Field id="an" label="Nome do administrador" value={form.admin_name} onChange={(e) => setForm({ ...form, admin_name: e.target.value })} />
+            <Button type="submit" className="sm:col-span-2">Criar e convidar o administrador</Button>
           </form>
+        </Card>
+      ) : null}
+
+      {invite ? (
+        <Card>
+          <p className="font-display text-lg font-bold">{invite.who} é administrador de {invite.inst}</p>
+          {invite.link ? (
+            <>
+              <p className="mt-1 text-sm text-muted">
+                {invite.emailed ? "Enviámos o convite por email. " : ""}Envie-lhe este link para definir a senha (vale 3 dias, uma só vez):
+              </p>
+              <p className="mt-3 break-all rounded-xl bg-canvas p-3 font-mono text-xs">{invite.link}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button className="min-h-10" onClick={() => { navigator.clipboard.writeText(invite.link!); toast("Link copiado."); }}>Copiar link</Button>
+                <a className="inline-flex min-h-10 items-center rounded-full border border-line px-4 text-sm font-semibold hover:border-ink" target="_blank" rel="noreferrer"
+                  href={`https://wa.me/?text=${encodeURIComponent(`Defina a sua senha do portal PagaMOZ (${invite.inst}): ${invite.link}`)}`}>Enviar por WhatsApp</a>
+                <button className="min-h-10 px-3 text-sm text-muted hover:text-ink" onClick={() => setInvite(null)}>Fechar</button>
+              </div>
+            </>
+          ) : <p className="mt-1 text-sm text-muted">Esta pessoa já tinha senha: pode entrar no portal com o email.</p>}
         </Card>
       ) : null}
 
@@ -90,7 +127,11 @@ export default function Instituicoes() {
                     </button>
                   </td>
                   <td className="px-3 py-2">{i.settlement_bank} {i.settlement_account_masked}</td>
-                  <td className="px-3 py-2">
+                  <td className="flex flex-wrap gap-3 px-3 py-2">
+                    <button className="font-medium hover:underline" onClick={async () => {
+                      const email = await dialog.prompt({ title: `Administrador de ${i.name}`, body: "Recebe um link para definir a própria senha.", input: { label: "Email", initial: "" }, confirm: "Convidar" });
+                      if (email) addAdmin(i.slug, i.name, email.trim(), "");
+                    }}>Convidar admin</button>
                     {i.status !== "activa" ? (
                       <button className="font-medium text-brand-800 hover:underline" onClick={() => patch(i.slug, { status: "activa" }, "activada")}>Activar</button>
                     ) : (
