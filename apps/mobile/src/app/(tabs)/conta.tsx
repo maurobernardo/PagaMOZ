@@ -4,11 +4,11 @@ import * as Notifications from "expo-notifications";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import {
-  Bell, Fingerprint, HelpCircle, Info, Languages, LogOut, Moon, Shield, Sparkles, Trash2, User, Vibrate,
+  Bell, Bookmark, FileText, Fingerprint, UserX, HelpCircle, Info, Languages, LogOut, Moon, Shield, Sparkles, Trash2, User, Vibrate,
 } from "lucide-react-native";
 import { useState } from "react";
 import { registerPush, unregisterPush } from "../../lib/push";
-import { Platform, ScrollView, Text, View } from "react-native";
+import { Alert as RNAlert, Platform, ScrollView, Text, View } from "react-native";
 import { Alert, Group, ListRow, PageTitle, Segmented, Toggle } from "../../components/ui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChevronRight, Pencil, UserPlus } from "lucide-react-native";
@@ -16,7 +16,7 @@ import { Pressable } from "react-native";
 import { shortName } from "../../lib/me";
 import { Avatar } from "../../components/avatar";
 import { R, shadow } from "../../theme";
-import { api, WEB } from "../../lib/api";
+import { api, errorMessage, WEB } from "../../lib/api";
 import { t } from "../../lib/i18n";
 import { useMe } from "../../lib/me";
 import { DEFAULT_PREFS, usePrefs, type Lang, type ThemePref } from "../../lib/prefs";
@@ -47,6 +47,23 @@ export default function Definicoes() {
       const r = await registerPush();
       if (r === "sem projecto EAS") setMsg(t("Avisos com a app fechada precisam da versão instalada da app (não o Expo Go)."));
     }
+  }
+
+  // Apagar a conta (exigido pelas lojas): confirma duas vezes, porque não se pode desfazer.
+  function deleteAccount() {
+    RNAlert.alert(t("Apagar a minha conta"), t("Os seus dados pessoais são apagados e sai da conta. Os comprovativos dos pagamentos continuam válidos. Isto não se pode desfazer."), [
+      { text: t("Cancelar"), style: "cancel" },
+      { text: t("Apagar"), style: "destructive", onPress: async () => {
+        await unregisterPush();
+        try {
+          await api("/api/me", { method: "DELETE" });
+          setMe(null);
+          setMsg(t("A sua conta foi apagada."));
+        } catch (e) {
+          setMsg(errorMessage(e));
+        }
+      } },
+    ]);
   }
 
   async function wipe() {
@@ -90,6 +107,7 @@ export default function Definicoes() {
         {me ? (
           <Group title={t("Conta")}>
             <ListRow first icon={Pencil} title={t("Editar perfil")} sub={[me.district, me.province].filter(Boolean).join(", ") || undefined} onPress={() => router.push("/perfil-editar")} />
+            <ListRow icon={Bookmark} title={t("Contas guardadas")} sub={t("Ex.: «casa da mãe», para pagar num toque")} onPress={() => router.push("/carteira")} />
           </Group>
         ) : null}
 
@@ -125,7 +143,9 @@ export default function Definicoes() {
 
         <Group title={t("Privacidade")}>
           <ListRow first icon={Shield} title={t("Política de privacidade")} onPress={() => router.push("/privacidade")} />
+          <ListRow icon={FileText} title={t("Termos de utilização")} onPress={() => router.push("/termos")} />
           <ListRow icon={Trash2} title={t("Apagar dados deste aparelho")} danger onPress={wipe} />
+          {me ? <ListRow icon={UserX} title={t("Apagar a minha conta")} danger onPress={deleteAccount} /> : null}
         </Group>
 
         <Group title={t("Ajuda")}>

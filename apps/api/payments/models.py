@@ -123,3 +123,34 @@ class DeadLetter(models.Model):
 
     def __str__(self):
         return f"{self.kind} {self.created_at:%Y-%m-%d %H:%M}"
+
+
+class Complaint(models.Model):
+    """Reclamação do cidadão sobre um pagamento; a instituição responde no portal."""
+
+    class Reason(models.TextChoices):
+        NOT_RECEIVED = "nao_recebi", "Paguei e não recebi o serviço"
+        WRONG_AMOUNT = "valor_errado", "Valor errado"
+        DUPLICATE = "duplicado", "Paguei duas vezes"
+        OTHER = "outro", "Outro motivo"
+
+    class State(models.TextChoices):
+        OPEN = "aberta", "Aberta"
+        REVIEW = "em_analise", "Em análise"
+        RESOLVED = "resolvida", "Resolvida"
+        REJECTED = "recusada", "Recusada"
+
+    transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE, related_name="complaints")
+    reason = models.CharField(max_length=20, choices=Reason.choices)
+    message = models.TextField(max_length=1000)
+    contact = models.CharField(max_length=40, blank=True)
+    status = models.CharField(max_length=12, choices=State.choices, default=State.OPEN)
+    response = models.TextField(max_length=1000, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.transaction.reference} · {self.get_reason_display()}"

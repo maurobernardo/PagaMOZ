@@ -1,13 +1,13 @@
 import * as DocumentPicker from "expo-document-picker";
 import { router, useLocalSearchParams } from "expo-router";
-import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Sparkles, CreditCard, FileCheck2, Info, Lock, Search, Upload } from "lucide-react-native";
+import { AlertTriangle, ArrowLeft, ArrowRight, Bookmark, CheckCircle2, Share2, Sparkles, CreditCard, FileCheck2, Info, Lock, Search, Upload } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { useMethodHealth } from "../../lib/intel";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert as RNAlert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Share, Text, TextInput, View } from "react-native";
 import { BrandMark, MethodMark } from "../../components/brand";
 import { Alert, Button, Card, Field, H2, Header, Loading, P, Row, Steps } from "../../components/ui";
 import { t } from "../../lib/i18n";
-import { api, ApiError, errorMessage, fieldErrors, newKey, type Payment, type Schemas, type Service } from "../../lib/api";
+import { api, ApiError, errorMessage, fieldErrors, newKey, WEB, type Payment, type Schemas, type Service } from "../../lib/api";
 import { cardSummary, formatCardNumber, formatExp } from "../../lib/card";
 import { formatMZN, isValidPhone, METHOD_LABEL, normalizePhone, WALLET_PREFIXES } from "../../lib/format";
 import { demo3ds } from "../../lib/session";
@@ -154,6 +154,27 @@ function PayFlow({ s }: { s: Service }) {
     }
   }
 
+  // Pedir a alguém: link da web com os dados preenchidos (outra pessoa paga, o serviço é seu).
+  async function askSomeone() {
+    const q = new URLSearchParams({ ...values, ...(s.pricing === "aberto" && confirmed ? { valor: String(confirmed.amount / 100) } : {}) });
+    await Share.share({ message: `${t("Pode pagar por mim?")} ${s.name}: ${WEB}/servicos/${s.id}?${q}` });
+  }
+
+  // Guardar com um nome ("casa da mãe") para pagar num toque e para o assistente.
+  const [saving, setSaving] = useState(false);
+  const [saveName, setSaveName] = useState("");
+  async function saveObligation() {
+    try {
+      await api("/api/me/obligations", { body: { service: s.id, label: saveName.trim(), fields: values } });
+      setSaving(false);
+      setSaveName("");
+      setError("");
+      RNAlert.alert(t("Guardado"), t("Encontra-a em Definições, Contas guardadas."));
+    } catch (e) {
+      setError(e instanceof ApiError && e.status === 403 ? t("Entre na sua conta para guardar.") : errorMessage(e));
+    }
+  }
+
   // Dividir: cria a divisão em n partes; cada pessoa paga a sua por um link.
   async function splitBill(n: number) {
     if (!confirmed) return;
@@ -289,6 +310,17 @@ function PayFlow({ s }: { s: Service }) {
             <Row label={t("Comissão")} value={!confirmed.commission || confirmed.commission_payer === "instituicao" ? t("Paga pela instituição") : formatMZN(confirmed.commission)} />
             <Row label={t("Total a pagar")} value={formatMZN(confirmed.total)} strong />
             <Button onPress={() => go(2)} icon={ArrowRight}>{t("Continuar para pagamento")}</Button>
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <Button variant="secondary" icon={Share2} style={{ flex: 1 }} onPress={askSomeone}>{t("Pedir a alguém")}</Button>
+              <Button variant="secondary" icon={Bookmark} style={{ flex: 1 }} onPress={() => setSaving(!saving)}>{t("Guardar")}</Button>
+            </View>
+            {saving ? (
+              <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+                <TextInput value={saveName} onChangeText={setSaveName} placeholder={t("Nome, ex.: casa da mãe")} placeholderTextColor={C.muted} maxLength={60}
+                  accessibilityLabel={t("Nome")} style={{ flex: 1, minHeight: 46, borderRadius: R.field, borderWidth: 1.5, borderColor: C.line, paddingHorizontal: 14, fontFamily: F.body, fontSize: 15, color: C.ink, backgroundColor: C.surface }} />
+                <Button onPress={saveObligation} disabled={saveName.trim().length < 2} style={{ minHeight: 46 }}>{t("Guardar")}</Button>
+              </View>
+            ) : null}
             {s.pricing === "aberto" && !params.parte ? (
               <View style={{ gap: 8 }}>
                 <Text style={{ fontFamily: F.semi, fontSize: 13, color: C.muted, textAlign: "center" }}>{t("Dividir com outras pessoas")}</Text>

@@ -511,7 +511,8 @@ export interface paths {
         get: operations["me_retrieve"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** @description O próprio utilizador. PATCH actualiza o perfil (nome, email, província, distrito). */
+        delete: operations["me_destroy"];
         options?: never;
         head?: never;
         /** @description O próprio utilizador. PATCH actualiza o perfil (nome, email, província, distrito). */
@@ -668,6 +669,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/payments/{reference}/complaints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GET: reclamações deste pagamento. POST: abrir uma (uma aberta de cada vez). */
+        get: operations["payments_complaints_list"];
+        put?: never;
+        /** @description GET: reclamações deste pagamento. POST: abrir uma (uma aberta de cada vez). */
+        post: operations["payments_complaints_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/payments/{reference}/qr.svg": {
         parameters: {
             query?: never;
@@ -746,6 +765,40 @@ export interface paths {
         get: operations["portal_balances_retrieve"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/{institution_slug}/complaints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Reclamações dos pagamentos desta instituição (as abertas primeiro). */
+        get: operations["portal_complaints_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/{institution_slug}/complaints/{id}/respond": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Responder: muda o estado e avisa o cidadão (push, se tiver a app com sessão). */
+        post: operations["portal_complaints_respond_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1217,6 +1270,36 @@ export interface components {
          * @enum {string}
          */
         CommissionPayerEnum: "cidadao" | "instituicao";
+        Complaint: {
+            readonly id: number;
+            readonly reference: string;
+            readonly service_name: string;
+            readonly amount: number;
+            reason: components["schemas"]["ReasonEnum"];
+            readonly reason_label: string;
+            message: string;
+            contact?: string;
+            readonly status: components["schemas"]["ComplaintStatusEnum"];
+            readonly status_label: string;
+            readonly response: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        ComplaintRequest: {
+            reason: components["schemas"]["ReasonEnum"];
+            message: string;
+            contact?: string;
+        };
+        /**
+         * @description * `aberta` - Aberta
+         *     * `em_analise` - Em análise
+         *     * `resolvida` - Resolvida
+         *     * `recusada` - Recusada
+         * @enum {string}
+         */
+        ComplaintStatusEnum: "aberta" | "em_analise" | "resolvida" | "recusada";
         Csrf: {
             csrf: string;
         };
@@ -1923,6 +2006,14 @@ export interface components {
             total: number;
             commission_payer: string;
         };
+        /**
+         * @description * `nao_recebi` - Paguei e não recebi o serviço
+         *     * `valor_errado` - Valor errado
+         *     * `duplicado` - Paguei duas vezes
+         *     * `outro` - Outro motivo
+         * @enum {string}
+         */
+        ReasonEnum: "nao_recebi" | "valor_errado" | "duplicado" | "outro";
         Reconciliation: {
             /** Format: date */
             date: string | null;
@@ -1986,6 +2077,17 @@ export interface components {
         ResolveRequestRequest: {
             note: string;
         };
+        RespondRequest: {
+            status: components["schemas"]["RespondStatusEnum"];
+            response: string;
+        };
+        /**
+         * @description * `em_analise` - em_analise
+         *     * `resolvida` - resolvida
+         *     * `recusada` - recusada
+         * @enum {string}
+         */
+        RespondStatusEnum: "em_analise" | "resolvida" | "recusada";
         /**
          * @description * `valido` - valido
          *     * `anulado` - anulado
@@ -3037,6 +3139,24 @@ export interface operations {
             };
         };
     };
+    me_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     me_partial_update: {
         parameters: {
             query?: never;
@@ -3418,6 +3538,54 @@ export interface operations {
             };
         };
     };
+    payments_complaints_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Complaint"][];
+                };
+            };
+        };
+    };
+    payments_complaints_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ComplaintRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ComplaintRequest"];
+                "multipart/form-data": components["schemas"]["ComplaintRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Complaint"];
+                };
+            };
+        };
+    };
     "payments_qr.svg_retrieve": {
         parameters: {
             query?: never;
@@ -3517,6 +3685,55 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Balances"];
+                };
+            };
+        };
+    };
+    portal_complaints_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Complaint"][];
+                };
+            };
+        };
+    };
+    portal_complaints_respond_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RespondRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["RespondRequest"];
+                "multipart/form-data": components["schemas"]["RespondRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Complaint"];
                 };
             };
         };

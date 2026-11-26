@@ -26,6 +26,7 @@ from connectors.api import ServicePrice, ServiceQuote
 from core.observability import metrics
 from core.views import health
 from intel import api as intel
+from payments import complaints
 from payments.api import (
     DemoSettle,
     PaymentCreate,
@@ -111,6 +112,9 @@ urlpatterns = [
     path("api/payments/<str:reference>/3ds", ThreeDSVerify.as_view(), name="payment-3ds"),
     path("api/payments/<str:reference>/qr.svg", PaymentQR.as_view(), name="payment-qr"),
     path("api/payments/<str:reference>/simular", DemoSettle.as_view(), name="payment-demo-settle"),
+    path("api/payments/<str:reference>/complaints", complaints.PaymentComplaints.as_view(), name="payment-complaints"),
+    path("api/portal/<slug:institution_slug>/complaints", complaints.PortalComplaints.as_view()),
+    path("api/portal/<slug:institution_slug>/complaints/<int:pk>/respond", complaints.PortalRespondComplaint.as_view()),
     path("api/receipts/verify", VerifyByFile.as_view(), name="receipt-verify-file"),
     path("api/receipts/<str:code>", VerifyByCode.as_view(), name="receipt-verify"),
     path("api/webhooks/<str:method>", Webhook.as_view(), name="webhook"),

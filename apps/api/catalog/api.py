@@ -233,7 +233,35 @@ class PortalServiceViewSet(
 class Me(generics.RetrieveUpdateAPIView):
     """O próprio utilizador. PATCH actualiza o perfil (nome, email, província, distrito)."""
 
-    http_method_names = ["get", "patch", "head", "options"]
+    http_method_names = ["get", "patch", "delete", "head", "options"]
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        """Apagar a conta: os dados pessoais saem.
+
+        Os pagamentos ficam (são a prova), mas deixam de estar ligados à pessoa.
+        """
+        from django.contrib.auth import logout
+        from rest_framework.response import Response
+
+        from accounts.models import PushDevice, SavedObligation
+        from audit.models import record
+        from payments.models import Transaction
+
+        u = request.user
+        record("account.delete", request=request, target=u)
+        Transaction.objects.filter(user=u).update(user=None)
+        SavedObligation.objects.filter(user=u).delete()
+        PushDevice.objects.filter(user=u).delete()
+        u.phone = f"+25800{u.pk:07d}"[:13]  # número fictício: liberta o verdadeiro para uma conta nova
+        u.first_name = u.last_name = u.email = u.province = u.district = u.avatar = ""
+        u.is_active = False
+        u.set_unusable_password()
+        u.save()
+        logout(request)
+        return Response(status=204)
 
     serializer_class = MeSerializer
     permission_classes = [permissions.IsAuthenticated]

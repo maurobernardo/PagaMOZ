@@ -7,6 +7,7 @@ import { CheckCircle2, Clock3, Copy, Download, KeyRound, Landmark, RotateCcw, Vo
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { BrandMark } from "../../components/brand";
+import { ComplaintBox } from "../../components/complaint";
 import { Alert, Button, Card, Field, H2, Header, Loading, P, Row } from "../../components/ui";
 import { API, api, errorMessage, type Payment } from "../../lib/api";
 import { formatDateTime, formatMZN, METHOD_LABEL, PAYMENT_STATUS } from "../../lib/format";
@@ -143,6 +144,7 @@ export default function Pagamento() {
           <Row dark label={t("Referência")} value={p.reference} />
         </Card>
 
+        {!waiting ? <ComplaintBox reference={p.reference} /> : null}
         {ok ? <Button variant="light" icon={Download} onPress={() => WebBrowser.openBrowserAsync(`${API}/api/payments/${p.reference}/receipt.pdf`)}>{t("Ver comprovativo (PDF)")}</Button> : null}
         {!waiting && !ok ? <Button variant="light" icon={RotateCcw} onPress={() => router.replace(`/servico/${p.service}`)}>{t("Tentar de novo")}</Button> : null}
         <Pressable accessibilityRole="button" onPress={() => router.dismissTo("/")} style={{ alignSelf: "center", padding: 12 }}>

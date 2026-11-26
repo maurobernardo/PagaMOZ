@@ -348,3 +348,32 @@ def test_bank_reference_has_valid_mod97_check():
 
     b = bank_reference(SimpleNamespace(reference="PMZ7KQ2MXH4RT", institution_id=3, amount=1000))
     assert b["entidade"] == "20003" and len(b["referencia"]) == 11 and int(b["referencia"]) % 97 == 1
+
+
+def test_complaint_open_once_and_institution_responds(svc, django_capture_on_commit_callbacks):
+    from institutions.models import Membership
+
+    _, t = run(svc, django_capture_on_commit_callbacks, key="complaint-0001")
+    c = APIClient()
+    url = f"/api/payments/{t.reference}/complaints"
+    r = c.post(url, {"reason": "nao_recebi", "message": "Paguei e o serviço não chegou."}, format="json")
+    assert r.status_code == 201 and r.json()["status"] == "aberta"
+    assert c.post(url, {"reason": "outro", "message": "Outra vez"}, format="json").status_code == 400
+
+    staff = User.objects.create_user("+258848888888")
+    Membership.objects.create(user=staff, institution=svc.institution, role=Membership.Role.OPERATOR)
+    p = APIClient()
+    p.force_login(staff)
+    s = p.session
+    s["mfa_ok"] = True
+    s.save()
+    slug = svc.institution.slug
+    rows = p.get(f"/api/portal/{slug}/complaints").json()
+    assert rows[0]["reference"] == t.reference
+    r = p.post(
+        f"/api/portal/{slug}/complaints/{rows[0]['id']}/respond",
+        {"status": "resolvida", "response": "Reenviámos o serviço."},
+        format="json",
+    )
+    assert r.status_code == 200, r.json()
+    assert c.get(url).json()[0]["response"] == "Reenviámos o serviço."

@@ -149,6 +149,10 @@ export function SiteFooter() {
       <div className="relative border-t border-white/10">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-5 py-6 text-xs text-white/45 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <p>© {new Date().getFullYear()} PagaMOZ · Protótipo com pagamentos simulados.</p>
+          <p className="flex gap-4">
+            <Link href="/termos" className="hover:text-white">Termos</Link>
+            <Link href="/privacidade" className="hover:text-white">Privacidade</Link>
+          </p>
           <p className="inline-flex items-center gap-2"><FlaskConical className="h-3.5 w-3.5 text-accent" /> Ambiente de demonstração</p>
         </div>
       </div>

@@ -11,7 +11,7 @@ const POINTS: [LucideIcon, string, string][] = [
   [CreditCard, "Cartão", "O número completo e o CVV nunca saem do seu telemóvel. Guardamos apenas a marca e os últimos 4 algarismos para o comprovativo."],
   [Database, "O que registamos", "O seu número de telefone (para entrar), os pagamentos que faz e, se quiser, nome, email, província e distrito. Os dados que escreve para cada serviço vão para a instituição que o presta."],
   [Smartphone, "Neste telemóvel", "Ficam guardadas as suas preferências (tema, idioma, notificações) e a sessão. Não usamos publicidade nem estatísticas de terceiros."],
-  [Trash2, "Apagar", "Em Definições pode apagar os dados deste aparelho. Os registos de pagamento ficam no servidor, porque são a prova de que pagou."],
+  [Trash2, "Apagar", "Em Definições pode apagar a sua conta: os dados pessoais são apagados. Os registos de pagamento ficam no servidor, sem ligação a si, porque são a prova de que pagou."],
 ];
 
 export default function Privacidade() {

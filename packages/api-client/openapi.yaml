@@ -819,6 +819,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/Me'
           description: ''
+    delete:
+      operationId: me_destroy
+      description: O próprio utilizador. PATCH actualiza o perfil (nome, email, província,
+        distrito).
+      tags:
+      - me
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/me/avatar:
     post:
       operationId: me_avatar_create
@@ -1168,6 +1179,65 @@ paths:
               schema:
                 $ref: '#/components/schemas/Payment'
           description: ''
+  /api/payments/{reference}/complaints:
+    get:
+      operationId: payments_complaints_list
+      description: 'GET: reclamações deste pagamento. POST: abrir uma (uma aberta
+        de cada vez).'
+      parameters:
+      - in: path
+        name: reference
+        schema:
+          type: string
+        required: true
+      tags:
+      - payments
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Complaint'
+          description: ''
+    post:
+      operationId: payments_complaints_create
+      description: 'GET: reclamações deste pagamento. POST: abrir uma (uma aberta
+        de cada vez).'
+      parameters:
+      - in: path
+        name: reference
+        schema:
+          type: string
+        required: true
+      tags:
+      - payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComplaintRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ComplaintRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ComplaintRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Complaint'
+          description: ''
   /api/payments/{reference}/qr.svg:
     get:
       operationId: payments_qr.svg_retrieve
@@ -1275,6 +1345,68 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Balances'
+          description: ''
+  /api/portal/{institution_slug}/complaints:
+    get:
+      operationId: portal_complaints_list
+      description: Reclamações dos pagamentos desta instituição (as abertas primeiro).
+      parameters:
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Complaint'
+          description: ''
+  /api/portal/{institution_slug}/complaints/{id}/respond:
+    post:
+      operationId: portal_complaints_respond_create
+      description: 'Responder: muda o estado e avisa o cidadão (push, se tiver a app
+        com sessão).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RespondRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RespondRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RespondRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Complaint'
           description: ''
   /api/portal/{institution_slug}/dashboard:
     get:
@@ -2315,6 +2447,90 @@ components:
       description: |-
         * `cidadao` - Cidadão
         * `instituicao` - Instituição
+    Complaint:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        reference:
+          type: string
+          readOnly: true
+        service_name:
+          type: string
+          readOnly: true
+        amount:
+          type: integer
+          readOnly: true
+        reason:
+          $ref: '#/components/schemas/ReasonEnum'
+        reason_label:
+          type: string
+          readOnly: true
+        message:
+          type: string
+          maxLength: 1000
+        contact:
+          type: string
+          maxLength: 40
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ComplaintStatusEnum'
+          readOnly: true
+        status_label:
+          type: string
+          readOnly: true
+        response:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - created_at
+      - id
+      - message
+      - reason
+      - reason_label
+      - reference
+      - response
+      - service_name
+      - status
+      - status_label
+      - updated_at
+    ComplaintRequest:
+      type: object
+      properties:
+        reason:
+          $ref: '#/components/schemas/ReasonEnum'
+        message:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        contact:
+          type: string
+          maxLength: 40
+      required:
+      - message
+      - reason
+    ComplaintStatusEnum:
+      enum:
+      - aberta
+      - em_analise
+      - resolvida
+      - recusada
+      type: string
+      description: |-
+        * `aberta` - Aberta
+        * `em_analise` - Em análise
+        * `resolvida` - Resolvida
+        * `recusada` - Recusada
     Csrf:
       type: object
       properties:
@@ -3929,6 +4145,18 @@ components:
       - id
       - items
       - total
+    ReasonEnum:
+      enum:
+      - nao_recebi
+      - valor_errado
+      - duplicado
+      - outro
+      type: string
+      description: |-
+        * `nao_recebi` - Paguei e não recebi o serviço
+        * `valor_errado` - Valor errado
+        * `duplicado` - Paguei duas vezes
+        * `outro` - Outro motivo
     Reconciliation:
       type: object
       properties:
@@ -4097,6 +4325,28 @@ components:
           maxLength: 300
       required:
       - note
+    RespondRequest:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/RespondStatusEnum'
+        response:
+          type: string
+          minLength: 5
+          maxLength: 1000
+      required:
+      - response
+      - status
+    RespondStatusEnum:
+      enum:
+      - em_analise
+      - resolvida
+      - recusada
+      type: string
+      description: |-
+        * `em_analise` - em_analise
+        * `resolvida` - resolvida
+        * `recusada` - recusada
     ResultadoEnum:
       enum:
       - valido

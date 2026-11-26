@@ -157,3 +157,18 @@ def test_push_token_registration_and_confirmed_push(client, django_user_model, m
     )
     assert tasks.push_payment_confirmed.apply(args=[1]).get() == 1
     assert sent[0]["to"] == tok and "100,00 MT" in sent[0]["body"] and "1234" in sent[0]["body"]
+
+
+def test_delete_account_removes_personal_data_and_keeps_payments(client, django_user_model):
+    from accounts.models import PushDevice, SavedObligation
+
+    u = django_user_model.objects.create_user("+258847777777", first_name="Ana", email="a@b.mz")
+    client.force_login(u)
+    PushDevice.objects.create(user=u, token="ExponentPushToken[abcdefghijk1]")
+    assert client.delete("/api/me").status_code == 204
+    u.refresh_from_db()
+    assert not u.is_active and u.phone != "+258847777777" and u.first_name == "" and u.email == ""
+    assert not PushDevice.objects.filter(user=u).exists() and not SavedObligation.objects.filter(user=u).exists()
+    assert client.get("/api/me").status_code in (401, 403)
+    # o número fica livre para uma conta nova
+    assert django_user_model.objects.create_user("+258847777777").pk != u.pk
