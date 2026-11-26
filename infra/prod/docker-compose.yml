@@ -49,6 +49,8 @@ services:
       dockerfile: infra/prod/web.Dockerfile
       args: { API_URL: "https://${DOMAIN}" }
     environment: { API_URL: "https://${DOMAIN}" }
+    # Dentro do VPS o nome do servidor resolve para 127.0.1.1; a web tem de ir pelo IP público (o Caddy).
+    extra_hosts: ["${DOMAIN}:${PUBLIC_IP}"]
     networks:
       proxy: { aliases: [pagamoz-web] }
     restart: unless-stopped
