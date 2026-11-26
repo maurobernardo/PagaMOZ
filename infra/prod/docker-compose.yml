@@ -1,5 +1,6 @@
-# Produção no VPS: Postgres + Redis + API (gunicorn) + Celery + Caddy (HTTPS automático).
-# Uso: no VPS, em infra/prod:  cp .env.example .env  (preencher)  &&  docker compose up -d --build
+# Produção no VPS: Postgres + Redis + API (gunicorn) + Celery.
+# O HTTPS é do Caddy que já existe no VPS (/opt/terra/deploy): a API entra na rede dele como "pagamoz-api".
+# Uso: no VPS, em infra/prod:  cp .env.example .env  (preencher)  &&  docker compose -p pagamoz up -d --build
 x-api: &api
   build: ../../apps/api
   env_file: .env
@@ -11,7 +12,6 @@ x-api: &api
   volumes:
     - ../../apps/web/public/logos:/logos:ro
     - media:/data/media
-    - static:/app/staticfiles
   depends_on:
     db: { condition: service_healthy }
     redis: { condition: service_healthy }
@@ -30,22 +30,18 @@ services:
     restart: unless-stopped
   api:
     <<: *api
-    command: sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn config.wsgi -b 0.0.0.0:8000 -w 3 --timeout 60"
+    networks:
+      default: {}
+      proxy: { aliases: [pagamoz-api] }
+    command: sh -c "python manage.py migrate --noinput && gunicorn config.wsgi -b 0.0.0.0:8000 -w 3 --timeout 60"
   worker:
     <<: *api
     command: celery -A config worker -l info
   beat:
     <<: *api
     command: celery -A config beat -l info
-  caddy:
-    image: caddy:2-alpine
-    ports: ["80:80", "443:443"]
-    environment: { API_DOMAIN: "${API_DOMAIN}" }
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - static:/srv/static:ro
-      - caddy:/data
-    depends_on: [api]
-    restart: unless-stopped
 
-volumes: { pg: {}, media: {}, static: {}, caddy: {} }
+volumes: { pg: {}, media: {} }
+
+networks:
+  proxy: { external: true, name: deploy_default }
