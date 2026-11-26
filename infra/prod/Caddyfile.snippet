@@ -1,8 +1,13 @@
-# PagaMOZ (API): acrescentar ao Caddyfile do VPS (/opt/terra/deploy/Caddyfile).
+# PagaMOZ: acrescentar ao Caddyfile do VPS (/opt/terra/deploy/Caddyfile). /api para a API, o resto para a web.
 srv2066467.hstgr.cloud {
 	encode zstd gzip
 	request_body {
 		max_size 10MB
 	}
-	reverse_proxy pagamoz-api:8000
+	handle /api/* {
+		reverse_proxy pagamoz-api:8000
+	}
+	handle {
+		reverse_proxy pagamoz-web:3000
+	}
 }

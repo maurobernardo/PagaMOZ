@@ -6,7 +6,7 @@
       "android": { "buildType": "apk" },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://srv2066467.hstgr.cloud",
-        "EXPO_PUBLIC_WEB_URL": "https://pagamoz.vercel.app"
+        "EXPO_PUBLIC_WEB_URL": "https://srv2066467.hstgr.cloud"
       }
     }
   }

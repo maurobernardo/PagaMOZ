@@ -43,6 +43,15 @@ services:
   beat:
     <<: *api
     command: celery -A config beat -l info
+  web:
+    build:
+      context: ../..
+      dockerfile: infra/prod/web.Dockerfile
+      args: { API_URL: "https://${DOMAIN}" }
+    environment: { API_URL: "https://${DOMAIN}" }
+    networks:
+      proxy: { aliases: [pagamoz-web] }
+    restart: unless-stopped
 
 volumes: { pg: {}, media: {} }
 
