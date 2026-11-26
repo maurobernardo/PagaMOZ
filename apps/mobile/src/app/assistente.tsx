@@ -1,5 +1,6 @@
 import { router } from "expo-router";
-import { ArrowUp, ShieldAlert, Sparkles } from "lucide-react-native";
+import { ArrowUp, ShieldAlert, Sparkles, Volume2 } from "lucide-react-native";
+import { speak } from "../lib/voice";
 import { useRef, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -62,6 +63,11 @@ export default function Assistente() {
               m.from === "me" ? { backgroundColor: C.ink, borderBottomRightRadius: 6 } : { backgroundColor: C.surface, borderBottomLeftRadius: 6, ...shadow() }]}>
               {m.from === "bot" && i === 0 ? <Sparkles size={16} color={C.ink} style={{ marginBottom: 6 }} /> : null}
               <Text style={{ fontFamily: F.body, fontSize: 15, lineHeight: 21, color: m.from === "me" ? C.white : C.ink }}>{m.text}</Text>
+              {m.from === "bot" ? (
+                <Pressable accessibilityRole="button" accessibilityLabel={t("Ouvir")} onPress={() => speak(m.text)} hitSlop={8} style={{ marginTop: 6, alignSelf: "flex-start" }}>
+                  <Volume2 size={16} color={C.muted} />
+                </Pressable>
+              ) : null}
               {m.scam ? (
                 <View style={{ marginTop: 10, gap: 6 }}>
                   {m.scam.reasons.map((r) => (

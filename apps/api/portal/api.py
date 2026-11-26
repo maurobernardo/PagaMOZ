@@ -481,3 +481,18 @@ class PortalMember(PortalView):
         record("member.remove", request=request, institution=m.institution, target=m, phone=m.user.phone)
         m.delete()
         return Response(status=204)
+
+
+class PortalForecast(PortalView):
+    """Receita prevista para os próximos 7 dias e pagadores habituais atrasados (para lembretes)."""
+
+    @extend_schema(
+        responses=inline_serializer(
+            "PortalForecast", {"revenue": serializers.DictField(), "late": serializers.ListField()}
+        )
+    )
+    def get(self, request, institution_slug):
+        from intel.forecast import late_payers, revenue_forecast
+
+        inst = self.institution()
+        return Response({"revenue": revenue_forecast(inst), "late": late_payers(inst)})

@@ -39,7 +39,7 @@ export default function Servico() {
 
 function PayFlow({ s }: { s: Service }) {
   // Dados vindos de uma fatura lida ou de uma conta recorrente (a pessoa revê antes de continuar).
-  const params = useLocalSearchParams<{ prefill?: string; valor?: string; origem?: string }>();
+  const params = useLocalSearchParams<{ prefill?: string; valor?: string; origem?: string; parte?: string }>();
   const prefill = (() => { try { return JSON.parse(params.prefill ?? "{}") as Record<string, string>; } catch { return {}; } })();
   const [step, setStep] = useState(0);
   const [values, setValues] = useState<Record<string, string>>(() =>
@@ -139,6 +139,7 @@ function PayFlow({ s }: { s: Service }) {
           amount: s.pricing === "aberto" && !confirmed.quote ? confirmed.amount : undefined,
           quote: confirmed.quote, request: confirmed.request, card: cardBody,
           payer_phone: WALLETS.includes(method) ? normalizePhone(phone) : undefined,
+          split_share: params.parte ? Number(params.parte) : undefined,
         },
       });
       if (r.demo_3ds_code) demo3ds.set(r.reference, r.demo_3ds_code);
@@ -149,6 +150,20 @@ function PayFlow({ s }: { s: Service }) {
         idem.current = "";
         setError(errorMessage(e));
       }
+      setBusy(false);
+    }
+  }
+
+  // Dividir: cria a divisão em n partes; cada pessoa paga a sua por um link.
+  async function splitBill(n: number) {
+    if (!confirmed) return;
+    setBusy(true);
+    try {
+      const b = await api<{ code: string }>("/api/splits", { body: { service: s.id, fields: values, total: confirmed.amount, names: Array(n).fill("") } });
+      router.push(`/dividir/${b.code}`);
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
       setBusy(false);
     }
   }
@@ -274,6 +289,19 @@ function PayFlow({ s }: { s: Service }) {
             <Row label={t("Comissão")} value={!confirmed.commission || confirmed.commission_payer === "instituicao" ? t("Paga pela instituição") : formatMZN(confirmed.commission)} />
             <Row label={t("Total a pagar")} value={formatMZN(confirmed.total)} strong />
             <Button onPress={() => go(2)} icon={ArrowRight}>{t("Continuar para pagamento")}</Button>
+            {s.pricing === "aberto" && !params.parte ? (
+              <View style={{ gap: 8 }}>
+                <Text style={{ fontFamily: F.semi, fontSize: 13, color: C.muted, textAlign: "center" }}>{t("Dividir com outras pessoas")}</Text>
+                <View style={{ flexDirection: "row", justifyContent: "center", gap: 8 }}>
+                  {[2, 3, 4, 5, 6].map((n) => (
+                    <Pressable key={n} accessibilityRole="button" accessibilityLabel={`${t("Dividir por")} ${n}`} onPress={() => splitBill(n)} disabled={busy}
+                      style={{ width: 46, height: 46, borderRadius: 23, borderWidth: 1.5, borderColor: C.line, alignItems: "center", justifyContent: "center", backgroundColor: C.surface }}>
+                      <Text style={{ fontFamily: F.bold, fontSize: 15, color: C.ink }}>{n}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            ) : null}
             <Button variant="ghost" onPress={() => go(0)} icon={ArrowLeft}>{t("Alterar dados")}</Button>
           </Card>
         )}

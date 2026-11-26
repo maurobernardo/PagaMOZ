@@ -768,6 +768,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/portal/{institution_slug}/forecast": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Receita prevista para os próximos 7 dias e pagadores habituais atrasados (para lembretes). */
+        get: operations["portal_forecast_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/portal/{institution_slug}/members": {
         parameters: {
             query?: never;
@@ -1043,6 +1060,57 @@ export interface paths {
         get: operations["requests_retrieve"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/splits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Divide uma conta de valor livre em partes iguais (2 a 10). Cada parte paga-se por um link. */
+        post: operations["splits_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/splits/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Estado da conta dividida: quem já pagou e quanto falta (o código é a chave de acesso). */
+        get: operations["splits_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ussd": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Callback USSD do agregador. Resposta em texto: "CON …" continua a sessão, "END …" termina. */
+        post: operations["ussd_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1717,6 +1785,8 @@ export interface components {
             /** @description Código do pedido (serviços de nível 3). */
             request?: string;
             card?: components["schemas"]["CardSummaryRequest"];
+            /** @description Parte de uma conta dividida que este pagamento cobre. */
+            split_share?: number;
         };
         /**
          * @description * `CRIADA` - Created
@@ -1730,6 +1800,12 @@ export interface components {
          * @enum {string}
          */
         PaymentStatusEnum: "CRIADA" | "PENDENTE" | "CONFIRMADA" | "LIQUIDADA" | "FALHADA" | "EXPIRADA" | "REVERTIDA" | "EM_DISPUTA";
+        PortalForecast: {
+            revenue: {
+                [key: string]: unknown;
+            };
+            late: unknown[];
+        };
         PortalLoginRequest: {
             phone: string;
             password: string;
@@ -2111,6 +2187,22 @@ export interface components {
             readonly provider: string;
             /** Format: date-time */
             readonly created_at: string;
+        };
+        Split: {
+            code: string;
+        };
+        SplitCreateRequest: {
+            service: number;
+            fields?: {
+                [key: string]: string;
+            };
+            total: number;
+            names: string[];
+            title?: string;
+        };
+        SplitDetail: {
+            code: string;
+            shares: unknown[];
         };
         StaffTransaction: {
             institution_name: string;
@@ -3450,6 +3542,27 @@ export interface operations {
             };
         };
     };
+    portal_forecast_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                institution_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalForecast"];
+                };
+            };
+        };
+    };
     portal_members_list: {
         parameters: {
             query?: never;
@@ -4005,6 +4118,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RequestPublic"];
+                };
+            };
+        };
+    };
+    splits_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SplitCreateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["SplitCreateRequest"];
+                "multipart/form-data": components["schemas"]["SplitCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Split"];
+                };
+            };
+        };
+    };
+    splits_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SplitDetail"];
+                };
+            };
+        };
+    };
+    ussd_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/x-www-form-urlencoded": {
+                    sessionId?: string;
+                    phoneNumber?: string;
+                    text?: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
                 };
             };
         };

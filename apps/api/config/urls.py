@@ -39,6 +39,7 @@ from payments.api import (
 )
 from portal.api import (
     Dashboard,
+    PortalForecast,
     PortalMember,
     PortalMembers,
     PortalReconciliation,
@@ -92,6 +93,9 @@ urlpatterns = [
     path("api/intel/scan", intel.Scan.as_view(), name="intel-scan"),
     path("api/intel/assistant", intel.Assistant.as_view(), name="intel-assistant"),
     path("api/intel/scam-check", intel.ScamCheck.as_view(), name="intel-scam-check"),
+    path("api/ussd", intel.Ussd.as_view(), name="ussd"),
+    path("api/splits", intel.SplitCreate.as_view(), name="split-create"),
+    path("api/splits/<str:code>", intel.SplitDetail.as_view(), name="split-detail"),
     path("api/auth/portal/login", PortalLoginView.as_view(), name="portal-login"),
     path("api/auth/portal/pending", PortalPendingView.as_view(), name="portal-pending"),
     path("api/auth/google/status", google.status, name="google-status"),
@@ -113,6 +117,7 @@ urlpatterns = [
     path("api/portal/<slug:institution_slug>/settlements", PortalSettlements.as_view()),
     path("api/portal/<slug:institution_slug>/balances", PortalBalances.as_view()),
     path("api/portal/<slug:institution_slug>/dashboard", Dashboard.as_view()),
+    path("api/portal/<slug:institution_slug>/forecast", PortalForecast.as_view()),
     path("api/portal/<slug:institution_slug>/transactions", PortalTransactions.as_view()),
     path("api/portal/<slug:institution_slug>/transactions/<str:reference>/reverse", PortalReverse.as_view()),
     path("api/portal/<slug:institution_slug>/reconciliation", PortalReconciliation.as_view()),

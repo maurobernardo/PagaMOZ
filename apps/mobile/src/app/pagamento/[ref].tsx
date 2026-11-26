@@ -3,7 +3,7 @@ import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { CheckCircle2, Clock3, Copy, Download, KeyRound, Landmark, RotateCcw, XCircle } from "lucide-react-native";
+import { CheckCircle2, Clock3, Copy, Download, KeyRound, Landmark, RotateCcw, Volume2, XCircle } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { BrandMark } from "../../components/brand";
@@ -13,6 +13,7 @@ import { formatDateTime, formatMZN, METHOD_LABEL, PAYMENT_STATUS } from "../../l
 import { t } from "../../lib/i18n";
 import { demo3ds } from "../../lib/session";
 import { C, F, R } from "../../theme";
+import { speak, spell } from "../../lib/voice";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { usePrefs } from "../../lib/prefs";
@@ -132,6 +133,7 @@ export default function Pagamento() {
             <Text selectable style={{ fontFamily: "monospace", fontSize: 23, fontWeight: "700", letterSpacing: 1, color: C.ink }}>{p.delivery.codigo}</Text>
             {p.delivery.instrucao ? <P muted size={14}>{p.delivery.instrucao}</P> : null}
             <Button icon={Copy} onPress={() => copy(p.delivery!.codigo!, t("Copiar código"))}>{t("Copiar código")}</Button>
+            <Button variant="secondary" icon={Volume2} onPress={() => speak(`${p.delivery!.titulo}: ${spell(p.delivery!.codigo!)}`)}>{t("Ouvir o código")}</Button>
           </Card>
         ) : null}
 

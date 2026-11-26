@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUp, ShieldAlert, Sparkles } from "lucide-react";
+import { ArrowUp, Mic, ShieldAlert, Sparkles, Volume2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Eyebrow } from "@/components/eyebrow";
@@ -22,6 +22,30 @@ export default function Assistente() {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const end = useRef<HTMLDivElement>(null);
+  const [listening, setListening] = useState(false);
+  const [canListen, setCanListen] = useState(false);
+  useEffect(() => setCanListen(typeof window !== "undefined" && ("SpeechRecognition" in window || "webkitSpeechRecognition" in window)), []);
+
+  // Voz do próprio browser (gratuita): falar o pedido e ouvir a resposta.
+  function listen() {
+    const W = window as unknown as Record<string, new () => { lang: string; interimResults: boolean; onresult: (e: { results: { 0: { 0: { transcript: string } } } }) => void; onend: () => void; start: () => void }>;
+    const Rec = W.SpeechRecognition ?? W.webkitSpeechRecognition;
+    if (!Rec) return;
+    const rec = new Rec();
+    rec.lang = "pt-PT";
+    rec.interimResults = false;
+    rec.onresult = (e) => send(e.results[0][0].transcript);
+    rec.onend = () => setListening(false);
+    setListening(true);
+    rec.start();
+  }
+  function speak(t: string) {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(t);
+    u.lang = "pt-PT";
+    window.speechSynthesis.speak(u);
+  }
   useEffect(() => end.current?.scrollIntoView({ behavior: "smooth", block: "end" }), [msgs]);
 
   async function send(message: string) {
@@ -62,6 +86,11 @@ export default function Assistente() {
           <div key={i} className={`flex flex-col gap-2 ${m.from === "me" ? "items-end" : "items-start"}`}>
             <div className={`max-w-[85%] rounded-3xl px-4 py-3 text-[15px] leading-relaxed ${m.from === "me" ? "rounded-br-md bg-ink text-white" : "rounded-bl-md bg-canvas"}`}>
               {m.text}
+              {m.from === "bot" ? (
+                <button type="button" onClick={() => speak(m.text)} aria-label="Ouvir resposta" className="frame-none ml-2 inline-grid h-7 w-7 place-items-center rounded-full align-middle text-muted hover:bg-white hover:text-ink">
+                  <Volume2 className="h-4 w-4" />
+                </button>
+              ) : null}
               {m.scam?.reasons.length ? (
                 <ul className="mt-2 space-y-1 text-sm">
                   {m.scam.reasons.map((r) => <li key={r} className="flex gap-2"><ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-accent" />{r}</li>)}
@@ -92,6 +121,11 @@ export default function Assistente() {
         <label htmlFor="msg" className="sr-only">Mensagem</label>
         <input id="msg" value={text} onChange={(e) => setText(e.target.value)} placeholder="Ex.: paga 500 de Credelec da casa da mãe" autoComplete="off"
           className="min-h-11 min-w-0 flex-1 bg-transparent px-4 text-base focus:outline-none" />
+        {canListen ? (
+          <button type="button" onClick={listen} aria-label="Falar" className={`frame-none grid h-11 w-11 shrink-0 place-items-center rounded-full ${listening ? "bg-accent text-white" : "bg-white text-ink"}`}>
+            <Mic className="h-5 w-5" />
+          </button>
+        ) : null}
         <button type="submit" aria-label="Enviar" disabled={!text.trim() || busy} className="frame-none grid h-11 w-11 shrink-0 place-items-center rounded-full bg-ink text-white disabled:opacity-40">
           <ArrowUp className="h-5 w-5" />
         </button>

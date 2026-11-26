@@ -27,11 +27,12 @@ export type Bill = {
 export type Bills = { recurring: Bill[]; credelec: Bill[] };
 
 /** Abre o serviço com os dados já preenchidos (de uma fatura lida ou de uma conta recorrente). */
-export function openPrefilled(service: number, fields: Record<string, string>, amount?: number | null, origin = "") {
-  router.push({
-    pathname: "/servico/[id]",
-    params: { id: String(service), prefill: JSON.stringify(fields), ...(amount ? { valor: String(amount / 100) } : {}), ...(origin ? { origem: origin } : {}) },
-  });
+export function openPrefilled(service: number, fields: Record<string, string>, amount?: number | null, origin = "", share = "") {
+  const params: Record<string, string> = { id: String(service), prefill: JSON.stringify(fields) };
+  if (amount) params.valor = String(amount / 100);
+  if (origin) params.origem = origin;
+  if (share) params.parte = share;
+  router.push({ pathname: "/servico/[id]", params });
 }
 
 /** Fotografa (ou escolhe) uma fatura, envia para leitura e abre o pagamento pré-preenchido. */

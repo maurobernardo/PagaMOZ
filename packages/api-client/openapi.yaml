@@ -1296,6 +1296,28 @@ paths:
               schema:
                 $ref: '#/components/schemas/Dashboard'
           description: ''
+  /api/portal/{institution_slug}/forecast:
+    get:
+      operationId: portal_forecast_retrieve
+      description: Receita prevista para os próximos 7 dias e pagadores habituais
+        atrasados (para lembretes).
+      parameters:
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalForecast'
+          description: ''
   /api/portal/{institution_slug}/members:
     get:
       operationId: portal_members_list
@@ -1969,6 +1991,86 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RequestPublic'
+          description: ''
+  /api/splits:
+    post:
+      operationId: splits_create
+      description: Divide uma conta de valor livre em partes iguais (2 a 10). Cada
+        parte paga-se por um link.
+      tags:
+      - splits
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SplitCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SplitCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SplitCreateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Split'
+          description: ''
+  /api/splits/{code}:
+    get:
+      operationId: splits_retrieve
+      description: 'Estado da conta dividida: quem já pagou e quanto falta (o código
+        é a chave de acesso).'
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        required: true
+      tags:
+      - splits
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SplitDetail'
+          description: ''
+  /api/ussd:
+    post:
+      operationId: ussd_create
+      description: 'Callback USSD do agregador. Resposta em texto: "CON …" continua
+        a sessão, "END …" termina.'
+      tags:
+      - ussd
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                sessionId:
+                  type: string
+                phoneNumber:
+                  type: string
+                text:
+                  type: string
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            text/plain:
+              schema:
+                type: string
           description: ''
   /api/webhooks/{method}:
     post:
@@ -3490,6 +3592,9 @@ components:
           description: Código do pedido (serviços de nível 3).
         card:
           $ref: '#/components/schemas/CardSummaryRequest'
+        split_share:
+          type: integer
+          description: Parte de uma conta dividida que este pagamento cobre.
       required:
       - method
       - service
@@ -3513,6 +3618,18 @@ components:
         * `EXPIRADA` - Expired
         * `REVERTIDA` - Reversed
         * `EM_DISPUTA` - Disputed
+    PortalForecast:
+      type: object
+      properties:
+        revenue:
+          type: object
+          additionalProperties: {}
+        late:
+          type: array
+          items: {}
+      required:
+      - late
+      - revenue
     PortalLoginRequest:
       type: object
       properties:
@@ -4476,6 +4593,50 @@ components:
       - id
       - net
       - provider
+    Split:
+      type: object
+      properties:
+        code:
+          type: string
+      required:
+      - code
+    SplitCreateRequest:
+      type: object
+      properties:
+        service:
+          type: integer
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        total:
+          type: integer
+          minimum: 1
+        names:
+          type: array
+          items:
+            type: string
+            maxLength: 40
+          maxItems: 10
+          minItems: 2
+        title:
+          type: string
+          maxLength: 80
+      required:
+      - names
+      - service
+      - total
+    SplitDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        shares:
+          type: array
+          items: {}
+      required:
+      - code
+      - shares
     StaffTransaction:
       type: object
       properties:

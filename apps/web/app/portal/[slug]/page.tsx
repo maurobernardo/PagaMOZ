@@ -139,6 +139,8 @@ export default function Dashboard() {
         <CardHead title="Por serviço" sub="30 dias" />
         <Breakdown rows={(d.by_service as { service__name: string; count: number; net: number }[]).map((r) => [r.service__name, r.count, r.net])} wide />
       </Card>
+
+      <Forecast slug={slug} />
     </div>
   );
 }
@@ -234,5 +236,53 @@ function Breakdown({ rows, wide }: { rows: (string | number)[][]; wide?: boolean
         </li>
       ))}
     </ul>
+  );
+}
+
+type FDay = { date: string; weekday: string; expected: number; low: number; high: number };
+type Late = { service_name: string; key: string; days_late: number; every_days: number; typical_amount: number; payer: string };
+
+/** Previsão da receita (próximos 7 dias) e pagadores habituais atrasados. */
+function Forecast({ slug }: { slug: string }) {
+  const { data } = useLoad(() => api.GET("/api/portal/{institution_slug}/forecast", { params: { path: { institution_slug: slug } } }), [slug]);
+  if (!data) return null;
+  const rev = data.revenue as { enough: boolean; days: FDay[]; total: number; explain: string };
+  const late = data.late as Late[];
+  const max = Math.max(1, ...rev.days.map((x) => x.high));
+  return (
+    <>
+      <Card className="animate-rise lg:col-span-2">
+        <CardHead title="Receita prevista" sub={rev.enough ? `Próximos 7 dias · ${formatMZN(rev.total)}` : "Próximos 7 dias"} />
+        {rev.enough ? (
+          <>
+            <div className="mt-6 flex h-44 items-end gap-3">
+              {rev.days.map((x) => (
+                <div key={x.date} className="flex flex-1 flex-col items-center gap-2" title={`${formatMZN(x.low)} a ${formatMZN(x.high)}`}>
+                  <div className="relative flex w-full flex-1 items-end">
+                    <div className="absolute bottom-0 w-full rounded-xl bg-canvas" style={{ height: `${(x.high / max) * 100}%` }} />
+                    <div className="relative w-full rounded-xl bg-ink" style={{ height: `${Math.max(2, (x.expected / max) * 100)}%` }} />
+                  </div>
+                  <span className="text-xs font-semibold text-muted">{x.weekday.slice(0, 3)}</span>
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-sm text-muted">{rev.explain}</p>
+          </>
+        ) : <p className="mt-4 text-sm text-muted">{rev.explain}</p>}
+      </Card>
+      <Card className="animate-rise lg:col-span-2">
+        <CardHead title="Pagadores habituais atrasados" sub={late.length ? `${late.length} a acompanhar` : "Nenhum de momento"} />
+        {late.length ? (
+          <ul className="mt-4 divide-y divide-line">
+            {late.slice(0, 10).map((l, i) => (
+              <li key={i} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
+                <span><strong>{l.payer}</strong> · {l.service_name} {l.key ? <span className="font-mono text-muted">{l.key}</span> : null}</span>
+                <span className="text-muted">paga a cada {l.every_days} dias · {formatMZN(l.typical_amount)} · <strong className="text-ink">{l.days_late} dias de atraso</strong></span>
+              </li>
+            ))}
+          </ul>
+        ) : <p className="mt-4 text-sm text-muted">Quem paga com regularidade e passa da data habitual aparece aqui.</p>}
+      </Card>
+    </>
   );
 }

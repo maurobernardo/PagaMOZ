@@ -36,7 +36,7 @@ const QUICK: { label: string; find: (s: Service) => boolean; group?: string }[] 
 export default function Home() {
   const top = useSafeAreaInsets().top;
   const cats = useCategories();
-  const { data: services, refreshing, refresh } = useServices();
+  const { data: services, refreshing, refresh, offline } = useServices();
   const [me, setMe] = useState<Me | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [code, setCode] = useState("");
@@ -143,6 +143,7 @@ export default function Home() {
         </View>
       </View>
 
+      {offline ? <Alert tone="info">{t("Sem internet: a mostrar a última lista guardada. Pagar precisa de rede.")}</Alert> : null}
       {scanMsg ? <Alert>{scanMsg}</Alert> : null}
       {/* Assistente: escrever o pedido em linguagem normal */}
       <Pressable accessibilityRole="button" onPress={() => router.push("/assistente")}

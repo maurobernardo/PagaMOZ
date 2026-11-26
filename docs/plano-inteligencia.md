@@ -144,3 +144,9 @@ orçamento por categoria com aviso discreto. Sempre com números da própria pes
 **Como saber se está a funcionar** (medir desde o primeiro dia):
 tempo até pagar, pagamentos falhados, lembretes que viram pagamento, contas pagas antes do prazo,
 discrepâncias resolvidas sem intervenção, burlas sinalizadas.
+
+## Estado (26/11/2026)
+
+- Fase 1: feita (método recomendado, contas da casa, previsão Credelec, fotografe e pague com Tesseract).
+- Fase 2: feita sem custos (assistente por regras, escudo contra burlas, reconciliação sugerida).
+- Fase 3: previsão de receita e pagadores atrasados, USSD com simulador, voz do browser e do telemóvel, catálogo sem internet, dividir contas de valor livre. Falta: contrato USSD/SMS com operadora ou agregador, voz em línguas nacionais.

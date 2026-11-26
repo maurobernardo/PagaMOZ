@@ -1,3 +1,4 @@
+import re
 from datetime import date, timedelta
 
 import pytest
@@ -132,3 +133,90 @@ def test_scam_check_levels():
         "/api/intel/scam-check", {"message": "Ganhou um prémio! Pague a taxa de 200 MT"}, format="json"
     )
     assert r.status_code == 200 and r.json()["level"] == "alto"
+
+
+def test_ussd_menus_and_credelec_payment_end_to_end():
+    call_command("seed_demo", verbosity=0)
+    c = APIClient()
+
+    def ussd(text, phone="+258841234567"):
+        r = c.post("/api/ussd", {"sessionId": "s1", "phoneNumber": phone, "text": text})
+        assert r.status_code == 200
+        return r.content.decode()
+
+    assert ussd("").startswith("CON PagaMOZ") and "1. Recarga Credelec" in ussd("")
+    assert ussd("1").startswith("CON") and ussd("1*12345678901").startswith("CON Valor")
+    assert ussd("1*123").startswith("END Contador inválido")
+    confirm = ussd("1*12345678901*200")
+    assert confirm.startswith("CON Contador 12345678901") and "Pagar 200 MT" in confirm
+    done = ussd("1*12345678901*200*1")
+    assert done.startswith("END Pedido enviado ao M-Pesa")
+    ref = re.search(r"PMZ[0-9A-Z]{10}", done).group(0)
+    t = Transaction.objects.get(reference=ref)
+    assert t.method == "mpesa" and t.payer_phone == "+258841234567" and t.amount == 20_000
+    assert ussd(f"3*{ref}").startswith(f"END {ref}:")
+    assert ussd("1*12345678901*200*2") == "END Cancelado."
+
+
+def test_ussd_airtime_checks_operator_and_uses_payer_wallet():
+    call_command("seed_demo", verbosity=0)
+    c = APIClient()
+    r = c.post("/api/ussd", {"phoneNumber": "+258861112222", "text": "2*2*0*100*1"}).content.decode()
+    assert r.startswith("END Pedido enviado ao e-Mola")
+    r = c.post("/api/ussd", {"phoneNumber": "+258861112222", "text": "2*1*0"}).content.decode()
+    assert r == "END Número não é desta operadora."
+    r = c.post("/api/ussd", {"phoneNumber": "+258211112222", "text": "2*1*841234567*100*1"}).content.decode()
+    assert "não tem carteira" in r
+
+
+def test_revenue_forecast_needs_history_and_late_payers_empty_without_data():
+    from institutions.models import Institution
+
+    from .forecast import late_payers, revenue_forecast
+
+    inst = Institution.objects.create(name="X", slug="x")
+    assert revenue_forecast(inst)["enough"] is False and late_payers(inst) == []
+
+
+def test_split_bill_shares_are_paid_once_and_sum_to_total(django_capture_on_commit_callbacks):
+    from .split import shares_for
+
+    assert shares_for(100_001, 3) == [33_334, 33_334, 33_333]
+    call_command("seed_demo", verbosity=0)
+    c = APIClient()
+    cred = Service.objects.get(slug="credelec")
+    r = c.post(
+        "/api/splits",
+        {"service": cred.id, "fields": {"contador": "12345678901"}, "total": 90_000, "names": ["Ana", "Bento", ""]},
+        format="json",
+    )
+    assert r.status_code == 201, r.json()
+    sp = r.json()
+    assert [s["amount"] for s in sp["shares"]] == [30_000, 30_000, 30_000] and sp["shares"][2]["name"] == "Pessoa 3"
+    share = sp["shares"][0]
+
+    def pay(key, amount=30_000):
+        body = {
+            "service": cred.id,
+            "fields": {"contador": "12345678901"},
+            "amount": amount,
+            "method": "mpesa",
+            "payer_phone": "+258841234567",
+            "split_share": share["id"],
+        }
+        with django_capture_on_commit_callbacks(execute=True):
+            return c.post("/api/payments", body, format="json", HTTP_IDEMPOTENCY_KEY=key)
+
+    assert pay("split-wrong-amt", 25_000).status_code == 400
+    assert pay("split-share-0001").status_code == 201
+    assert pay("split-share-0002").status_code == 400  # a mesma parte não se paga duas vezes
+    d = c.get(f"/api/splits/{sp['code']}").json()
+    assert d["shares"][0]["state"] == "pago" and d["paid"] == 30_000
+
+    fatura = Service.objects.get(institution__slug="edm", slug="fatura")
+    r = c.post(
+        "/api/splits",
+        {"service": fatura.id, "fields": {"cliente": "12345678"}, "total": 90_000, "names": ["A", "B"]},
+        format="json",
+    )
+    assert r.status_code == 400

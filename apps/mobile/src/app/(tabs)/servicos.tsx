@@ -23,7 +23,7 @@ export default function Servicos() {
   }, [params.categoria, params.q]);
 
   const cats = useCategories();
-  const { data, error, refreshing, refresh } = useServices({ category: cat, q: search });
+  const { data, error, refreshing, refresh, offline } = useServices({ category: cat, q: search });
   const entries = groupServices(data ?? []);
   const current = cats.find((c) => c.slug === cat);
 
@@ -53,6 +53,7 @@ export default function Servicos() {
             <Pill label={t("Todos")} active={!cat} onPress={() => setCat("")} />
             {cats.map((c) => <Pill key={c.slug} label={c.name} icon={categoryIcon(c.slug)} active={cat === c.slug} onPress={() => setCat(c.slug)} />)}
           </ScrollView>
+          {offline ? <Alert tone="info">{t("Sem internet: a mostrar a última lista guardada. Pagar precisa de rede.")}</Alert> : null}
           {error ? <Alert>{error}</Alert> : null}
         </View>
       }

@@ -4,13 +4,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, Bookmark, CheckCircle2, CircleAlert, ClipboardList, FileCheck2, FlaskConical, Lock, Pencil,
-  ReceiptText, Search, Share2, Sparkles, Upload, UserRound, Wallet,
+  ReceiptText, Search, Share2, Sparkles, Users, Upload, UserRound, Wallet,
 } from "lucide-react";
 import { useCardForm } from "@/components/card-form";
 import { BrandMark } from "@/components/brand-mark";
 import { MethodIcon, WALLET_PREFIXES } from "@/components/method-icon";
 import { useToast } from "@/components/toast";
-import { Alert, Button, Card, Field, Row, Toolbar } from "@/components/ui";
+import { Alert, Button, Card, Field, Row, Toolbar, useDialog } from "@/components/ui";
 import { api, csrfToken, errorMessage, fieldErrors, newIdempotencyKey, type Service } from "@/lib/api";
 import { formatMZN, isValidPhone, METHOD_LABEL, normalizePhone } from "@/lib/i18n";
 
@@ -37,6 +37,7 @@ export function PayFlow({
   scenarios: Record<string, string>;
 }) {
   const router = useRouter();
+  const dialog = useDialog();
   const textFields = s.fields.filter((f) => f.type !== "file" && f.type !== "select");
   const selectFields = s.fields.filter((f) => f.type === "select");
   const card = useCardForm();
@@ -160,6 +161,7 @@ export function PayFlow({
           method: method as never,
           fields: values,
           amount: s.pricing === "aberto" && !confirmed.quote ? confirmed.amount : undefined,
+          split_share: prefill.parte ? Number(prefill.parte) : undefined,
           quote: confirmed.quote,
           request: confirmed.request,
           card: method === "cartao" && card.state.summary ? card.state.summary : undefined,
@@ -215,10 +217,25 @@ export function PayFlow({
     }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
+  // Dividir: pergunta quantas pessoas e cria a divisão; cada uma paga a sua parte por um link.
+  async function splitBill() {
+    if (!confirmed) return;
+    const n = await dialog.prompt({ title: "Dividir a conta", body: "Entre quantas pessoas (2 a 10)? Cada uma recebe um link para pagar a sua parte.",
+      input: { label: "Número de pessoas", placeholder: "Ex.: 3" }, confirm: "Dividir" });
+    const parts = Number(n);
+    if (!parts || parts < 2 || parts > 10) return n ? setError("Indique entre 2 e 10 pessoas.") : undefined;
+    const r = await fetch("/api/splits", { method: "POST", headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken() },
+      body: JSON.stringify({ service: s.id, fields: values, total: confirmed.amount, names: Array(parts).fill("") }) });
+    const b = await r.json();
+    if (!r.ok) return setError(b.detail ?? "Não foi possível dividir.");
+    router.push(`/dividir/${b.code}`);
+  }
+
   const isWallet = WALLETS.includes(method);
 
   return (
     <div>
+      {dialog.ui}
       <ol className="mb-6 grid grid-cols-3 gap-2" aria-label="Passos">
         {STEPS.map(([k, label], i) => {
           const I = STEP_ICON[k];
@@ -351,6 +368,9 @@ export function PayFlow({
           ) : null}
           <div className="mt-6 space-y-4">
             <Button onClick={() => setStep("metodo")} className="w-full !min-h-12">Continuar para pagamento <ArrowRight className="h-4 w-4" /></Button>
+            {s.pricing === "aberto" && !prefill.parte ? (
+              <Button variant="ghost" className="w-full !min-h-11 text-sm" onClick={splitBill}><Users className="h-4 w-4" /> Dividir com outras pessoas</Button>
+            ) : null}
             <Toolbar className="flex w-full flex-wrap justify-center">
               <Button variant="ghost" className="!min-h-10 text-sm" onClick={shareLink}><Share2 className="h-4 w-4" /> Pedir a alguém</Button>
               {!confirmed.request ? <Button variant="ghost" className="!min-h-10 text-sm" onClick={saveToWallet}><Bookmark className="h-4 w-4" /> Guardar</Button> : null}

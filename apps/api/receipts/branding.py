@@ -42,7 +42,8 @@ def color_from_raster(path: Path) -> tuple[int, int, int] | None:
     im = Image.open(path).convert("RGBA")
     im.thumbnail((96, 96))
     counts: Counter = Counter()
-    for r, g, b, a in im.getdata():
+    pixels = im.get_flattened_data() if hasattr(im, "get_flattened_data") else im.getdata()
+    for r, g, b, a in pixels:
         if a > 200 and _vivid((r, g, b)):
             # cores mais vivas pesam mais (um emblema com zonas claras não fica bege)
             s = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)[2]

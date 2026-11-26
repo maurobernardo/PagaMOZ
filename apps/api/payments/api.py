@@ -62,6 +62,9 @@ class PaymentCreateSerializer(serializers.Serializer):
     quote = serializers.CharField(required=False, help_text="Obrigatório em serviços de valor por consulta.")
     request = serializers.CharField(required=False, help_text="Código do pedido (serviços de nível 3).")
     card = CardSummary(required=False)
+    split_share = serializers.IntegerField(
+        required=False, help_text="Parte de uma conta dividida que este pagamento cobre."
+    )
 
     def validate(self, attrs):
         if attrs["method"] == Method.CARD and not attrs.get("card"):
@@ -184,6 +187,10 @@ class PaymentCreate(APIView):
                     demo_scenario=d.get("scenario", ""), idempotency_key=key, request_hash=req_hash,
                     **src, **price(service, amount),
                 )  # fmt: skip
+                if d.get("split_share"):
+                    from intel.split import claim
+
+                    claim(d["split_share"], service.id, txn.amount, txn)
                 init = get_provider(txn.method).initiate(txn)
                 extra = {}
                 if init.challenge_code:

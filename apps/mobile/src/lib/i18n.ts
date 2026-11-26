@@ -94,6 +94,11 @@ const EN: Record<string, string> = {
   "Verificar mensagem": "Check a message", "Isto é burla?": "Is this a scam?", "Colar": "Paste",
   "Cole a mensagem que recebeu (SMS ou WhatsApp). Mostramos os sinais de fraude.": "Paste the message you got (SMS or WhatsApp). We show the scam signs.",
   "Cole aqui a mensagem…": "Paste the message here…", "Recebeu uma mensagem suspeita?": "Got a suspicious message?", "Verificamos se tem sinais de burla.": "We check it for scam signs.",
+  "Ouvir": "Listen", "Ouvir o código": "Listen to the code",
+  "Sem internet: a mostrar a última lista guardada. Pagar precisa de rede.": "Offline: showing the last saved list. Paying needs a connection.",
+  "Dividir com outras pessoas": "Split with other people", "Dividir por": "Split by", "Conta dividida": "Split bill", "pessoas": "people",
+  "Vamos dividir": "Let's split", "Paga a tua parte aqui": "Pay your share here", "Partilhar link": "Share link",
+  "Pago": "Paid", "A pagar agora": "Paying now", "Por pagar": "Unpaid", "Pagar esta parte": "Pay this share",
   // definições
   "Aparência": "Appearance", "Tema": "Theme", "Automático": "Automatic", "Claro": "Light", "Escuro": "Dark",
   "Idioma": "Language", "Português": "Portuguese", "Notificações": "Notifications",
