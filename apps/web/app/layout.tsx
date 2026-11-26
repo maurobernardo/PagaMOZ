@@ -1,6 +1,7 @@
 import { THEME_SCRIPT } from "@/lib/theme-script";
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { CookieNotice } from "@/components/cookie-notice";
 import { PresenterFlag } from "@/components/presenter-flag";
 import { Toaster } from "@/components/toast";
 import "./globals.css";
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         </a>
         <PresenterFlag />
         <Toaster>{children}</Toaster>
+        <CookieNotice />
       </body>
     </html>
   );

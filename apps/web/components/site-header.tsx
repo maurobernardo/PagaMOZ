@@ -155,6 +155,7 @@ export function SiteFooter() {
           <p className="flex gap-4">
             <Link href="/termos" className="hover:text-white">Termos</Link>
             <Link href="/privacidade" className="hover:text-white">Privacidade</Link>
+            <Link href="/cookies" className="hover:text-white">Cookies</Link>
           </p>
           <p className="inline-flex items-center gap-2"><FlaskConical className="h-3.5 w-3.5 text-accent" /> Ambiente de demonstração</p>
         </div>

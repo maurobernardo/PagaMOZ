@@ -149,11 +149,11 @@ html[data-theme="dark"] .glass {
    As classes do hero estão escritas "em escuro" (bg-ink, text-white); aqui trocam-se as cores por baixo. */
 .theme-flip {
   --color-ink: #f4f4f1;
-  --color-white: #0b0b0c;
-  --color-paper: #0b0b0c;
-  --color-canvas: #ffffff;
-  --color-line: #e7e6e1;
-  --color-muted: #6e6e6a;
+  --color-white: #161618;
+  --color-paper: #161618;
+  --color-canvas: #0b0b0c;
+  --color-line: #2a2a2d;
+  --color-muted: #a2a29d;
 }
 .theme-flip .glass-dark {
   background: rgb(11 11 12 / 0.04);

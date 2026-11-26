@@ -1,5 +1,11 @@
 // Inglês da web: a frase em português é a chave (as da app mais as da web).
 export const EN: Record<string, string> = {
+"Cookies": "Cookies",
+"Aceitar": "Accept",
+"Política de cookies": "Cookie policy",
+"Usamos apenas cookies necessários: manter a sessão, proteger formulários e lembrar o tema e o idioma. Sem publicidade nem análise.": "We only use necessary cookies: keeping you signed in, protecting forms and remembering theme and language. No ads or analytics.",
+"O PagaMOZ usa apenas cookies e armazenamento necessários para o site funcionar. Não usamos cookies de publicidade nem de análise, e não partilhamos estes dados com terceiros.": "PagaMOZ only uses the cookies and storage needed for the site to work. We use no advertising or analytics cookies and do not share this data with third parties.",
+
 "Início": "Home",
 "Serviços": "Services",
 "Verificar": "Verify",
