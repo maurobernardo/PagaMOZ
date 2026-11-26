@@ -45,7 +45,7 @@ export function ButtonLink({ variant = "primary", className = "", ...p }: Compon
 
 /** Botões agrupados num cartão translúcido (barra de acções). */
 export function Toolbar({ className = "", children }: { className?: string; children: ReactNode }) {
-  return <div className={`glass inline-flex flex-wrap items-center gap-1.5 rounded-full p-1.5 ${className}`}>{children}</div>;
+  return <div className={`glass inline-flex flex-wrap items-center gap-2 rounded-full p-1.5 ${className}`}>{children}</div>;
 }
 
 export function Field({ label, hint, error, id, ...input }: ComponentProps<"input"> & { label: string; hint?: string; error?: string; id: string }) {
@@ -58,7 +58,7 @@ export function Field({ label, hint, error, id, ...input }: ComponentProps<"inpu
         id={id}
         aria-invalid={!!error}
         aria-describedby={error ? `${id}-err` : hint ? `${id}-hint` : undefined}
-        className="mt-1.5 block min-h-12 w-full rounded-2xl border border-line bg-white px-4 text-base text-ink placeholder:text-muted/70 transition focus:border-ink focus:outline-none focus:ring-4 focus:ring-ink/5 aria-[invalid=true]:border-accent"
+        className="mt-2 block min-h-12 w-full rounded-2xl border border-line bg-white px-4 text-base text-ink placeholder:text-muted/70 transition focus:border-ink focus:outline-none focus:ring-4 focus:ring-ink/5 aria-[invalid=true]:border-accent"
         {...input}
       />
       {error ? (
@@ -157,7 +157,7 @@ function DialogView({ req, close }: { req: DialogReq; close: () => void }) {
             {req.input.label}
             <Input autoFocus value={value} placeholder={req.input.placeholder} rows={3}
               onChange={(e: React.ChangeEvent<HTMLInputElement & HTMLTextAreaElement>) => setValue(e.target.value)}
-              className="mt-1.5 block min-h-12 w-full rounded-2xl border border-line px-4 py-3 text-base font-normal focus:border-ink focus:outline-none focus:ring-4 focus:ring-ink/5" />
+              className="mt-2 block min-h-12 w-full rounded-2xl border border-line px-4 py-3 text-base font-normal focus:border-ink focus:outline-none focus:ring-4 focus:ring-ink/5" />
           </label>
         ) : null}
         <div className="mt-6 flex justify-end gap-2">

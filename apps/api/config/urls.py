@@ -9,6 +9,7 @@ from accounts.api import (
     AvatarView,
     CsrfView,
     LogoutView,
+    MfaEmailResendView,
     MfaSetupView,
     MfaVerifyView,
     MyPayments,
@@ -22,7 +23,7 @@ from accounts.api import (
 )
 from accounts.invite import SetPasswordView
 from backoffice import api as bo
-from catalog.api import CategoryList, Me, PortalServiceViewSet, PublicServiceViewSet
+from catalog.api import CategoryList, Me, PortalServiceViewSet, PublicServiceViewSet, institution_logo
 from connectors.api import ServicePrice, ServiceQuote
 from core.observability import metrics
 from core.views import health
@@ -72,6 +73,8 @@ urlpatterns = [
     path("api/backoffice/institutions", bo.InstitutionList.as_view()),
     path("api/backoffice/institutions/<slug:slug>", bo.InstitutionDetail.as_view()),
     path("api/backoffice/institutions/<slug:slug>/members", bo.InstitutionAdmins.as_view()),
+    path("api/backoffice/institutions/<slug:slug>/logo", bo.InstitutionLogo.as_view()),
+    path("api/catalog/institutions/<slug:slug>/logo", institution_logo),
     path("api/backoffice/users/<int:pk>/invite", bo.ResendInvite.as_view()),
     path("api/backoffice/transactions", bo.Transactions.as_view()),
     path("api/backoffice/discrepancies", bo.Discrepancies.as_view()),
@@ -107,6 +110,7 @@ urlpatterns = [
     path("api/auth/google/start", google.start, name="google-start"),
     path("api/auth/google/callback", google.callback, name="google-callback"),
     path("api/auth/portal/mfa/setup", MfaSetupView.as_view(), name="mfa-setup"),
+    path("api/auth/portal/mfa/email", MfaEmailResendView.as_view(), name="mfa-email"),
     path("api/auth/portal/mfa/verify", MfaVerifyView.as_view(), name="mfa-verify"),
     path("api/catalog/categories", CategoryList.as_view(), name="categories"),
     path("api/payments", PaymentCreate.as_view(), name="payment-create"),

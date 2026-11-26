@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useToast } from "@/components/toast";
 import { Badge, Button, Card, Field, useDialog } from "@/components/ui";
-import { api, errorMessage, type Schemas } from "@/lib/api";
+import { api, csrfToken, errorMessage, type Schemas } from "@/lib/api";
+import { BrandMark } from "@/components/brand-mark";
 import { formatMZN } from "@/lib/i18n";
 import { useLoad } from "@/lib/use-load";
 
@@ -18,6 +19,17 @@ export default function Instituicoes() {
   const [form, setForm] = useState(EMPTY);
   const [showNew, setShowNew] = useState(false);
   const [invite, setInvite] = useState<Invite | null>(null);
+  const [logo, setLogo] = useState<File | null>(null);
+
+  /** Envia o logótipo (JPG/PNG/WebP até 3 MB); o servidor reduz e guarda em WebP. */
+  async function uploadLogo(slug: string, file: File) {
+    const fd = new FormData();
+    fd.append("logo", file);
+    const r = await fetch(`/api/backoffice/institutions/${slug}/logo`, { method: "POST", body: fd, headers: { "X-CSRFToken": csrfToken() }, credentials: "include" });
+    if (!r.ok) return toast((await r.json().catch(() => ({}))).detail ?? "Não foi possível guardar o logótipo.", "bad");
+    toast("Logótipo guardado.");
+    reload();
+  }
   const { data, reload } = useLoad(() => api.GET("/api/backoffice/institutions"), []);
 
   async function patch(slug: string, body: Partial<Inst>, what: string) {
@@ -45,6 +57,8 @@ export default function Instituicoes() {
     });
     if (!r.data) return toast(errorMessage(r.error), "bad");
     toast(`${r.data.name} criada em adesão.`);
+    if (logo) await uploadLogo(r.data.slug, logo);
+    setLogo(null);
     await addAdmin(r.data.slug, r.data.name, admin_email, admin_name);
     setForm(EMPTY);
     setShowNew(false);
@@ -72,6 +86,10 @@ export default function Instituicoes() {
             <Field id="b" label="Banco de liquidação" value={form.settlement_bank} onChange={(e) => setForm({ ...form, settlement_bank: e.target.value })} />
             <Field id="a" label="Conta (só ficam os últimos 4 dígitos)" value={form.settlement_account_masked}
               onChange={(e) => setForm({ ...form, settlement_account_masked: e.target.value })} />
+            <label className="grid gap-2 text-sm font-semibold sm:col-span-2">Logótipo (JPG, PNG ou WebP, até 3 MB)
+              <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => setLogo(e.target.files?.[0] ?? null)}
+                className="block w-full rounded-2xl border border-dashed border-line bg-white p-3 text-sm file:mr-3 file:rounded-full file:border-0 file:bg-ink file:px-4 file:py-2 file:font-semibold file:text-white" />
+            </label>
             <Field id="ae" label="Email do administrador da instituição" type="email" value={form.admin_email}
               onChange={(e) => setForm({ ...form, admin_email: e.target.value })} />
             <Field id="an" label="Nome do administrador" value={form.admin_name} onChange={(e) => setForm({ ...form, admin_name: e.target.value })} />
@@ -114,7 +132,7 @@ export default function Instituicoes() {
               const [label, tone] = STATUS[i.status as keyof typeof STATUS] ?? [i.status, "info"];
               return (
                 <tr key={i.slug}>
-                  <td className="px-3 py-2"><span className="font-medium">{i.name}</span><br /><span className="text-xs text-muted">{i.services} serviços · {i.members} membros</span></td>
+                  <td className="px-3 py-2"><span className="flex items-center gap-3"><BrandMark slug={i.slug} name={i.name} size={36} /><span><span className="font-medium">{i.name}</span><br /><span className="text-xs text-muted">{i.services} serviços · {i.members} membros</span></span></span></td>
                   <td className="px-3 py-2"><Badge tone={tone}>{label}</Badge></td>
                   <td className="px-3 py-2 text-right tabular-nums">{formatMZN(i.volume_30d)} <span className="text-muted">({i.count_30d})</span></td>
                   <td className="px-3 py-2 text-right tabular-nums">
@@ -127,17 +145,21 @@ export default function Instituicoes() {
                     </button>
                   </td>
                   <td className="px-3 py-2">{i.settlement_bank} {i.settlement_account_masked}</td>
-                  <td className="flex flex-wrap gap-3 px-3 py-2">
-                    <button className="font-medium hover:underline" onClick={async () => {
+                  <td className="px-3 py-2"><div className="flex flex-wrap gap-2">
+                    <button className="min-h-9 rounded-full border border-line bg-white px-3.5 text-sm font-semibold transition hover:border-ink" onClick={async () => {
                       const email = await dialog.prompt({ title: `Administrador de ${i.name}`, body: "Recebe um link para definir a própria senha.", input: { label: "Email", initial: "" }, confirm: "Convidar" });
                       if (email) addAdmin(i.slug, i.name, email.trim(), "");
                     }}>Convidar admin</button>
+                    <label className="inline-flex min-h-9 cursor-pointer items-center rounded-full border border-line bg-white px-3.5 text-sm font-semibold transition hover:border-ink">
+                      Logótipo
+                      <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => e.target.files?.[0] && uploadLogo(i.slug, e.target.files[0])} />
+                    </label>
                     {i.status !== "activa" ? (
-                      <button className="font-medium text-brand-800 hover:underline" onClick={() => patch(i.slug, { status: "activa" }, "activada")}>Activar</button>
+                      <button className="min-h-9 rounded-full bg-ink px-3.5 text-sm font-semibold text-white hover:bg-ink/85" onClick={() => patch(i.slug, { status: "activa" }, "activada")}>Activar</button>
                     ) : (
-                      <button className="font-medium text-accent hover:underline" onClick={async () => (await dialog.confirm({ title: `Suspender ${i.name}?`, body: "Sai do catálogo e o portal da instituição fica bloqueado.", confirm: "Suspender", danger: true })) && patch(i.slug, { status: "suspensa" }, "suspensa")}>Suspender</button>
+                      <button className="min-h-9 rounded-full border border-accent/40 px-3.5 text-sm font-semibold text-accent hover:bg-accent-soft" onClick={async () => (await dialog.confirm({ title: `Suspender ${i.name}?`, body: "Sai do catálogo e o portal da instituição fica bloqueado.", confirm: "Suspender", danger: true })) && patch(i.slug, { status: "suspensa" }, "suspensa")}>Suspender</button>
                     )}
-                  </td>
+                  </div></td>
                 </tr>
               );
             })}

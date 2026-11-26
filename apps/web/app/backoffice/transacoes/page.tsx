@@ -22,16 +22,16 @@ export default function Transacoes() {
   return (
     <div className="space-y-4">
       <form className="flex flex-wrap items-end gap-2" onSubmit={(e) => { e.preventDefault(); setPage(1); setApplied(f); }}>
-        <label className="grid text-xs font-medium text-ink/80">Referência
+        <label className="grid gap-1.5 text-xs font-semibold text-ink/80">Referência
           <input className={inputCls} value={f.q} onChange={(e) => setF({ ...f, q: e.target.value })} placeholder="PMZ…" />
         </label>
-        <label className="grid text-xs font-medium text-ink/80">Instituição
+        <label className="grid gap-1.5 text-xs font-semibold text-ink/80">Instituição
           <select className={inputCls} value={f.institution} onChange={(e) => setF({ ...f, institution: e.target.value })}>
             <option value="">Todas</option>
             {(insts ?? []).map((i) => <option key={i.slug} value={i.slug}>{i.name}</option>)}
           </select>
         </label>
-        <label className="grid text-xs font-medium text-ink/80">Estado
+        <label className="grid gap-1.5 text-xs font-semibold text-ink/80">Estado
           <select className={inputCls} value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}>
             <option value="">Todos</option>
             {Object.entries(PAYMENT_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
@@ -71,7 +71,7 @@ export default function Transacoes() {
       {data ? (
         <div className="flex items-center justify-between text-sm text-muted">
           <span>{data.count} transacções</span>
-          <span className="flex gap-2">
+          <span className="flex gap-3">
             <Button variant="secondary" className="min-h-10" disabled={!data.previous} onClick={() => setPage(page - 1)}>Anterior</Button>
             <Button variant="secondary" className="min-h-10" disabled={!data.next} onClick={() => setPage(page + 1)}>Seguinte</Button>
           </span>

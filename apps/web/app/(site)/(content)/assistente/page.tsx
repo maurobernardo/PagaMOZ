@@ -52,7 +52,10 @@ export default function Assistente() {
     u.lang = "pt-PT";
     window.speechSynthesis.speak(u);
   }
-  useEffect(() => end.current?.scrollIntoView({ behavior: "smooth", block: "end" }), [msgs]);
+  // Chaves obrigatórias: scrollIntoView devolve uma Promise nos browsers novos e o React tomá-la-ia por limpeza.
+  useEffect(() => {
+    end.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [msgs]);
 
   async function send(message: string) {
     const m = message.trim();

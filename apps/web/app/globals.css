@@ -101,21 +101,13 @@ dialog::backdrop {
   }
 }
 
-/*
-  Moldura translúcida dos botões: cada botão aparece dentro de um "cartão" de vidro.
-  Feita com box-shadow para não mexer no layout. Em barras já translúcidas (.glass) não se repete.
-*/
+/* Botões: só uma sombra suave (o anel antigo fazia botões vizinhos parecerem colados). */
 .frame {
-  box-shadow:
-    0 0 0 5px rgb(255 255 255 / 0.55),
-    0 0 0 6px rgb(11 11 12 / 0.09),
-    0 12px 28px -16px rgb(11 11 12 / 0.45);
+  box-shadow: 0 8px 20px -14px rgb(11 11 12 / 0.45);
 }
 .frame-dark,
 .bg-ink .frame {
-  box-shadow:
-    0 0 0 5px rgb(255 255 255 / 0.07),
-    0 0 0 6px rgb(255 255 255 / 0.16);
+  box-shadow: none;
 }
 .glass .frame,
 .glass-dark .frame,

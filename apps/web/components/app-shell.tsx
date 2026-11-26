@@ -110,7 +110,7 @@ export function AppShell({ nav, eyebrow, org, orgSub, userName, greeting, alerts
         </header>
 
         <main id="conteudo" className="px-5 pb-16 sm:px-10">
-          <div className="pb-10 pt-10 sm:pb-12 sm:pt-14">
+          <div className="pb-6 pt-6 sm:pb-8 sm:pt-8">
             <div className="mb-3 sm:hidden"><Eyebrow icon={LayoutGrid}>{eyebrow}</Eyebrow></div>
             <h1 className="text-3xl font-bold tracking-tight sm:text-[2.6rem] sm:leading-[1.1]">{isHome || !current ? greeting : current.label}</h1>
             <p className="mt-2 text-muted first-letter:uppercase">{isHome || !current ? `${today()} · Maputo` : org}</p>

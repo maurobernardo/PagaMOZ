@@ -207,7 +207,9 @@ class PortalLoginView(APIView):
     throttle_classes = [OtpThrottle]
 
     @extend_schema(request=PortalLogin, responses=inline_serializer("PortalLoginStep", {
-        "mfa_enrolled": serializers.BooleanField(), "demo_code": serializers.CharField(required=False)}))  # fmt: skip
+        "mfa_enrolled": serializers.BooleanField(), "mfa_method": serializers.CharField(),
+        "email_hint": serializers.CharField(required=False),
+        "demo_code": serializers.CharField(required=False)}))  # fmt: skip
     def post(self, request):
         from django.core.cache import cache
 
@@ -230,7 +232,39 @@ class PortalLoginView(APIView):
         cache.delete(key)
         request.session.cycle_key()
         request.session["pre_mfa_user"] = user.pk
-        return Response({"mfa_enrolled": user.mfa_enabled, **_demo_code(user)})
+        return Response(_second_step(request, user))
+
+
+def _second_step(request, user) -> dict:
+    """Código por email quando há SMTP; senão a app autenticadora (como antes)."""
+    from . import email_mfa
+
+    if email_mfa.available(user):
+        try:
+            return {"mfa_enrolled": True, **email_mfa.start(request, user)}
+        except OSError:
+            pass  # SMTP em baixo: segue para a app autenticadora
+    return {"mfa_enrolled": user.mfa_enabled, "mfa_method": "totp", **_demo_code(user)}
+
+
+class MfaEmailResendView(APIView):
+    """Envia um código novo por email (o anterior deixa de valer)."""
+
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [OtpThrottle]
+
+    @extend_schema(request=None, responses=inline_serializer("MfaEmail", {
+        "mfa_method": serializers.CharField(), "email_hint": serializers.CharField()}))  # fmt: skip
+    def post(self, request):
+        from . import email_mfa
+
+        user = _pre_mfa_user(request)
+        if user is None or not email_mfa.available(user):
+            return Response({"detail": "Entre primeiro com a senha."}, status=401)
+        try:
+            return Response(email_mfa.start(request, user))
+        except OSError:
+            return Response({"detail": "Não foi possível enviar o email. Tente daqui a pouco."}, status=503)
 
 
 def _pre_mfa_user(request):
@@ -278,15 +312,24 @@ class MfaVerifyView(APIView):
         from .totp import verify
 
         user = _pre_mfa_user(request)
-        if user is None or not user.mfa_secret:
-            return Response({"detail": "Entre primeiro com a palavra-passe."}, status=401)
+        if user is None:
+            return Response({"detail": "Entre primeiro com a senha."}, status=401)
         s = MfaCode(data=request.data)
         s.is_valid(raise_exception=True)
-        counter = verify(user.mfa_secret, s.validated_data["code"])
-        if counter is None or counter <= user.mfa_last_counter:
-            record("auth.mfa_failed", actor=user, request=request)
-            return Response({"detail": "Código inválido ou já usado."}, status=400)
-        User.objects.filter(pk=user.pk).update(mfa_last_counter=counter, mfa_enabled=True)
+        from . import email_mfa
+
+        by_email = email_mfa.check(request, user, s.validated_data["code"])
+        if by_email is False:
+            record("auth.mfa_failed", actor=user, request=request, via="email")
+            return Response({"detail": "Código errado ou expirado. Peça um novo."}, status=400)
+        if by_email is None:
+            if not user.mfa_secret:
+                return Response({"detail": "Entre primeiro com a senha."}, status=401)
+            counter = verify(user.mfa_secret, s.validated_data["code"])
+            if counter is None or counter <= user.mfa_last_counter:
+                record("auth.mfa_failed", actor=user, request=request)
+                return Response({"detail": "Código inválido ou já usado."}, status=400)
+            User.objects.filter(pk=user.pk).update(mfa_last_counter=counter, mfa_enabled=True)
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
         request.session.pop("pre_mfa_user", None)
         request.session["mfa_ok"] = True
@@ -304,12 +347,14 @@ class PortalPendingView(APIView):
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(responses=inline_serializer("PortalPending", {
-        "mfa_enrolled": serializers.BooleanField(), "demo_code": serializers.CharField(required=False)}))  # fmt: skip
+        "mfa_enrolled": serializers.BooleanField(), "mfa_method": serializers.CharField(),
+        "email_hint": serializers.CharField(required=False),
+        "demo_code": serializers.CharField(required=False)}))  # fmt: skip
     def get(self, request):
         user = _pre_mfa_user(request)
         if user is None:
             return Response({"detail": "Sessão expirada. Entre de novo."}, status=401)
-        return Response({"mfa_enrolled": user.mfa_enabled, **_demo_code(user)})
+        return Response(_second_step(request, user))
 
 
 class CsrfView(APIView):

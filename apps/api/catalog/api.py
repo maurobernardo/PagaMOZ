@@ -26,10 +26,36 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class InstitutionPublicSerializer(serializers.ModelSerializer):
+    # Endereço curto: a imagem não vai repetida em cada serviço. Vazio = logótipo do site ou iniciais.
+    logo_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Institution
-        fields = ["id", "name", "slug", "is_demo"]
+        fields = ["id", "name", "slug", "is_demo", "logo_url"]
         read_only_fields = fields
+
+    def get_logo_url(self, inst) -> str:
+        if not inst.logo:
+            return ""
+        import hashlib
+
+        return f"/api/catalog/institutions/{inst.slug}/logo?v={hashlib.md5(inst.logo.encode()).hexdigest()[:8]}"
+
+
+def institution_logo(request, slug):
+    """Logótipo carregado no backoffice, como imagem (com cache longa: o ?v= muda quando o logótipo muda)."""
+    import base64
+
+    from django.http import Http404, HttpResponse
+
+    inst = Institution.objects.filter(slug=slug).only("logo").first()
+    if not inst or not inst.logo.startswith("data:image/webp;base64,"):
+        raise Http404
+    r = HttpResponse(base64.b64decode(inst.logo.split(",", 1)[1]), content_type="image/webp")
+    # Com ?v= (muda quando o logótipo muda) guarda-se um ano; sem ele, 5 minutos.
+    long = "public, max-age=31536000, immutable"
+    r["Cache-Control"] = long if request.GET.get("v") else "public, max-age=300"
+    return r
 
 
 class ServiceField(serializers.Serializer):

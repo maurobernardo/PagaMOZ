@@ -34,6 +34,8 @@ class Institution(Commission):
     settlement_bank = models.CharField("banco de liquidação", max_length=80, blank=True)
     settlement_account_masked = models.CharField("conta (mascarada)", max_length=32, blank=True)
     is_demo = models.BooleanField(default=True)
+    # Logótipo carregado pelo super admin: WebP pequeno (até 256 px, fundo transparente mantido) em data URL.
+    logo = models.TextField("logótipo", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

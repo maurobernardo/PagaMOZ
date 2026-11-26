@@ -6,7 +6,7 @@ import { Suspense, useEffect, useState } from "react";
 import { GOOGLE_ERRORS, GoogleButton, OrDivider } from "@/components/google-button";
 import { AuthFrame } from "@/components/auth-frame";
 import { Alert, Button, Field } from "@/components/ui";
-import { api, errorMessage, type Schemas } from "@/lib/api";
+import { api, csrfToken, errorMessage, type Schemas } from "@/lib/api";
 import { isValidPhone, normalizePhone } from "@/lib/i18n";
 
 type Step = "password" | "setup" | "mfa" | "choose";
@@ -28,6 +28,8 @@ function PortalLogin() {
   const [code, setCode] = useState("");
   const [secret, setSecret] = useState("");
   const [demoCode, setDemoCode] = useState("");
+  const [emailHint, setEmailHint] = useState("");
+  const [sent, setSent] = useState(false);
   const [memberships, setMemberships] = useState<Schemas["Membership"][]>([]);
   const [staff, setStaff] = useState(false);
   const [error, setError] = useState(GOOGLE_ERRORS[params.get("erro") ?? ""] ?? "");
@@ -40,10 +42,7 @@ function PortalLogin() {
     // Voltou da Google: a palavra-passe está dispensada, falta o MFA.
     api.GET("/api/auth/portal/pending").then(async (r) => {
       if (!r.data) return setError(errorMessage(r.error));
-      if (r.data.mfa_enrolled) {
-        setDemoCode(r.data.demo_code ?? "");
-        setStep("mfa");
-      } else await setup();
+      await next(r.data);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -65,10 +64,29 @@ function PortalLogin() {
     const r = await api.POST("/api/auth/portal/login", { body: { login: isEmail ? who.trim().toLowerCase() : normalizePhone(who), password } as never });
     setBusy(false);
     if (!r.data) return setError(errorMessage(r.error));
-    if (r.data.mfa_enrolled) {
-      setDemoCode(r.data.demo_code ?? "");
+    await next(r.data);
+  }
+
+  /** Segundo passo: código enviado por email (nunca no ecrã) ou, sem email configurado, a app autenticadora. */
+  async function next(d: { mfa_enrolled: boolean; mfa_method?: string; email_hint?: string; demo_code?: string }) {
+    if (d.mfa_method === "email") {
+      setEmailHint(d.email_hint ?? "");
+      setDemoCode("");
+      return setStep("mfa");
+    }
+    if (d.mfa_enrolled) {
+      setDemoCode(d.demo_code ?? "");
       setStep("mfa");
     } else await setup();
+  }
+
+  async function resend() {
+    const r = await fetch("/api/auth/portal/mfa/email", { method: "POST", headers: { "X-CSRFToken": csrfToken() } });
+    const b = await r.json().catch(() => ({}));
+    if (!r.ok) return setError(b.detail ?? "Não foi possível enviar.");
+    setError("");
+    setEmailHint(b.email_hint ?? emailHint);
+    setSent(true);
   }
 
   async function verify(e: React.FormEvent) {
@@ -92,7 +110,7 @@ function PortalLogin() {
   const idx = step === "setup" ? 1 : steps.findIndex(([k]) => k === step);
 
   const title = step === "password" ? "Portal da instituição" : step === "setup" ? "Proteja a sua conta" : step === "mfa" ? "Confirme que é você" : "Escolha onde entrar";
-  const sub = step === "password" ? "Acesso para as equipas das instituições aderentes." : step === "setup" ? "Configure uma app autenticadora. Só precisa de fazer isto uma vez." : step === "mfa" ? "Introduza o código de 6 dígitos da sua app autenticadora." : "A sua conta tem acesso a mais de um espaço.";
+  const sub = step === "password" ? "Acesso para as equipas das instituições aderentes." : step === "setup" ? "Configure uma app autenticadora. Só precisa de fazer isto uma vez." : step === "mfa" ? (emailHint ? `Enviámos um código de 6 dígitos para ${emailHint}.` : "Introduza o código de 6 dígitos da sua app autenticadora.") : "A sua conta tem acesso a mais de um espaço.";
 
   return (
     <AuthFrame eyebrow="Portal das instituições" icon={Building2} title={title} sub={sub}
@@ -148,6 +166,12 @@ function PortalLogin() {
           <Field id="code" label="Código" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code}
             onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} />
           <Button type="submit" disabled={busy || code.length !== 6} className="w-full !min-h-12">{busy ? "A verificar…" : "Entrar"}</Button>
+          {emailHint ? (
+            <p className="text-center text-sm text-muted">
+              {sent ? "Enviámos um código novo. " : "Não chegou? Veja também o spam. "}
+              <button type="button" onClick={resend} className="font-semibold text-ink underline underline-offset-4">Enviar outro código</button>
+            </p>
+          ) : null}
         </form>
       )}
 

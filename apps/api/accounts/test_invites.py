@@ -1,4 +1,4 @@
-"""Super admin cria instituição + administrador por email; o administrador define a senha pelo convite e entra com email."""
+"""Super admin cria instituição e administrador; o administrador define a senha pelo convite e entra com email."""
 
 import re
 
@@ -118,3 +118,27 @@ def test_create_staff_command_prints_invite_and_needs_no_password(capsys):
     u = User.objects.get(email="dono@pagamoz.test")
     assert u.is_staff and u.is_superuser and not u.has_usable_password() and u.phone is None
     assert "/definir-senha?uid=" in capsys.readouterr().out
+
+
+@pytest.mark.django_db
+def test_portal_second_step_by_email_never_shows_code(client, settings, mailoutbox):
+    settings.EMAIL_HOST = "smtp.teste"
+    settings.DEMO_MODE = True  # mesmo em demonstração, o código por email não vai na resposta
+    User.objects.create_user(None, email="ana@inst.test", password="Senha-forte-123", is_staff=True)
+    r = client.post(
+        "/api/auth/portal/login",
+        {"login": "ana@inst.test", "password": "Senha-forte-123"},
+        content_type="application/json",
+    )
+    body = r.json()
+    assert body["mfa_method"] == "email" and body["email_hint"] == "a•••a@inst.test" and "demo_code" not in body
+    code = re.search(r"\b(\d{6})\b", mailoutbox[0].subject).group(1)
+    wrong = "000000" if code != "000000" else "111111"
+    assert (
+        client.post("/api/auth/portal/mfa/verify", {"code": wrong}, content_type="application/json").status_code == 400
+    )
+    assert (
+        client.post("/api/auth/portal/mfa/verify", {"code": code}, content_type="application/json").status_code == 200
+    )
+    # Usado uma vez: não volta a servir.
+    assert client.get("/api/me").status_code == 200

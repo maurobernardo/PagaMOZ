@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
 from rest_framework import generics, permissions, serializers
+from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -94,10 +95,10 @@ class InstitutionAdminSerializer(serializers.ModelSerializer):
         model = Institution
         fields = [
             "id", "name", "slug", "nuit", "status", "settlement_bank", "settlement_account_masked",
-            "commission_bps", "commission_fixed", "commission_payer", "is_demo", "created_at",
+            "commission_bps", "commission_fixed", "commission_payer", "is_demo", "logo", "created_at",
             "volume_30d", "count_30d", "services", "members",
         ]  # fmt: skip
-        read_only_fields = ["id", "created_at"]
+        read_only_fields = ["id", "logo", "created_at"]
 
     def validate_nuit(self, v):
         if v and not (v.isdigit() and len(v) == 9):
@@ -140,6 +141,58 @@ class InstitutionDetail(generics.RetrieveUpdateAPIView):
         inst = serializer.save()
         record("institution.update", request=self.request, institution=inst, target=inst,
                changes={f: [str(before[f]), str(getattr(inst, f))] for f in before})  # fmt: skip
+
+
+def logo_data_url(f) -> str:
+    """Só imagens reais; mantém a proporção e a transparência; até 256 px; WebP."""
+    import base64
+    import io
+
+    from PIL import Image, ImageOps
+
+    im = Image.open(f)
+    if im.format not in ("JPEG", "PNG", "WEBP", "MPO"):
+        raise ValueError("formato")
+    im = ImageOps.exif_transpose(im).convert("RGBA")
+    im.thumbnail((256, 256))
+    buf = io.BytesIO()
+    im.save(buf, "WEBP", quality=85)
+    return "data:image/webp;base64," + base64.b64encode(buf.getvalue()).decode()
+
+
+class InstitutionLogo(APIView):
+    """POST multipart `logo` (JPG/PNG/WebP até 3 MB) define o logótipo; DELETE tira-o."""
+
+    permission_classes = [IsPlatformStaff]
+    parser_classes = [MultiPartParser]
+
+    @extend_schema(
+        request={
+            "multipart/form-data": {"type": "object", "properties": {"logo": {"type": "string", "format": "binary"}}}
+        },
+        responses=inline_serializer("Logo", {"logo": serializers.CharField()}),
+    )
+    def post(self, request, slug):
+        from PIL import Image
+
+        inst = get_object_or_404(Institution, slug=slug)
+        f = request.FILES.get("logo")
+        if f is None or f.size > 3 * 1024 * 1024:
+            return Response({"detail": "Escolha uma imagem até 3 MB."}, status=400)
+        try:
+            inst.logo = logo_data_url(f)
+        except (OSError, ValueError, Image.DecompressionBombError):
+            return Response({"detail": "Esta imagem não pode ser lida."}, status=400)
+        inst.save(update_fields=["logo"])
+        record("institution.logo", request=request, institution=inst, target=inst)
+        return Response({"logo": inst.logo})
+
+    @extend_schema(responses={204: None})
+    def delete(self, request, slug):
+        inst = get_object_or_404(Institution, slug=slug)
+        inst.logo = ""
+        inst.save(update_fields=["logo"])
+        return Response(status=204)
 
 
 class InstitutionAdmins(APIView):
@@ -293,15 +346,48 @@ class DeadLetterAction(StaffView):
 # ---------- Auditoria ----------
 
 
+def _target_label(kind: str, pk: str) -> str:
+    """Nome legível do objecto: referência do pagamento, nome da pessoa, nome da instituição..."""
+    from accounts.models import User
+    from institutions.models import Membership
+    from payments.models import Complaint
+
+    try:
+        if kind == "Transaction":
+            return Transaction.objects.only("reference").get(pk=pk).reference
+        if kind == "User":
+            u = User.objects.get(pk=pk)
+            return u.get_full_name() or u.email or u.phone or ""
+        if kind == "Institution":
+            return Institution.objects.only("name").get(pk=pk).name
+        if kind == "Membership":
+            m = Membership.objects.select_related("user").get(pk=pk)
+            return m.user.get_full_name() or m.user.email or m.user.phone or ""
+        if kind == "Complaint":
+            return f"Reclamação de {Complaint.objects.select_related('transaction').get(pk=pk).transaction.reference}"
+    except Exception:  # noqa: BLE001 - objecto apagado ou id estranho: fica o tipo e o número
+        pass
+    return f"{kind} {pk}".strip()
+
+
 class AuditSerializer(serializers.ModelSerializer):
     actor_phone = serializers.CharField(source="actor.phone", allow_null=True, default=None)
+    actor_name = serializers.SerializerMethodField()
     institution_name = serializers.CharField(source="institution.name", allow_null=True, default=None)
+    target_label = serializers.SerializerMethodField()
 
     class Meta:
         model = AuditLog
-        fields = ["id", "created_at", "action", "actor_phone", "institution_name", "target_type", "target_id",
-                  "data", "ip"]  # fmt: skip
+        fields = ["id", "created_at", "action", "actor_phone", "actor_name", "institution_name", "target_type",
+                  "target_id", "target_label", "data", "ip"]  # fmt: skip
         read_only_fields = fields
+
+    def get_actor_name(self, e) -> str | None:
+        u = e.actor
+        return (u.get_full_name() or u.email or u.phone) if u else None
+
+    def get_target_label(self, e) -> str:
+        return _target_label(e.target_type, e.target_id) if e.target_type else ""
 
 
 class Audit(generics.ListAPIView):
@@ -321,7 +407,12 @@ class Audit(generics.ListAPIView):
         if v := p.get("institution"):
             qs = qs.filter(institution__slug=v)
         if v := p.get("actor"):
-            qs = qs.filter(actor__phone__contains=v)
+            qs = qs.filter(
+                Q(actor__phone__contains=v)
+                | Q(actor__email__icontains=v)
+                | Q(actor__first_name__icontains=v)
+                | Q(actor__last_name__icontains=v)
+            )
         return qs
 
 

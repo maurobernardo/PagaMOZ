@@ -86,6 +86,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/portal/mfa/email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Envia um código novo por email (o anterior deixa de valer). */
+        post: operations["auth_portal_mfa_email_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/portal/mfa/setup": {
         parameters: {
             query?: never;
@@ -249,6 +266,24 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["backoffice_institutions_partial_update"];
+        trace?: never;
+    };
+    "/api/backoffice/institutions/{slug}/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description POST multipart `logo` (JPG/PNG/WebP até 3 MB) define o logótipo; DELETE tira-o. */
+        post: operations["backoffice_institutions_logo_create"];
+        /** @description POST multipart `logo` (JPG/PNG/WebP até 3 MB) define o logótipo; DELETE tira-o. */
+        delete: operations["backoffice_institutions_logo_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/backoffice/institutions/{slug}/members": {
@@ -1273,9 +1308,11 @@ export interface components {
             readonly created_at: string;
             readonly action: string;
             actor_phone?: string | null;
+            readonly actor_name: string | null;
             institution_name?: string | null;
             readonly target_type: string;
             readonly target_id: string;
+            readonly target_label: string;
             readonly data: unknown;
             readonly ip: string | null;
         };
@@ -1463,6 +1500,8 @@ export interface components {
             commission_fixed?: number | null;
             commission_payer?: components["schemas"]["CommissionPayerEnum"] | components["schemas"]["BlankEnum"];
             is_demo?: boolean;
+            /** Logótipo */
+            readonly logo: string;
             /** Format: date-time */
             readonly created_at: string;
             /** @default 0 */
@@ -1505,6 +1544,7 @@ export interface components {
             readonly name: string;
             readonly slug: string;
             readonly is_demo: boolean;
+            readonly logo_url: string;
         };
         /**
          * @description * `1` - Consulta + pagamento em tempo real
@@ -1536,6 +1576,9 @@ export interface components {
          * @enum {string}
          */
         KindEnum: "falta_no_provedor" | "falta_na_plataforma" | "valor_divergente" | "estado_divergente";
+        Logo: {
+            logo: string;
+        };
         Me: {
             readonly phone: string;
             readonly name: string;
@@ -1588,6 +1631,10 @@ export interface components {
         };
         MfaCodeRequest: {
             code: string;
+        };
+        MfaEmail: {
+            mfa_method: string;
+            email_hint: string;
         };
         MfaSetup: {
             secret: string;
@@ -1963,10 +2010,14 @@ export interface components {
         };
         PortalLoginStep: {
             mfa_enrolled: boolean;
+            mfa_method: string;
+            email_hint?: string;
             demo_code?: string;
         };
         PortalPending: {
             mfa_enrolled: boolean;
+            mfa_method: string;
+            email_hint?: string;
             demo_code?: string;
         };
         PortalSession: {
@@ -2572,6 +2623,25 @@ export interface operations {
             };
         };
     };
+    auth_portal_mfa_email_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MfaEmail"];
+                };
+            };
+        };
+    };
     auth_portal_mfa_setup_create: {
         parameters: {
             query?: never;
@@ -2864,6 +2934,54 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["InstitutionAdmin"];
                 };
+            };
+        };
+    };
+    backoffice_institutions_logo_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    logo?: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Logo"];
+                };
+            };
+        };
+    };
+    backoffice_institutions_logo_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

@@ -2,7 +2,9 @@ import { Image } from "expo-image";
 import {
   Building, Car, CreditCard, GraduationCap, HeartPulse, IdCard, Landmark, LayoutGrid, QrCode, Zap, type LucideIcon,
 } from "lucide-react-native";
+import { useState } from "react";
 import { Text, View } from "react-native";
+import { API } from "../lib/api";
 import Svg, { Path } from "react-native-svg";
 import { C, F } from "../theme";
 
@@ -44,11 +46,13 @@ const LOGOS: Record<string, number> = {
 /** Logótipo da marca; sem ficheiro mostra as iniciais num quadrado preto. */
 export function BrandMark({ slug, name, size = 48, round = false }: { slug: string; name: string; size?: number; round?: boolean }) {
   const radius = round ? size / 2 : size * 0.28;
-  const src = LOGOS[slug];
+  const [failed, setFailed] = useState(false);
+  // Sem ficheiro na app: o logótipo carregado no backoffice (erro -> iniciais).
+  const src = LOGOS[slug] ?? (failed || !/^[a-z0-9-]+$/.test(slug) ? undefined : { uri: `${API}/api/catalog/institutions/${slug}/logo` });
   if (src)
     return (
       <View style={{ width: size, height: size, borderRadius: radius, backgroundColor: "#ffffff", borderWidth: 1, borderColor: C.line, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-        <Image source={src} style={{ width: size * (round ? 0.68 : 0.8), height: size * (round ? 0.68 : 0.8) }} contentFit="contain" accessibilityLabel={name} />
+        <Image source={src} onError={() => setFailed(true)} style={{ width: size * (round ? 0.68 : 0.8), height: size * (round ? 0.68 : 0.8) }} contentFit="contain" accessibilityLabel={name} />
       </View>
     );
   const initials = name.replace(/\(.*?\)/g, "").split(/[\s-]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
