@@ -4,7 +4,6 @@ import { Camera } from "lucide-react-native";
 import { useState } from "react";
 import { ActivityIndicator, Platform, Pressable, Text, View } from "react-native";
 import { api, errorMessage } from "../lib/api";
-import { toJpeg } from "../lib/image";
 import { t } from "../lib/i18n";
 import { initials, type Me } from "../lib/me";
 import { C, F } from "../theme";
@@ -27,16 +26,15 @@ export function AvatarPicker({ me, onChange, onError }: { me: Me; onChange: (ava
     // A galeria abre sem pedir permissão (o sistema mostra o seu próprio seletor); a câmara precisa.
     if (camera && !(await ImagePicker.requestCameraPermissionsAsync()).granted)
       return onError(t("Autorize o acesso às fotos nas definições do telemóvel."));
-    const opts: ImagePicker.ImagePickerOptions = { mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.8 };
+    const opts: ImagePicker.ImagePickerOptions = { mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.5, base64: true };
     const r = camera ? await ImagePicker.launchCameraAsync(opts) : await ImagePicker.launchImageLibraryAsync(opts);
     const a = r.assets?.[0];
     if (r.canceled || !a) return;
     setBusy(true);
     try {
-      const fd = new FormData();
-      if (Platform.OS === "web") fd.append("avatar", await (await fetch(a.uri)).blob(), "foto.jpg");
-      else fd.append("avatar", (await toJpeg(a.uri, 512)) as unknown as Blob);
-      const res = await api<{ avatar: string }>("/api/me/avatar", { form: fd });
+      // Em base64 (JSON): o envio multipart falhava antes de chegar ao servidor em alguns telemóveis.
+      if (!a.base64) throw new Error(t("Esta imagem não pode ser lida."));
+      const res = await api<{ avatar: string }>("/api/me/avatar", { body: { base64: a.base64 } });
       onChange(res.avatar);
     } catch (e) {
       onError(errorMessage(e));

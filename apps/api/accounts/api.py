@@ -10,7 +10,7 @@ from django.utils import timezone
 from drf_spectacular.utils import extend_schema, inline_serializer
 from PIL import Image, ImageOps
 from rest_framework import generics, permissions, serializers, viewsets
-from rest_framework.parsers import MultiPartParser
+from rest_framework.parsers import JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
@@ -297,7 +297,10 @@ class CsrfView(APIView):
 class AvatarView(APIView):
     """POST multipart `avatar` (JPG/PNG/WebP até 5 MB) guarda a foto de perfil; DELETE remove-a."""
 
-    parser_classes = [MultiPartParser]
+    parser_classes = [
+        MultiPartParser,
+        JSONParser,
+    ]  # JSON {"base64": ...}: a app envia assim (multipart falha em alguns telemóveis)
 
     @extend_schema(
         request={
@@ -307,7 +310,14 @@ class AvatarView(APIView):
     )
     def post(self, request):
         f = request.FILES.get("avatar")
-        if f is None or f.size > 5 * 1024 * 1024:
+        size = f.size if f else 0
+        if f is None and isinstance(request.data.get("base64"), str):
+            try:
+                raw = base64.b64decode(request.data["base64"].split(",")[-1], validate=True)
+            except ValueError:
+                return Response({"detail": "Esta imagem não pode ser lida."}, status=400)
+            f, size = io.BytesIO(raw), len(raw)
+        if f is None or size > 5 * 1024 * 1024:
             return Response({"detail": "Escolha uma imagem até 5 MB."}, status=400)
         try:
             request.user.avatar = avatar_data_url(f)

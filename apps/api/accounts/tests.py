@@ -172,3 +172,19 @@ def test_delete_account_removes_personal_data_and_keeps_payments(client, django_
     assert client.get("/api/me").status_code in (401, 403)
     # o número fica livre para uma conta nova
     assert django_user_model.objects.create_user("+258847777777").pk != u.pk
+
+
+def test_avatar_upload_as_base64_json(client, django_user_model):
+    import base64
+    import io
+
+    from PIL import Image
+
+    client.force_login(django_user_model.objects.create_user("+258844444444"))
+    buf = io.BytesIO()
+    Image.new("RGB", (40, 30), "red").save(buf, "JPEG")
+    r = client.post(
+        "/api/me/avatar", {"base64": base64.b64encode(buf.getvalue()).decode()}, content_type="application/json"
+    )
+    assert r.status_code == 200 and r.json()["avatar"].startswith("data:image/webp")
+    assert client.post("/api/me/avatar", {"base64": "!!"}, content_type="application/json").status_code == 400
