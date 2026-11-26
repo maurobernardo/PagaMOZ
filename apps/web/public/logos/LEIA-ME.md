@@ -14,3 +14,4 @@ São marcas registadas: para produção, confirmar autorização de cada marca.
 vodacom.svg (Wikipedia: Vodacom Logo 2017.svg), tmcel.png (tmcel.mz), tvcabo.svg (tvcabo.mz).
 edm.png e emose.png (ícones dos sites oficiais), uem.png (uem.mz), inss.png (inss.gov.mz).
 Ao acrescentar um ficheiro, junte-o também à lista LOGOS em components/brand-mark.tsx.
+fipag, gotv, isctem, isutc, startimes, ucm, ujc, up-maputo, unizambeze: .webp recortados dos ficheiros que o utilizador pôs em apps/web/public.

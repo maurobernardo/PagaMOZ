@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUp, Mic, ShieldAlert, Sparkles, Volume2 } from "lucide-react";
+import { ArrowUp, Mic, ShieldAlert, MessageCircle, Volume2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Eyebrow } from "@/components/eyebrow";
@@ -77,7 +77,7 @@ export default function Assistente() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
       <div>
-        <Eyebrow icon={Sparkles}>Assistente</Eyebrow>
+        <Eyebrow icon={MessageCircle}>Assistente</Eyebrow>
         <h1 className="mt-4 text-4xl font-bold">Diga o que quer pagar</h1>
         <p className="mt-2 text-muted">Em português simples. Eu encontro o serviço e preparo o pagamento.</p>
       </div>

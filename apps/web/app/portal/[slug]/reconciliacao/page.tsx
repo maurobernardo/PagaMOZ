@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, CheckCircle2, CircleAlert, ListChecks, Sparkles } from "lucide-react";
+import { CalendarDays, CheckCircle2, CircleAlert, ListChecks, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { filterInput } from "@/components/table";
 import { useToast } from "@/components/toast";
@@ -97,7 +97,7 @@ export default function Reconciliacao() {
                     {i.resolution_note ? <p className="mt-1 text-sm italic text-muted">“{i.resolution_note}”</p> : null}
                     {!i.resolved && i.suggestion ? (
                       <div className="mt-3 flex items-start gap-2 rounded-2xl bg-canvas p-3 text-sm">
-                        <Sparkles className="mt-0.5 h-4 w-4 shrink-0" />
+                        <MessageCircle className="mt-0.5 h-4 w-4 shrink-0" />
                         <div>
                           <p className="font-semibold">Sugestão {i.suggestion.confidence && i.suggestion.confidence >= 0.8 ? "(muito provável)" : "(possível)"}</p>
                           <p className="text-muted">{i.suggestion.text}</p>
@@ -109,7 +109,7 @@ export default function Reconciliacao() {
                 {!i.resolved && canWrite(["admin", "financeiro"]) ? (
                   <div className="flex flex-col gap-2">
                     {i.suggestion && ["resolver", "resolver_par"].includes(i.suggestion.action ?? "") ? (
-                      <Button onClick={() => accept(i.id, i.suggestion!.text ?? "", i.suggestion!.pair)}><Sparkles className="h-4 w-4" /> Aceitar sugestão</Button>
+                      <Button onClick={() => accept(i.id, i.suggestion!.text ?? "", i.suggestion!.pair)}><MessageCircle className="h-4 w-4" /> Aceitar sugestão</Button>
                     ) : null}
                     <Button variant="secondary" onClick={() => resolve(i.id, i.reference || i.provider_ref)}>Marcar resolvida</Button>
                   </div>

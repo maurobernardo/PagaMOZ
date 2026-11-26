@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { ArrowUp, ShieldAlert, Sparkles, Volume2 } from "lucide-react-native";
+import { ArrowUp, ShieldAlert, MessageCircle, Volume2 } from "lucide-react-native";
 import { speak } from "../lib/voice";
 import { useRef, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
@@ -61,7 +61,7 @@ export default function Assistente() {
           <View key={i} style={{ alignItems: m.from === "me" ? "flex-end" : "flex-start", gap: 8 }}>
             <View style={[{ maxWidth: "86%", borderRadius: 22, paddingHorizontal: 16, paddingVertical: 12 },
               m.from === "me" ? { backgroundColor: C.ink, borderBottomRightRadius: 6 } : { backgroundColor: C.surface, borderBottomLeftRadius: 6, ...shadow() }]}>
-              {m.from === "bot" && i === 0 ? <Sparkles size={16} color={C.ink} style={{ marginBottom: 6 }} /> : null}
+              {m.from === "bot" && i === 0 ? <MessageCircle size={16} color={C.ink} style={{ marginBottom: 6 }} /> : null}
               <Text style={{ fontFamily: F.body, fontSize: 15, lineHeight: 21, color: m.from === "me" ? C.white : C.ink }}>{m.text}</Text>
               {m.from === "bot" ? (
                 <Pressable accessibilityRole="button" accessibilityLabel={t("Ouvir")} onPress={() => speak(m.text)} hitSlop={8} style={{ marginTop: 6, alignSelf: "flex-start" }}>

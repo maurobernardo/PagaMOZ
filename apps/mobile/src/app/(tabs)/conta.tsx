@@ -4,7 +4,7 @@ import * as Notifications from "expo-notifications";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import {
-  Bell, Bookmark, FileText, Fingerprint, UserX, HelpCircle, Info, Languages, LogOut, Moon, Shield, Sparkles, Trash2, User, Vibrate,
+  Bell, Bookmark, FileText, Fingerprint, UserX, HelpCircle, Info, Languages, LogOut, Moon, Shield, MessageCircle, Trash2, User, Vibrate,
 } from "lucide-react-native";
 import { useState } from "react";
 import { registerPush, unregisterPush } from "../../lib/push";
@@ -150,7 +150,7 @@ export default function Definicoes() {
 
         <Group title={t("Ajuda")}>
           <ListRow first icon={HelpCircle} title={t("Perguntas frequentes")} onPress={() => WebBrowser.openBrowserAsync(`${WEB}/#faq`)} />
-          <ListRow icon={Sparkles} title={t("Ver boas-vindas outra vez")} onPress={async () => { await setItem(ONBOARDED, ""); router.replace("/bem-vindo"); }} />
+          <ListRow icon={MessageCircle} title={t("Ver boas-vindas outra vez")} onPress={async () => { await setItem(ONBOARDED, ""); router.replace("/bem-vindo"); }} />
         </Group>
 
         <Group title={t("Sobre")}>

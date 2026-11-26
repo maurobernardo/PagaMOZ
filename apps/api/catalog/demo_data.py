@@ -47,6 +47,7 @@ GROUPS = {
     "tv": ("TV por assinatura", "Escolha o seu fornecedor"),
     "energia": ("Electricidade (EDM)", "Escolha o tipo de contador"),
     "propinas": ("Propinas", "Escolha a sua universidade"),
+    "agua": ("Fatura de água", "Escolha a sua cidade"),
 }
 
 
@@ -119,7 +120,7 @@ INSTITUTIONS = [
                 CONSULTA,
                 None,
                 [f("cliente", "N.º de cliente", pattern=r"^\d{5,12}$", help="Está no topo da última fatura da água.")],
-                conf("agua_fatura", "Maputo, Matola, Boane e Marracuene."),
+                grouped(conf("agua_fatura", "Maputo, Matola, Boane e Marracuene."), "agua", "Maputo e Matola (AdRMM)"),
             ),
         ],
     ),
@@ -496,6 +497,131 @@ INSTITUTIONS = [
                 None,
                 [f("n_estudante", "N.º de estudante", pattern=r"^\d{5,10}$", help="Está no cartão de estudante.")],
                 grouped(conf("uem_propinas", "Mostra as prestações em dívida."), "propinas", "UJC"),
+            ),
+        ],
+    ),
+    (
+        "servicos-basicos",
+        "fipag",
+        "Fundo de Investimento e Património do Abastecimento de Água (FIPAG)",
+        [
+            (
+                "fatura",
+                "Fatura de água",
+                L1,
+                CONSULTA,
+                None,
+                [f("cliente", "N.º de cliente", pattern=r"^\d{5,12}$", help="Está no topo da última fatura da água.")],
+                grouped(
+                    conf("agua_fatura", "Beira, Nampula, Quelimane, Tete e outras cidades."),
+                    "agua",
+                    "Outras cidades (FIPAG)",
+                ),
+            ),
+        ],
+    ),
+    (
+        "educacao",
+        "isutc",
+        "Instituto Superior de Transportes e Comunicações (ISUTC)",
+        [
+            (
+                "propinas",
+                "Propinas",
+                L1,
+                CONSULTA,
+                None,
+                [f("n_estudante", "N.º de estudante", pattern=r"^\d{5,10}$", help="Está no cartão de estudante.")],
+                grouped(conf("uem_propinas", "Mostra as prestações em dívida."), "propinas", "ISUTC"),
+            ),
+        ],
+    ),
+    (
+        "municipios",
+        "cmcm",
+        "Conselho Municipal da Cidade da Matola",
+        [
+            ("iav", "Imposto Autárquico de Veículos (IAV)", L2, CONSULTA, None, [MATRICULA], conf("iav")),
+            (
+                "ipra",
+                "Imposto Predial Autárquico (IPRA)",
+                L2,
+                CONSULTA,
+                None,
+                [f("artigo", "N.º do artigo matricial", pattern=r"^\d{3,10}$")],
+                conf("ipra"),
+            ),
+        ],
+    ),
+    (
+        "municipios",
+        "cmb",
+        "Conselho Municipal da Beira",
+        [
+            ("iav", "Imposto Autárquico de Veículos (IAV)", L2, CONSULTA, None, [MATRICULA], conf("iav")),
+            (
+                "ipra",
+                "Imposto Predial Autárquico (IPRA)",
+                L2,
+                CONSULTA,
+                None,
+                [f("artigo", "N.º do artigo matricial", pattern=r"^\d{3,10}$")],
+                conf("ipra"),
+            ),
+        ],
+    ),
+    (
+        "saude",
+        "hcb",
+        "Hospital Central da Beira",
+        [
+            (
+                "factura",
+                "Factura hospitalar",
+                L2,
+                CONSULTA,
+                None,
+                [f("factura", "N.º da factura", pattern=r"^\d{5,12}$", help="Está no topo da factura do hospital.")],
+                conf("hospital"),
+            ),
+        ],
+    ),
+    (
+        "saude",
+        "hcn",
+        "Hospital Central de Nampula",
+        [
+            (
+                "factura",
+                "Factura hospitalar",
+                L2,
+                CONSULTA,
+                None,
+                [f("factura", "N.º da factura", pattern=r"^\d{5,12}$", help="Está no topo da factura do hospital.")],
+                conf("hospital"),
+            ),
+        ],
+    ),
+    (
+        "outros",
+        "hollard",
+        "Hollard Moçambique (Seguros)",
+        [
+            (
+                "premio",
+                "Prémio de seguro",
+                L1,
+                CONSULTA,
+                None,
+                [
+                    f(
+                        "apolice",
+                        "N.º da apólice",
+                        pattern=r"^[0-9A-Za-z/-]{5,20}$",
+                        help="Está no contrato ou no cartão do seguro.",
+                    )
+                ],
+                conf("apolice"),
             ),
         ],
     ),

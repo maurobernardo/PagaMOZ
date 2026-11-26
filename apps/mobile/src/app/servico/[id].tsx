@@ -1,6 +1,6 @@
 import * as DocumentPicker from "expo-document-picker";
 import { router, useLocalSearchParams } from "expo-router";
-import { AlertTriangle, ArrowLeft, ArrowRight, Bookmark, CheckCircle2, Share2, Sparkles, CreditCard, FileCheck2, Info, Lock, Search, Upload } from "lucide-react-native";
+import { AlertTriangle, ArrowLeft, ArrowRight, Bookmark, CheckCircle2, Share2, MessageCircle, CreditCard, FileCheck2, Info, Lock, Search, Upload } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { useMethodHealth } from "../../lib/intel";
 import { Alert as RNAlert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Share, Text, TextInput, View } from "react-native";
@@ -352,7 +352,7 @@ function PayFlow({ s }: { s: Service }) {
                     <Text style={{ fontFamily: F.bold, fontSize: 14, lineHeight: 18, color: on ? C.white : C.ink }}>{label}</Text>
                     {health[k]?.recommended ? (
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                        <Sparkles size={12} color={on ? C.white : C.ok} />
+                        <MessageCircle size={12} color={on ? C.white : C.ok} />
                         <Text style={{ fontFamily: F.semi, fontSize: 11, color: on ? C.white : C.ok }}>{t("A funcionar bem agora")}</Text>
                       </View>
                     ) : health[k] && ["instavel", "falhas"].includes(health[k].state) ? (

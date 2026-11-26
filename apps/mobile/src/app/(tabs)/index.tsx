@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from "expo-router";
-import { ArrowRight, Bell, CalendarClock, Sparkles, Camera, ChevronRight, CreditCard, Moon, Search, ShieldCheck, Sun, UserRound } from "lucide-react-native";
+import { ArrowRight, Bell, CalendarClock, MessageCircle, Camera, ChevronRight, CreditCard, Moon, Search, ShieldCheck, Sun, UserRound } from "lucide-react-native";
 import { scanBill, type Bills } from "../../lib/intel";
 import { Alert } from "../../components/ui";
 import { Avatar } from "../../components/avatar";
@@ -26,12 +26,14 @@ function greeting() {
 /** Atalhos "Pagar rápido": um toque e está no serviço (ou na escolha da operadora). */
 const QUICK: { label: string; find: (s: Service) => boolean; group?: string }[] = [
   { label: "Credelec", find: (s) => s.institution.slug === "edm" && s.slug === "credelec" },
-  { label: "Água", find: (s) => s.institution.slug === "adrmm" },
+  { label: "Água", find: (s) => s.group?.key === "agua", group: "agua" },
   { label: "Recarga", find: (s) => s.group?.key === "recarga", group: "recarga" },
   { label: "TV", find: (s) => s.group?.key === "tv", group: "tv" },
   { label: "Multas", find: (s) => s.institution.slug === "inatter" },
   { label: "Passaporte", find: (s) => s.slug === "passaporte" },
 ];
+
+const HERO_LOGOS: [string, string][] = [["edm", "EDM"], ["fipag", "FIPAG"], ["vodacom", "Vodacom"], ["dstv", "DStv"], ["uem", "UEM"], ["at", "AT"]];
 
 export default function Home() {
   const top = useSafeAreaInsets().top;
@@ -56,6 +58,7 @@ export default function Home() {
   }, []);
   useFocusEffect(loadMe);
 
+  const institutions = services ? new Set(services.map((x) => x.institution.slug)).size : 0;
   const last = payments[0];
   // Próximas contas (as 3 mais perto) e energia a acabar.
   const next = [
@@ -88,6 +91,7 @@ export default function Home() {
       {/* Topo com fotografia (pagamento com telemóvel), escurecida para o texto branco se ler bem */}
       <View style={{ marginHorizontal: -18, paddingTop: top, paddingHorizontal: 18, paddingBottom: 56, backgroundColor: C.hero, overflow: "hidden", borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}>
         <Image source={require("../../../assets/hero.webp")} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} contentFit="cover" accessibilityIgnoresInvertColors />
+        <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.45)" }} />
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <LogoMark size={32} color={C.onHero} />
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
@@ -109,6 +113,19 @@ export default function Home() {
             <Text style={{ fontFamily: F.semi, fontSize: 12, color: C.onHero }}>{greeting()}</Text>
           </View>
           <Text style={{ fontFamily: F.display, fontSize: 30, letterSpacing: -0.9, color: C.onHero }} numberOfLines={1}>{me ? shortName(me) : t("Pague sem filas")}</Text>
+          {/* Instituições que já pode pagar aqui (logótipos sobrepostos + contagem real do catálogo) */}
+          <Pressable accessibilityRole="button" onPress={() => router.push("/servicos")} style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 2 }}>
+            <View style={{ flexDirection: "row" }}>
+              {HERO_LOGOS.map(([slug, name], i) => (
+                <View key={slug} style={{ marginLeft: i ? -10 : 0, borderRadius: 16, borderWidth: 2, borderColor: "rgba(0,0,0,0.35)" }}>
+                  <BrandMark slug={slug} name={name} size={30} round />
+                </View>
+              ))}
+            </View>
+            <Text style={{ flex: 1, fontFamily: F.semi, fontSize: 12, color: "rgba(255,255,255,0.85)" }} numberOfLines={2}>
+              {institutions ? `${institutions} ${t("instituições: luz, água, TV, propinas e mais")}` : t("Luz, água, TV, propinas e mais")}
+            </Text>
+          </Pressable>
         </View>
 
         {/* Cartão de vidro: este mês */}
@@ -239,7 +256,7 @@ export default function Home() {
     {/* Assistente: botão flutuante, sempre à mão */}
     <Pressable accessibilityRole="button" accessibilityLabel={t("Assistente")} onPress={() => router.push("/assistente")}
       style={({ pressed }) => ({ position: "absolute", right: 18, bottom: 24, flexDirection: "row", alignItems: "center", gap: 8, height: 56, paddingHorizontal: 20, borderRadius: 28, backgroundColor: C.ink, transform: [{ scale: pressed ? 0.95 : 1 }], shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 8 })}>
-      <Sparkles size={20} color={C.white} />
+      <MessageCircle size={20} color={C.white} />
       <Text style={{ fontFamily: F.semi, fontSize: 15, color: C.white }}>{t("Assistente")}</Text>
     </Pressable>
     </View>

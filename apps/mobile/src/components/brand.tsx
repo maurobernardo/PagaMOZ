@@ -24,6 +24,15 @@ const LOGOS: Record<string, number> = {
   inss: require("../../assets/logos/inss.png"), mastercard: require("../../assets/logos/mastercard.svg"), mkesh: require("../../assets/logos/mkesh.webp"),
   movitel: require("../../assets/logos/movitel.jpg"), mpesa: require("../../assets/logos/mpesa.svg"), senami: require("../../assets/logos/senami.webp"),
   tmcel: require("../../assets/logos/tmcel.png"), tvcabo: require("../../assets/logos/tvcabo.svg"), uem: require("../../assets/logos/uem.png"),
+  "fipag": require("../../assets/logos/fipag.webp"),
+  "gotv": require("../../assets/logos/gotv.webp"),
+  "isctem": require("../../assets/logos/isctem.webp"),
+  "isutc": require("../../assets/logos/isutc.webp"),
+  "startimes": require("../../assets/logos/startimes.webp"),
+  "ucm": require("../../assets/logos/ucm.webp"),
+  "ujc": require("../../assets/logos/ujc.webp"),
+  "up-maputo": require("../../assets/logos/up-maputo.webp"),
+  "unizambeze": require("../../assets/logos/unizambeze.webp"),
   visa: require("../../assets/logos/visa.svg"), vodacom: require("../../assets/logos/vodacom.svg"), zap: require("../../assets/logos/zap.png"),
 };
 

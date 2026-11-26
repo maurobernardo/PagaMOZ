@@ -78,6 +78,7 @@ const EN: Record<string, string> = {
   "Autorize o acesso às fotos nas definições do telemóvel.": "Allow photo access in your phone settings.",
   "Avisos com a app fechada precisam da versão instalada da app (não o Expo Go).": "Alerts with the app closed need the installed app (not Expo Go).",
   "Pague sem filas": "Pay without queues", "Pago este mês": "Paid this month", "Comece agora": "Get started", "pagamentos": "payments",
+  "instituições: luz, água, TV, propinas e mais": "institutions: power, water, TV, tuition and more", "Luz, água, TV, propinas e mais": "Power, water, TV, tuition and more",
   "Histórico e comprovativos guardados": "History and receipts saved", "Acompanhar": "Track", "Recarga": "Top-up",
   "A funcionar bem agora": "Working well now", "Com falhas agora": "Failing now", "Instável agora": "Unstable now",
   "Lemos estes dados da sua fatura. Confirme se estão certos antes de continuar.": "We read these details from your bill. Check them before continuing.",

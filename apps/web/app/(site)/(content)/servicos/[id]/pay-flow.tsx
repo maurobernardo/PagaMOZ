@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, Bookmark, CheckCircle2, CircleAlert, ClipboardList, FileCheck2, FlaskConical, Lock, Pencil,
-  ReceiptText, Search, Share2, Sparkles, Users, Upload, UserRound, Wallet,
+  ReceiptText, Search, Share2, MessageCircle, Users, Upload, UserRound, Wallet,
 } from "lucide-react";
 import { useCardForm } from "@/components/card-form";
 import { BrandMark } from "@/components/brand-mark";
@@ -395,7 +395,7 @@ export function PayFlow({
                     {WALLET_PREFIXES[k] ? <BrandMark slug={k} name={label} size={44} /> : k === "cartao" ? <span className="flex gap-1.5"><BrandMark slug="visa" name="Visa" size={44} /><BrandMark slug="mastercard" name="Mastercard" size={44} /></span> : <MethodIcon method={k} className={method === k ? "!bg-white/15 !text-white" : ""} />}
                     <span className="text-sm font-semibold leading-tight">{label}</span>
                     {health[k]?.recommended ? (
-                      <span className={`inline-flex items-center gap-1 text-xs font-semibold ${method === k ? "text-white" : "text-emerald-700"}`}><Sparkles className="h-3 w-3" /> A funcionar bem agora</span>
+                      <span className={`inline-flex items-center gap-1 text-xs font-semibold ${method === k ? "text-white" : "text-emerald-700"}`}><MessageCircle className="h-3 w-3" /> A funcionar bem agora</span>
                     ) : health[k] && ["instavel", "falhas"].includes(health[k].state) ? (
                       <span className={`inline-flex items-center gap-1 text-xs font-semibold ${method === k ? "text-white" : "text-amber-700"}`}><AlertTriangle className="h-3 w-3" /> {health[k].state === "falhas" ? "Com falhas agora" : "Instável agora"}</span>
                     ) : null}

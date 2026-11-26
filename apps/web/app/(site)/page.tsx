@@ -3,6 +3,7 @@ import {
   LayoutGrid, ListOrdered, MapPin, MessageCircleQuestion, MousePointerClick, QrCode, Search, Share2, ShieldCheck, Smartphone,
 } from "lucide-react";
 import Link from "next/link";
+import { BrandMark } from "@/components/brand-mark";
 import { CategoryIcon } from "@/components/category-icon";
 import { Eyebrow } from "@/components/eyebrow";
 import { HeroPreview } from "@/components/hero-preview";
@@ -62,6 +63,12 @@ export default async function Home() {
               <Building2 className="h-4 w-4" /> Sou instituição <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
+          <ul aria-label="Algumas instituições" className="mt-10 flex animate-rise flex-wrap items-center justify-center gap-3 [animation-delay:340ms]">
+            {[["edm", "EDM"], ["fipag", "FIPAG"], ["adrmm", "AdRMM"], ["vodacom", "Vodacom"], ["movitel", "Movitel"], ["dstv", "DStv"], ["startimes", "StarTimes"], ["at", "AT"], ["inss", "INSS"], ["uem", "UEM"], ["ucm", "UCM"], ["isutc", "ISUTC"]].map(([slug, name]) => (
+              <li key={slug} title={name}><BrandMark slug={slug} name={name} size={44} className="!rounded-full ring-2 ring-white/15" /></li>
+            ))}
+          </ul>
+
         </div>
 
         <div className="relative mx-auto mt-14 max-w-6xl animate-rise px-5 [animation-delay:380ms] sm:mt-16 sm:px-8">
@@ -291,26 +298,11 @@ function FlowArrow() {
  * (nunca atrás do título). Uma luz suave de cima e um brilho vermelho discreto em baixo.
  */
 function HeroBackdrop() {
-  const cols = 16;
-  const rows = 9;
-  const lit = [[0, 1], [1, 4], [0, 6], [2, 2], [14, 1], [15, 3], [13, 5], [15, 7], [1, 8], [14, 8]];
+  // Fotografia (Shixart1985, CC BY 2.0) escurecida para o texto branco se ler bem.
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-      <div className="absolute inset-0 grid [mask-image:linear-gradient(to_bottom,black_55%,transparent)]"
-        style={{ gridTemplateColumns: `repeat(${cols}, 1fr)`, gridTemplateRows: `repeat(${rows}, 1fr)` }}>
-        {Array.from({ length: cols * rows }, (_, k) => {
-          const c = k % cols, r = Math.floor(k / cols);
-          const on = lit.findIndex(([x, y]) => x === c && y === r);
-          return (
-            <div key={k} className="border-b border-r border-white/[0.06]">
-              {on >= 0 ? <div className="h-full w-full animate-cell bg-white" style={{ animationDelay: `${on * 0.9}s` }} /> : null}
-            </div>
-          );
-        })}
-      </div>
-      <div className="absolute inset-0 bg-[radial-gradient(45%_45%_at_50%_30%,rgba(11,11,12,0.95),transparent_75%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(70%_55%_at_50%_0%,rgba(255,255,255,0.10),transparent_70%)]" />
-      <div className="absolute inset-x-0 bottom-0 h-2/3 bg-[radial-gradient(55%_55%_at_50%_100%,rgba(224,38,47,0.22),transparent_70%)]" />
+      <img src="/hero.webp" alt="" className="h-full w-full object-cover opacity-60" />
+      <div className="absolute inset-0 bg-ink/60" />
     </div>
   );
 }

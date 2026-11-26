@@ -58,6 +58,13 @@ ALIASES: dict[str, list[str]] = {
     "up-maputo": ["up", "pedagogica", "universidade pedagogica", "propina", "propinas"],
     "isctem": ["isctem", "propina", "propinas", "instituto superior"],
     "unizambeze": ["unizambeze", "zambeze", "universidade zambeze", "propina", "propinas"],
+    "fipag": ["fipag", "agua", "aguas", "torneira", "beira", "nampula", "quelimane", "tete"],
+    "isutc": ["isutc", "transportes e comunicacoes", "propina", "propinas", "instituto superior"],
+    "cmcm": ["matola", "conselho municipal", "municipio", "autarquia", "iav", "ipra", "predial"],
+    "cmb": ["beira", "conselho municipal", "municipio", "autarquia", "iav", "ipra", "predial"],
+    "hcb": ["hcb", "hospital", "beira", "saude", "factura hospitalar"],
+    "hcn": ["hcn", "hospital", "nampula", "saude", "factura hospitalar"],
+    "hollard": ["hollard", "seguro", "seguros", "apolice"],
     "ujc": ["ujc", "joaquim chissano", "chissano", "propina", "propinas"],
 }
 
