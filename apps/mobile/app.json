@@ -9,7 +9,8 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "mz.pagamoz.app"
+      "bundleIdentifier": "mz.pagamoz.app",
+      "infoPlist": {}
     },
     "android": {
       "package": "mz.pagamoz.app",
@@ -40,6 +41,17 @@
     ],
     "experiments": {
       "typedRoutes": false
-    }
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "14f5cd4c-ceff-4242-8620-2dc7c39252aa"
+      }
+    },
+    "owner": "maurozibane10"
   }
 }
