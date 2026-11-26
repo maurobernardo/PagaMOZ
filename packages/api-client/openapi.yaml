@@ -654,6 +654,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/Health'
           description: ''
+  /api/intel/assistant:
+    post:
+      operationId: intel_assistant_create
+      description: 'Assistente por texto: percebe o pedido e devolve uma resposta
+        curta com acções (nunca paga sozinho).'
+      tags:
+      - intel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssistantRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AssistantRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AssistantRequestRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssistantReply'
+          description: ''
   /api/intel/bills:
     get:
       operationId: intel_bills_retrieve
@@ -688,6 +717,35 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MethodHealth'
+          description: ''
+  /api/intel/scam-check:
+    post:
+      operationId: intel_scam_check_create
+      description: Avalia uma mensagem (SMS/WhatsApp) por sinais de burla, com os
+        motivos.
+      tags:
+      - intel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScamRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ScamRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ScamRequestRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScamResult'
           description: ''
   /api/intel/scan:
     post:
@@ -1942,6 +2000,29 @@ components:
       description: |-
         * `retry` - retry
         * `resolve` - resolve
+    AssistantReply:
+      type: object
+      properties:
+        reply:
+          type: string
+        actions:
+          type: array
+          items: {}
+        suggestions:
+          type: array
+          items: {}
+      required:
+      - actions
+      - reply
+    AssistantRequestRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 500
+      required:
+      - message
     Attachment:
       type: object
       properties:
@@ -2239,6 +2320,19 @@ components:
           readOnly: true
         kind_label:
           type: string
+        suggestion:
+          type: object
+          nullable: true
+          properties:
+            text:
+              type: string
+            confidence:
+              type: number
+            pair:
+              type: integer
+            action:
+              type: string
+          readOnly: true
         reference:
           type: string
           readOnly: true
@@ -2273,6 +2367,7 @@ components:
       - reference
       - resolution_note
       - resolved
+      - suggestion
     DiscrepancyStaff:
       type: object
       properties:
@@ -3931,6 +4026,35 @@ components:
           type: integer
       required:
       - discrepancies
+    ScamRequestRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 2000
+      required:
+      - message
+    ScamResult:
+      type: object
+      properties:
+        level:
+          type: string
+        score:
+          type: integer
+        reasons:
+          type: array
+          items: {}
+        summary:
+          type: string
+        tip:
+          type: string
+      required:
+      - level
+      - reasons
+      - score
+      - summary
+      - tip
     ScanResult:
       type: object
       properties:

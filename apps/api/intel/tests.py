@@ -86,3 +86,49 @@ def test_scan_endpoint_accepts_text_and_logs_event():
     assert Event.objects.filter(kind="scan").exists()
     assert APIClient().post("/api/intel/scan", {}).status_code == 400
     assert Status.CONFIRMED  # silencia import não usado em alguns linters
+
+
+def test_assistant_understands_pay_status_help_and_saved_names():
+    from accounts.models import SavedObligation
+
+    from .assistant import reply
+
+    call_command("seed_demo", verbosity=0)
+    services = Service.objects.filter(is_active=True).select_related("institution", "category")
+
+    r = reply("paga 500 de credelec", services)
+    a = r["actions"][0]
+    assert a["type"] == "service" and Service.objects.get(pk=a["service"]).slug == "credelec" and a["amount"] == 50_000
+
+    r = reply("quero pagar a multa do carro", services)
+    assert Service.objects.get(pk=r["actions"][0]["service"]).institution.slug == "inatter"
+
+    assert reply("estado PMZAAAAAAAAAA", services)["reply"].startswith("Não encontro")
+    assert reply("ajuda", services)["suggestions"]
+
+    u = User.objects.create_user("+258846666666")
+    cred = Service.objects.get(slug="credelec")
+    SavedObligation.objects.create(user=u, service=cred, label="Casa da mãe", fields={"contador": "12345678901"})
+    r = reply("Paga 300 MT da casa da mae", services, u)
+    a = r["actions"][0]
+    assert a["fields"] == {"contador": "12345678901"} and a["amount"] == 30_000 and "Casa da mãe" in r["reply"]
+
+
+def test_assistant_does_not_take_phone_numbers_as_amounts():
+    from .assistant import _amount
+
+    assert _amount("recarga 841234567") is None and _amount("recarga 100 para 841234567") == 10_000
+
+
+def test_scam_check_levels():
+    from .scam import check
+
+    alto = check("URGENTE: a sua conta M-Pesa foi bloqueada. Envie o seu PIN para 84 123 4567 para desbloquear.")
+    assert alto["level"] == "alto" and len(alto["reasons"]) >= 3
+    medio = check("Enviei 500 MT por engano para o seu número, devolva por favor")
+    assert medio["level"] in ("medio", "alto")
+    assert check("A sua fatura de água de Novembro está disponível.")["level"] == "baixo"
+    r = APIClient().post(
+        "/api/intel/scam-check", {"message": "Ganhou um prémio! Pague a taxa de 200 MT"}, format="json"
+    )
+    assert r.status_code == 200 and r.json()["level"] == "alto"

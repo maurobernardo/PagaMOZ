@@ -4,6 +4,7 @@ import { FileSearch, FileUp, Hash, QrCode, ScanLine, ShieldCheck } from "lucide-
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Eyebrow } from "@/components/eyebrow";
+import { ScamCheck } from "@/components/scam-check";
 import { Alert, Button, Skeleton } from "@/components/ui";
 import { VerificationResult, type Verification } from "@/components/verification-result";
 import { csrfToken } from "@/lib/api";
@@ -96,6 +97,8 @@ export default function Verificar() {
             onChange={(e) => e.target.files?.[0] && checkFile(e.target.files[0])} />
         </div>
       </div>
+
+      <div className="mt-6"><ScamCheck /></div>
 
       <div className="mx-auto mt-8 max-w-xl">
         {busy ? <Skeleton className="h-48" /> : null}

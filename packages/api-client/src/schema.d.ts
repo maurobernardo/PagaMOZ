@@ -411,6 +411,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/intel/assistant": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Assistente por texto: percebe o pedido e devolve uma resposta curta com acções (nunca paga sozinho). */
+        post: operations["intel_assistant_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/intel/bills": {
         parameters: {
             query?: never;
@@ -439,6 +456,23 @@ export interface paths {
         get: operations["intel_methods_list"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/intel/scam-check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Avalia uma mensagem (SMS/WhatsApp) por sinais de burla, com os motivos. */
+        post: operations["intel_scam_check_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1041,6 +1075,14 @@ export interface components {
          * @enum {string}
          */
         ActionEnum: "retry" | "resolve";
+        AssistantReply: {
+            reply: string;
+            actions: unknown[];
+            suggestions?: unknown[];
+        };
+        AssistantRequestRequest: {
+            message: string;
+        };
         Attachment: {
             readonly id: number;
             readonly field: string;
@@ -1156,6 +1198,12 @@ export interface components {
             readonly id: number;
             readonly kind: components["schemas"]["KindEnum"];
             kind_label: string;
+            readonly suggestion: {
+                text?: string;
+                confidence?: number;
+                pair?: number;
+                action?: string;
+            } | null;
             readonly reference: string;
             readonly provider_ref: string;
             readonly platform_amount: number | null;
@@ -1886,6 +1934,16 @@ export interface components {
         };
         RunReconResult: {
             discrepancies: number;
+        };
+        ScamRequestRequest: {
+            message: string;
+        };
+        ScamResult: {
+            level: string;
+            score: number;
+            reasons: unknown[];
+            summary: string;
+            tip: string;
         };
         ScanResult: {
             service: number | null;
@@ -2753,6 +2811,31 @@ export interface operations {
             };
         };
     };
+    intel_assistant_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssistantRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AssistantRequestRequest"];
+                "multipart/form-data": components["schemas"]["AssistantRequestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssistantReply"];
+                };
+            };
+        };
+    };
     intel_bills_retrieve: {
         parameters: {
             query?: never;
@@ -2787,6 +2870,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MethodHealth"][];
+                };
+            };
+        };
+    };
+    intel_scam_check_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScamRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ScamRequestRequest"];
+                "multipart/form-data": components["schemas"]["ScamRequestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScamResult"];
                 };
             };
         };

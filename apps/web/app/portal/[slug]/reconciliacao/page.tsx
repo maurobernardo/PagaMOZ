@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, CheckCircle2, CircleAlert, ListChecks } from "lucide-react";
+import { CalendarDays, CheckCircle2, CircleAlert, ListChecks, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { filterInput } from "@/components/table";
 import { useToast } from "@/components/toast";
@@ -30,6 +30,20 @@ export default function Reconciliacao() {
     const r = await api.POST("/api/portal/{institution_slug}/reconciliation/{id}/resolve", { params: { path: { institution_slug: slug, id } }, body: { note } });
     if (r.data) toast("Divergência resolvida.");
     else toast(errorMessage(r.error), "bad");
+    reload();
+    refreshAlerts();
+  }
+
+  // Aceitar a sugestão: resolve a divergência (e o seu par, quando é o mesmo pagamento) com o motivo como nota.
+  async function accept(id: number, text: string, pair?: number) {
+    const ok = await dialog.confirm({ title: "Aceitar sugestão", body: text, confirm: "Aceitar e resolver" });
+    if (!ok) return;
+    const note = `Sugestão aceite: ${text}`.slice(0, 300);
+    for (const target of pair ? [id, pair] : [id]) {
+      const r = await api.POST("/api/portal/{institution_slug}/reconciliation/{id}/resolve", { params: { path: { institution_slug: slug, id: target } }, body: { note } });
+      if (!r.data) { toast(errorMessage(r.error), "bad"); break; }
+    }
+    toast(pair ? "As duas divergências ficaram resolvidas." : "Divergência resolvida.");
     reload();
     refreshAlerts();
   }
@@ -81,10 +95,24 @@ export default function Reconciliacao() {
                       Plataforma {i.platform_amount != null ? formatMZN(i.platform_amount) : "-"} · Provedor {i.provider_amount != null ? formatMZN(i.provider_amount) : "-"}
                     </p>
                     {i.resolution_note ? <p className="mt-1 text-sm italic text-muted">“{i.resolution_note}”</p> : null}
+                    {!i.resolved && i.suggestion ? (
+                      <div className="mt-3 flex items-start gap-2 rounded-2xl bg-canvas p-3 text-sm">
+                        <Sparkles className="mt-0.5 h-4 w-4 shrink-0" />
+                        <div>
+                          <p className="font-semibold">Sugestão {i.suggestion.confidence && i.suggestion.confidence >= 0.8 ? "(muito provável)" : "(possível)"}</p>
+                          <p className="text-muted">{i.suggestion.text}</p>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
                 {!i.resolved && canWrite(["admin", "financeiro"]) ? (
-                  <Button variant="secondary" onClick={() => resolve(i.id, i.reference || i.provider_ref)}>Marcar resolvida</Button>
+                  <div className="flex flex-col gap-2">
+                    {i.suggestion && ["resolver", "resolver_par"].includes(i.suggestion.action ?? "") ? (
+                      <Button onClick={() => accept(i.id, i.suggestion!.text ?? "", i.suggestion!.pair)}><Sparkles className="h-4 w-4" /> Aceitar sugestão</Button>
+                    ) : null}
+                    <Button variant="secondary" onClick={() => resolve(i.id, i.reference || i.provider_ref)}>Marcar resolvida</Button>
+                  </div>
                 ) : null}
               </Card>
             </li>

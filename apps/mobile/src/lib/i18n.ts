@@ -89,6 +89,11 @@ const EN: Record<string, string> = {
   "Datas estimadas a partir dos seus pagamentos. Avisamos 2 dias antes.": "Dates estimated from your payments. We remind you 2 days before.",
   "Energia Credelec": "Credelec power", "Contador": "Meter", "dias de energia": "days of power", "Cerca de": "About", "por mês": "per month",
   "Recarregar": "Top up", "Fotografar": "Snap", "Contas": "Bills",
+  "Assistente": "Assistant", "«Paga 500 de Credelec»…": "“Pay 500 Credelec”…", "Escreva o que quer pagar…": "Type what you want to pay…",
+  "Mensagem": "Message", "Enviar": "Send", "Olá! Diga-me o que quer pagar ou pergunte o que vence esta semana.": "Hi! Tell me what to pay or ask what's due this week.",
+  "Verificar mensagem": "Check a message", "Isto é burla?": "Is this a scam?", "Colar": "Paste",
+  "Cole a mensagem que recebeu (SMS ou WhatsApp). Mostramos os sinais de fraude.": "Paste the message you got (SMS or WhatsApp). We show the scam signs.",
+  "Cole aqui a mensagem…": "Paste the message here…", "Recebeu uma mensagem suspeita?": "Got a suspicious message?", "Verificamos se tem sinais de burla.": "We check it for scam signs.",
   // definições
   "Aparência": "Appearance", "Tema": "Theme", "Automático": "Automatic", "Claro": "Light", "Escuro": "Dark",
   "Idioma": "Language", "Português": "Portuguese", "Notificações": "Notifications",

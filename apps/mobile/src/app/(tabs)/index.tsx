@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from "expo-router";
-import { ArrowRight, Bell, CalendarClock, Camera, ChevronRight, CreditCard, Moon, Search, ShieldCheck, Sun, UserRound } from "lucide-react-native";
+import { ArrowRight, Bell, CalendarClock, Sparkles, Camera, ChevronRight, CreditCard, Moon, Search, ShieldCheck, Sun, UserRound } from "lucide-react-native";
 import { scanBill, type Bills } from "../../lib/intel";
 import { Alert } from "../../components/ui";
 import { Avatar } from "../../components/avatar";
@@ -144,6 +144,15 @@ export default function Home() {
       </View>
 
       {scanMsg ? <Alert>{scanMsg}</Alert> : null}
+      {/* Assistente: escrever o pedido em linguagem normal */}
+      <Pressable accessibilityRole="button" onPress={() => router.push("/assistente")}
+        style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: C.surface, borderRadius: R.pill, paddingVertical: 10, paddingLeft: 10, paddingRight: 16, transform: [{ scale: pressed ? 0.985 : 1 }], ...shadow() })}>
+        <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: C.ink, alignItems: "center", justifyContent: "center" }}>
+          <Sparkles size={17} color={C.white} />
+        </View>
+        <Text style={{ flex: 1, fontFamily: F.body, fontSize: 15, color: C.muted }} numberOfLines={1}>{t("«Paga 500 de Credelec»…")}</Text>
+        <Text style={{ fontFamily: F.semi, fontSize: 13, color: C.ink }}>{t("Assistente")}</Text>
+      </Pressable>
       {/* Cartão sobreposto */}
       <Pressable accessibilityRole="button" onPress={() => router.push(last ? `/pagamento/${last.reference}` : "/servicos")}
         style={({ pressed }) => ({ marginTop: -46, backgroundColor: C.surface, borderRadius: R.card, padding: 16, flexDirection: "row", alignItems: "center", gap: 14, transform: [{ scale: pressed ? 0.985 : 1 }], ...shadow() })}>

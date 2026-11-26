@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, ArrowUpRight, Building2, FlaskConical, LayoutGrid, MapPin, Menu, ShieldCheck, User, X, Zap } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Building2, FlaskConical, LayoutGrid, MapPin, Menu, ShieldCheck, Sparkles, User, X, Zap } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -11,6 +11,7 @@ import { METHOD_LABEL } from "@/lib/i18n";
 
 const LINKS = [
   { href: "/servicos", label: "Serviços", icon: LayoutGrid },
+  { href: "/assistente", label: "Assistente", icon: Sparkles },
   { href: "/verificar", label: "Verificar comprovativo", icon: ShieldCheck },
   { href: "/portal", label: "Para instituições", icon: Building2 },
 ];

@@ -12,7 +12,7 @@ from django.db.models.functions import TruncDate
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_field, inline_serializer
 from rest_framework import generics, permissions, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -297,12 +297,32 @@ class PortalReverse(PortalView):
 class DiscrepancySerializer(serializers.ModelSerializer):
     kind_label = serializers.CharField(source="get_kind_display")
 
+    suggestion = serializers.SerializerMethodField()
+
+    @extend_schema_field(
+        {
+            "type": "object",
+            "nullable": True,
+            "properties": {
+                "text": {"type": "string"},
+                "confidence": {"type": "number"},
+                "pair": {"type": "integer"},
+                "action": {"type": "string"},
+            },
+        }
+    )
+    def get_suggestion(self, obj):
+        from reconciliation.suggest import suggest
+
+        return suggest(obj, self.context.get("siblings", []))
+
     class Meta:
         model = Discrepancy
         fields = [
             "id",
             "kind",
             "kind_label",
+            "suggestion",
             "reference",
             "provider_ref",
             "platform_amount",
@@ -351,7 +371,9 @@ class PortalReconciliation(PortalView):
                 "ran_at": run.ran_at,
                 "platform_count": count,
                 "matched": count - items.exclude(kind=Discrepancy.Kind.MISSING_AT_PLATFORM).count(),
-                "items": DiscrepancySerializer(items, many=True).data,
+                "items": DiscrepancySerializer(
+                    items, many=True, context={"siblings": list(items.select_related("institution"))}
+                ).data,
                 "runs": [
                     {"date": r.business_date, "discrepancies": r.items.filter(institution=inst).count()} for r in runs
                 ],

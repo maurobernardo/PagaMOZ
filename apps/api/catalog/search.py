@@ -113,7 +113,12 @@ def score(query: str, hay: list[str]) -> float:
 
 
 def rank(services, query: str):
-    scored = [(score(query, haystack(s)), s) for s in services]
+    words = set(norm(query).split())
+
+    def own(s) -> float:  # a palavra está no nome do próprio serviço: "credelec" -> Recarga Credelec, não a fatura
+        return 2.0 * len(words & set(norm(f"{s.name} {s.slug}").split()))
+
+    scored = [((sc + own(s)) if (sc := score(query, haystack(s))) else 0, s) for s in services]
     return [s for sc, s in sorted(scored, key=lambda x: -x[0]) if sc > 0]
 
 

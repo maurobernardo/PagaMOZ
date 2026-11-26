@@ -7,8 +7,9 @@ from rest_framework.views import APIView
 
 from catalog.api import _public_services
 
-from . import insights, scan
+from . import assistant, insights, scan
 from .models import log
+from .scam import check as scam_check
 
 
 class MethodHealth(APIView):
@@ -95,3 +96,56 @@ class Scan(APIView):
         result = scan.interpret(text, _public_services().select_related("institution"))
         log("scan", request, service=result.get("service"), confidence=result.get("confidence"))
         return Response(result)
+
+
+class AssistantThrottle(UserRateThrottle):
+    rate = "120/hour"
+
+
+class Assistant(APIView):
+    """Assistente por texto: percebe o pedido e devolve uma resposta curta com acções (nunca paga sozinho)."""
+
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [AssistantThrottle]
+
+    @extend_schema(
+        request=inline_serializer("AssistantRequest", {"message": serializers.CharField(max_length=500)}),
+        responses=inline_serializer(
+            "AssistantReply",
+            {
+                "reply": serializers.CharField(),
+                "actions": serializers.ListField(),
+                "suggestions": serializers.ListField(required=False),
+            },
+        ),
+    )
+    def post(self, request):
+        msg = str(request.data.get("message", ""))[:500]
+        out = assistant.reply(msg, _public_services().select_related("institution", "category"), request.user)
+        log("assistant", request, intent=(out.get("actions") or [{}])[0].get("type", "texto"))
+        return Response(out)
+
+
+class ScamCheck(APIView):
+    """Avalia uma mensagem (SMS/WhatsApp) por sinais de burla, com os motivos."""
+
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [AssistantThrottle]
+
+    @extend_schema(
+        request=inline_serializer("ScamRequest", {"message": serializers.CharField(max_length=2000)}),
+        responses=inline_serializer(
+            "ScamResult",
+            {
+                "level": serializers.CharField(),
+                "score": serializers.IntegerField(),
+                "reasons": serializers.ListField(),
+                "summary": serializers.CharField(),
+                "tip": serializers.CharField(),
+            },  # fmt: skip
+        ),
+    )
+    def post(self, request):
+        r = scam_check(str(request.data.get("message", ""))[:2000])
+        log("scam_check", request, level=r["level"])
+        return Response(r)

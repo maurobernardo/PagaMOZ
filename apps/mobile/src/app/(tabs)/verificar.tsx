@@ -1,12 +1,13 @@
-import { CheckCircle2, FileSearch, ShieldCheck, XCircle } from "lucide-react-native";
+import { router } from "expo-router";
+import { CheckCircle2, FileSearch, ShieldAlert, ShieldCheck, XCircle } from "lucide-react-native";
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Alert, Button, Card, Eyebrow, Field, H2, P, PageTitle, Row } from "../../components/ui";
 import { api, ApiError, errorMessage, type Schemas } from "../../lib/api";
 import { formatDateTime, formatMZN } from "../../lib/format";
 import { t } from "../../lib/i18n";
-import { C } from "../../theme";
+import { C, F } from "../../theme";
 
 /** Confirma se um comprovativo PagaMOZ é verdadeiro, pelo código impresso ao lado do QR. */
 export default function Verificar() {
@@ -62,6 +63,16 @@ export default function Verificar() {
           </Card>
         ) : null}
         {error && !error.includes("7KQ2M") ? <Alert>{error}</Alert> : null}
+        <Pressable accessibilityRole="button" onPress={() => router.push("/burla")}
+          style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: C.hero, borderRadius: 24, padding: 18, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
+          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.12)", alignItems: "center", justifyContent: "center" }}>
+            <ShieldAlert size={20} color={C.onHero} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontFamily: F.display, fontSize: 17, color: C.onHero }}>{t("Recebeu uma mensagem suspeita?")}</Text>
+            <Text style={{ fontFamily: F.body, fontSize: 13, color: "rgba(255,255,255,0.65)" }}>{t("Verificamos se tem sinais de burla.")}</Text>
+          </View>
+        </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   );
