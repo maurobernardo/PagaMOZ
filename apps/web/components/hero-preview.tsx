@@ -3,6 +3,7 @@
 import { ArrowLeftRight, Banknote, CheckCircle2, CircleAlert, LayoutDashboard, Scale, Smartphone, CreditCard, Landmark } from "lucide-react";
 import { useEffect, useState } from "react";
 import { LogoMark } from "./logo";
+import { MethodIcon } from "./method-icon";
 
 const TABS = [
   { key: "painel", label: "Painel", icon: LayoutDashboard },
@@ -13,12 +14,12 @@ const TABS = [
 type Tab = (typeof TABS)[number]["key"];
 
 const FEED = [
-  { s: "Recarga Credelec", m: "M-Pesa", v: "500,00", i: Smartphone },
-  { s: "Fatura pós-paga", m: "Visa •••• 4242", v: "2 318,40", i: CreditCard },
-  { s: "Recarga Credelec", m: "e-Mola", v: "1 000,00", i: Smartphone },
-  { s: "Fatura pós-paga", m: "Referência bancária", v: "4 120,00", i: Landmark },
-  { s: "Recarga Credelec", m: "mKesh", v: "250,00", i: Smartphone },
-  { s: "Recarga Credelec", m: "M-Pesa", v: "750,00", i: Smartphone },
+  { s: "Recarga Credelec", m: "M-Pesa", v: "500,00", k: "mpesa" },
+  { s: "Fatura pós-paga", m: "Visa •••• 4242", v: "2 318,40", k: "cartao" },
+  { s: "Recarga Credelec", m: "e-Mola", v: "1 000,00", k: "emola" },
+  { s: "Fatura pós-paga", m: "Referência bancária", v: "4 120,00", k: "referencia_bancaria" },
+  { s: "Recarga Credelec", m: "mKesh", v: "250,00", k: "mkesh" },
+  { s: "Recarga Credelec", m: "M-Pesa", v: "750,00", k: "mpesa" },
 ];
 const BARS = [38, 52, 44, 70, 58, 64, 49, 80, 66, 72, 61, 90, 76, 84];
 
@@ -129,7 +130,7 @@ function Transacoes({ tick }: { tick: number }) {
       <ul className="mt-4 divide-y divide-line rounded-2xl bg-white">
         {rows.map((r, k) => (
           <li key={`${tick}-${k}`} className={`flex items-center gap-3 px-4 py-2.5 ${k === 0 ? "animate-rise bg-canvas/60" : ""}`}>
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-canvas"><r.i className="h-4 w-4" /></span>
+            <MethodIcon method={r.k} className="h-8 w-8 rounded-xl" />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-xs font-semibold">{r.s}</span>
               <span className="block truncate text-[11px] text-muted">{r.m}</span>

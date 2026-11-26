@@ -30,7 +30,7 @@ export default async function Home() {
   return (
     <>
       {/* ---------- Hero ---------- */}
-      <section className="relative isolate overflow-hidden bg-ink pt-24 text-white sm:pt-28">
+      <section className="theme-flip relative isolate overflow-hidden bg-ink pt-24 text-white sm:pt-28">
         <HeroBackdrop />
         <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-5 sm:px-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
           <div className="text-center lg:text-left">
@@ -306,8 +306,8 @@ function HeroBackdrop() {
   // Fotografia (Shixart1985, CC BY 2.0) escurecida para o texto branco se ler bem.
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-      <img src="/hero.webp" alt="" className="h-full w-full object-cover opacity-60" />
-      <div className="absolute inset-0 bg-ink/60" />
+      <img src="/hero.webp" alt="" className="h-full w-full object-cover opacity-40" />
+      <div className="absolute inset-0 bg-ink/80" />
     </div>
   );
 }

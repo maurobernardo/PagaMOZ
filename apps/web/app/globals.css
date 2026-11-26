@@ -141,3 +141,30 @@ html[data-theme="dark"] .glass {
   background: rgb(22 22 24 / 0.6);
   border-color: rgb(255 255 255 / 0.08);
 }
+
+/* Hero da página inicial: segue o tema (claro no claro, escuro no escuro); o painel dentro dele fica ao contrário.
+   As classes do hero estão escritas "em escuro" (bg-ink, text-white); aqui trocam-se as cores por baixo. */
+.theme-flip {
+  --color-ink: #f4f4f1;
+  --color-white: #0b0b0c;
+  --color-paper: #0b0b0c;
+  --color-canvas: #ffffff;
+  --color-line: #e7e6e1;
+  --color-muted: #6e6e6a;
+}
+.theme-flip .glass-dark {
+  background: rgb(11 11 12 / 0.04);
+  border-color: rgb(11 11 12 / 0.12);
+}
+html[data-theme="dark"] .theme-flip {
+  --color-ink: #0b0b0c;
+  --color-white: #ffffff;
+  --color-paper: #ffffff;
+  --color-canvas: #f4f4f1;
+  --color-line: #e7e6e1;
+  --color-muted: #6e6e6a;
+}
+html[data-theme="dark"] html[data-theme="dark"] .theme-flip .glass-dark {
+  background: rgb(255 255 255 / 0.06);
+  border-color: rgb(255 255 255 / 0.12);
+}

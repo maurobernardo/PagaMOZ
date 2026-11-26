@@ -20,11 +20,12 @@ const LINKS = [
 /** Barra flutuante em vidro. Na página inicial fica escura sobre o hero; no resto do site é clara. */
 export function SiteHeader() {
   const path = usePathname();
-  const dark = path === "/";
+  const dark = false;
+  const home = path === "/";
   const [open, setOpen] = useState(false);
 
   return (
-    <header className={`${dark ? "absolute" : "sticky"} inset-x-0 top-0 z-40 px-3 pt-3 sm:px-6 sm:pt-4`}>
+    <header className={`${home ? "absolute" : "sticky"} inset-x-0 top-0 z-40 px-3 pt-3 sm:px-6 sm:pt-4`}>
       <nav aria-label="Principal"
         className={`mx-auto flex max-w-6xl items-center gap-2 rounded-full py-2 pl-4 pr-2 ${dark ? "glass-dark" : "glass !bg-white/85 shadow-[var(--shadow-soft)]"}`}>
         <Link href="/" aria-label="PagaMOZ, início" className="mr-auto"><Logo inverted={dark} /></Link>
