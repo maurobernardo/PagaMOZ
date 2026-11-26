@@ -1,3 +1,4 @@
+import { t } from "../lib/i18n";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
@@ -53,7 +54,7 @@ export function Header({ title, right, dark, back = true }: { title?: string; ri
   const top = useSafeAreaInsets().top;
   return (
     <View style={{ paddingTop: top + 6, paddingHorizontal: 16, paddingBottom: 8, flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: dark ? C.hero : C.canvas }}>
-      {back ? <RoundButton icon={ChevronLeft} label="Voltar" dark={dark} onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} /> : <View style={{ width: 44 }} />}
+      {back ? <RoundButton icon={ChevronLeft} label={t("Voltar")} dark={dark} onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} /> : <View style={{ width: 44 }} />}
       <Text numberOfLines={1} style={{ flex: 1, textAlign: "center", fontFamily: F.bold, fontSize: 16, color: dark ? C.onHero : C.ink }}>{title ?? ""}</Text>
       {right ?? <View style={{ width: 44 }} />}
     </View>

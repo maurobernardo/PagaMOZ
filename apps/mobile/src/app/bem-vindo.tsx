@@ -78,7 +78,7 @@ function Receipt({ rotate, x, y, tone, org, name, amount, dark = true, front }: 
         <BrandMark slug={org} name={name} size={40} />
         <View style={{ flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: dark ? "rgba(255,255,255,0.1)" : "#f4f4f1", borderRadius: 99, paddingHorizontal: 10, paddingVertical: 4 }}>
           <Check size={12} color={fg} strokeWidth={3} />
-          <Text style={{ fontFamily: F.bold, fontSize: 11, color: fg }}>Pago</Text>
+          <Text style={{ fontFamily: F.bold, fontSize: 11, color: fg }}>{t("Pago")}</Text>
         </View>
       </View>
       <View style={{ gap: 4 }}>
@@ -89,7 +89,7 @@ function Receipt({ rotate, x, y, tone, org, name, amount, dark = true, front }: 
         <View style={{ height: 1, backgroundColor: dark ? "rgba(255,255,255,0.12)" : "#e9e8e3" }} />
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <Text style={{ fontFamily: "monospace", fontSize: 11, color: sub }}>PMZ••••••7K2Q</Text>
-          <Text style={{ fontFamily: F.bold, fontSize: 11, color: sub }}>Comprovativo</Text>
+          <Text style={{ fontFamily: F.bold, fontSize: 11, color: sub }}>{t("Comprovativo")}</Text>
         </View>
       </View>
     </View>

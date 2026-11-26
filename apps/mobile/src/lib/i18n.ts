@@ -100,6 +100,7 @@ const EN: Record<string, string> = {
   "Dividir com outras pessoas": "Split with other people", "Dividir por": "Split by", "Conta dividida": "Split bill", "pessoas": "people",
   "Vamos dividir": "Let's split", "Paga a tua parte aqui": "Pay your share here", "Partilhar link": "Share link",
   "Pago": "Paid", "A pagar agora": "Paying now", "Por pagar": "Unpaid", "Pagar esta parte": "Pay this share",
+  "Comprovativo": "Receipt", "Cifrado": "Encrypted",
   "Contas guardadas": "Saved bills", "Ex.: «casa da mãe», para pagar num toque": "E.g. “mum's house”, to pay in one tap",
   "Guarde ao pagar, no passo «Confirmar». Depois diga ao assistente: «paga a casa da mãe».": "Save it when paying, at the Confirm step. Then tell the assistant: “pay mum's house”.",
   "Ainda não guardou nenhuma conta.": "You haven't saved any bill yet.", "Mudar nome": "Rename", "Apagar": "Delete",

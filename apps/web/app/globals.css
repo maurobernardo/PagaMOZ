@@ -119,3 +119,25 @@ dialog::backdrop {
 .frame-none {
   box-shadow: none;
 }
+
+/* Modo escuro: troca tinta e papel (botões pretos passam a claros, cartões brancos a grafite). */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --color-ink: #f4f4f1;
+  --color-white: #161618;
+  --color-paper: #161618;
+  --color-canvas: #0b0b0c;
+  --color-line: #2a2a2d;
+  --color-muted: #a2a29d;
+  --color-accent-soft: #3a1416;
+  --color-brand-50: #1c1c1f;
+  --color-brand-100: #2a2a2d;
+  --color-brand-600: #d6d6d1;
+  --color-brand-700: #f4f4f1;
+  --color-brand-800: #f4f4f1;
+  --color-brand-900: #f4f4f1;
+}
+html[data-theme="dark"] .glass {
+  background: rgb(22 22 24 / 0.6);
+  border-color: rgb(255 255 255 / 0.08);
+}

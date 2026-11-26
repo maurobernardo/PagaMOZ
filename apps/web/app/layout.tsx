@@ -1,3 +1,4 @@
+import { THEME_SCRIPT } from "@/lib/theme-script";
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import { PresenterFlag } from "@/components/presenter-flag";
@@ -18,7 +19,8 @@ export const viewport: Viewport = { themeColor: "#0b0b0c", width: "device-width"
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-MZ" className={`${display.variable} ${body.variable} ${mono.variable}`}>
+    <html lang="pt-MZ" suppressHydrationWarning className={`${display.variable} ${body.variable} ${mono.variable}`}>
+      <head><script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} /></head>
       <body className="min-h-dvh bg-canvas text-ink antialiased">
         <a href="#conteudo" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[60] focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-white">
           Saltar para o conteúdo

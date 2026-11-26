@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Logo } from "./logo";
+import { Prefs } from "./prefs";
 import { BrandMark } from "./brand-mark";
 import { METHOD_ICON } from "./method-icon";
 import { METHOD_LABEL } from "@/lib/i18n";
@@ -42,6 +43,7 @@ export function SiteHeader() {
             );
           })}
         </ul>
+        <Prefs dark={dark} />
         <Link href="/conta"
           className={`hidden min-h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold transition md:inline-flex ${dark ? "bg-white text-ink hover:bg-white/90" : "bg-ink text-white hover:bg-ink/85"}`}>
           <User className="h-4 w-4" /> A minha conta

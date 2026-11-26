@@ -11,7 +11,7 @@ export function BrandMark({ slug, name, size = 48, className = "" }: { slug: str
   if (file)
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={`/logos/${file}`} alt={name} style={box} className={`shrink-0 rounded-xl bg-white object-contain p-1 ${className}`} />
+      <img src={`/logos/${file}`} alt={name} style={box} className={`shrink-0 rounded-xl bg-[#fff] object-contain p-1 ${className}`} />
     );
   const initials = name.replace(/\(.*?\)/g, "").split(/[\s-]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
   return (

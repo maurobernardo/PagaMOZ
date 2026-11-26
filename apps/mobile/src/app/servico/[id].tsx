@@ -376,7 +376,7 @@ function PayFlow({ s }: { s: Service }) {
                 <View style={{ backgroundColor: C.hero, borderRadius: 22, padding: 18, gap: 18 }}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                     <CreditCard size={26} color={C.onHero} />
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><Lock size={14} color="rgba(255,255,255,0.6)" /><Text style={{ fontFamily: F.semi, fontSize: 12, color: "rgba(255,255,255,0.6)" }}>Cifrado</Text></View>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><Lock size={14} color="rgba(255,255,255,0.6)" /><Text style={{ fontFamily: F.semi, fontSize: 12, color: "rgba(255,255,255,0.6)" }}>{t("Cifrado")}</Text></View>
                   </View>
                   <Text style={{ fontFamily: "monospace", fontSize: 20, letterSpacing: 2, color: C.onHero }}>{formatCardNumber(card.number) || "•••• •••• •••• ••••"}</Text>
                   <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
