@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from "expo-router";
-import { ArrowRight, Bell, ChevronRight, Moon, Receipt, Search, Sun, UserRound, Wallet } from "lucide-react-native";
+import { ArrowRight, Bell, ChevronRight, CreditCard, Moon, Search, ShieldCheck, Smartphone, Sun, UserRound } from "lucide-react-native";
 import { Avatar } from "../../components/avatar";
 import { shortName, type Me as FullMe } from "../../lib/me";
 import { Image } from "expo-image";
@@ -53,6 +53,14 @@ export default function Home() {
 
   const last = payments[0];
   const paid = payments.filter((p) => ["CONFIRMADA", "LIQUIDADA"].includes(p.status));
+  // Este mês e mini-barras dos últimos 6 meses (hora de Maputo).
+  const ym = (iso: string) => { const d = new Date(new Date(iso).getTime() + 2 * 3600_000); return d.getUTCFullYear() * 12 + d.getUTCMonth(); };
+  const nowYm = ym(new Date().toISOString());
+  const thisMonth = paid.filter((p) => ym(p.created_at) === nowYm);
+  const monthTotal = thisMonth.reduce((a, p) => a + p.total, 0);
+  const monthCount = thisMonth.length;
+  const sums = Array.from({ length: 6 }, (_, k) => paid.filter((p) => ym(p.created_at) === nowYm - 5 + k).reduce((a, p) => a + p.total, 0));
+  const spark = sums.map((v) => v / Math.max(1, ...sums));
   const track = () => {
     const c = code.toUpperCase().replace(/[\s-]/g, "");
     if (/^PMZ[0-9A-Z]{10}$/.test(c)) router.push(`/pagamento/${c}`);
@@ -64,7 +72,7 @@ export default function Home() {
     <ScrollView style={{ backgroundColor: C.canvas }} contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 120, gap: 18 }} keyboardShouldPersistTaps="handled"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { refresh(); loadMe(); }} tintColor={C.ink} />}>
       {/* Topo com fotografia (pagamento com telemóvel), escurecida para o texto branco se ler bem */}
-      <View style={{ marginHorizontal: -18, paddingTop: top, paddingHorizontal: 18, paddingBottom: 62, backgroundColor: C.hero, overflow: "hidden", borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}>
+      <View style={{ marginHorizontal: -18, paddingTop: top, paddingHorizontal: 18, paddingBottom: 56, backgroundColor: C.hero, overflow: "hidden", borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}>
         <Image source={require("../../../assets/hero.webp")} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} contentFit="cover" accessibilityIgnoresInvertColors />
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <LogoMark size={32} color={C.onHero} />
@@ -80,13 +88,44 @@ export default function Home() {
             )}
           </View>
         </View>
-        <View style={{ marginTop: 18, gap: 2 }}>
-          <Text style={{ fontFamily: F.body, fontSize: 17, color: "rgba(255,255,255,0.8)" }}>{greeting()},</Text>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <Text style={{ fontFamily: F.display, fontSize: 32, letterSpacing: -1, color: C.onHero }} numberOfLines={1}>{me ? shortName(me) : "PagaMOZ"}</Text>
-            {sunny ? <Sun size={24} color={C.onHero} /> : <Moon size={22} color={C.onHero} />}
+        {/* Saudação: pílula de vidro + nome */}
+        <View style={{ marginTop: 18, gap: 8 }}>
+          <View style={{ alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 11, paddingVertical: 5, borderRadius: 99, backgroundColor: "rgba(255,255,255,0.14)", borderWidth: 1, borderColor: "rgba(255,255,255,0.18)" }}>
+            {sunny ? <Sun size={13} color={C.onHero} /> : <Moon size={13} color={C.onHero} />}
+            <Text style={{ fontFamily: F.semi, fontSize: 12, color: C.onHero }}>{greeting()}</Text>
           </View>
-          <Text style={{ fontFamily: F.body, fontSize: 15, lineHeight: 21, color: "rgba(255,255,255,0.75)", maxWidth: 270 }}>{t("O que vamos pagar hoje? Sem filas, com comprovativo na hora.")}</Text>
+          <Text style={{ fontFamily: F.display, fontSize: 30, letterSpacing: -0.9, color: C.onHero }} numberOfLines={1}>{me ? shortName(me) : t("Pague sem filas")}</Text>
+        </View>
+
+        {/* Cartão de vidro: este mês */}
+        <Pressable accessibilityRole="button" onPress={() => router.push(me ? "/perfil" : "/cadastro")}
+          style={{ marginTop: 16, borderRadius: 22, padding: 16, backgroundColor: "rgba(255,255,255,0.12)", borderWidth: 1, borderColor: "rgba(255,255,255,0.18)", flexDirection: "row", alignItems: "flex-end", gap: 12 }}>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={{ fontFamily: F.semi, fontSize: 12, color: "rgba(255,255,255,0.7)" }}>{me ? t("Pago este mês") : t("Comece agora")}</Text>
+            <Text style={{ fontFamily: F.display, fontSize: 26, letterSpacing: -0.6, color: C.onHero }} numberOfLines={1} adjustsFontSizeToFit>
+              {me ? formatMZN(monthTotal).replace(",00", "") : t("Criar conta")}
+            </Text>
+            <Text style={{ fontFamily: F.body, fontSize: 12, color: "rgba(255,255,255,0.7)" }}>{me ? `${monthCount} ${t("pagamentos")}` : t("Histórico e comprovativos guardados")}</Text>
+          </View>
+          {me ? (
+            <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 4, height: 44 }}>
+              {spark.map((v, k) => (
+                <View key={k} style={{ width: 7, height: Math.max(4, v * 44), borderRadius: 4, backgroundColor: k === spark.length - 1 ? C.onHero : "rgba(255,255,255,0.35)" }} />
+              ))}
+            </View>
+          ) : <ArrowRight size={22} color={C.onHero} />}
+        </Pressable>
+
+        {/* Atalhos */}
+        <View style={{ marginTop: 16, flexDirection: "row", justifyContent: "space-between" }}>
+          {([[CreditCard, "Pagar", "/servicos"], [Search, "Acompanhar", "/notificacoes"], [ShieldCheck, "Verificar", "/verificar"], [Smartphone, "Recarga", "/grupo/recarga"]] as const).map(([I, label, href]) => (
+            <Pressable key={label} accessibilityRole="button" accessibilityLabel={t(label)} onPress={() => router.push(href)} style={{ alignItems: "center", gap: 6, width: 72 }}>
+              <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: "rgba(255,255,255,0.14)", borderWidth: 1, borderColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" }}>
+                <I size={21} color={C.onHero} />
+              </View>
+              <Text style={{ fontFamily: F.semi, fontSize: 12, color: C.onHero }}>{t(label)}</Text>
+            </Pressable>
+          ))}
         </View>
       </View>
 
@@ -104,10 +143,6 @@ export default function Home() {
         <ChevronRight size={20} color={C.ink} />
       </Pressable>
 
-      <View style={{ flexDirection: "row", gap: 12 }}>
-        <Stat icon={Receipt} label={t("Pagamentos")} value={me ? String(payments.length) : "-"} sub={me ? t("no total") : t("Entre para ver")} />
-        <Stat icon={Wallet} label={t("Total pago")} value={me ? formatMZN(paid.reduce((a, p) => a + p.total, 0)).replace(",00", "").replace(" MT", "") : "-"} sub="MT" />
-      </View>
 
       <View style={{ gap: 12 }}>
         <View>
@@ -167,21 +202,5 @@ export default function Home() {
         {codeErr ? <Text style={{ fontFamily: F.semi, fontSize: 13, color: "#ff8a8f" }}>{codeErr}</Text> : null}
       </View>
     </ScrollView>
-  );
-}
-
-function Stat({ icon: Icon, label, value, sub }: { icon: typeof Wallet; label: string; value: string; sub: string }) {
-  return (
-    <View style={{ flex: 1, backgroundColor: C.surface, borderRadius: 22, padding: 14, flexDirection: "row", alignItems: "center", gap: 12, ...shadow() }}>
-      <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: C.soft, alignItems: "center", justifyContent: "center" }}>
-        <Icon size={18} color={C.ink} />
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontFamily: F.body, fontSize: 12, color: C.muted }}>{label}</Text>
-        <Text style={{ fontFamily: F.display, fontSize: 19, color: C.ink }} numberOfLines={1} adjustsFontSizeToFit>
-          {value} <Text style={{ fontFamily: F.body, fontSize: 12, color: C.muted }}>{sub}</Text>
-        </Text>
-      </View>
-    </View>
   );
 }

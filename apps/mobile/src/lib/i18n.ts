@@ -76,6 +76,9 @@ const EN: Record<string, string> = {
   "Entre para receber o estado dos seus pagamentos aqui.": "Sign in to get your payment updates here.", "Sem notificações por agora.": "No notifications for now.",
   "Fotografia do início": "Home photo", "Mudar foto": "Change photo", "Escolher foto": "Choose photo", "Tirar foto": "Take photo", "Remover": "Remove",
   "Autorize o acesso às fotos nas definições do telemóvel.": "Allow photo access in your phone settings.",
+  "Avisos com a app fechada precisam da versão instalada da app (não o Expo Go).": "Alerts with the app closed need the installed app (not Expo Go).",
+  "Pague sem filas": "Pay without queues", "Pago este mês": "Paid this month", "Comece agora": "Get started", "pagamentos": "payments",
+  "Histórico e comprovativos guardados": "History and receipts saved", "Acompanhar": "Track", "Recarga": "Top-up",
   // definições
   "Aparência": "Appearance", "Tema": "Theme", "Automático": "Automatic", "Claro": "Light", "Escuro": "Dark",
   "Idioma": "Language", "Português": "Portuguese", "Notificações": "Notifications",

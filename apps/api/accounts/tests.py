@@ -126,3 +126,34 @@ def test_avatar_upload_is_resized_and_rejects_non_images(client, django_user_mod
     assert client.get("/api/me").json()["avatar"].startswith("data:image/webp")
     bad = SimpleUploadedFile("a.png", b"<script>", "image/png")
     assert client.post("/api/me/avatar", {"avatar": bad}).status_code == 400
+
+
+def test_push_token_registration_and_confirmed_push(client, django_user_model, monkeypatch):
+    from accounts import tasks
+    from accounts.models import PushDevice
+
+    u = django_user_model.objects.create_user("+258844444444")
+    client.force_login(u)
+    assert client.post("/api/me/push-token", {"token": "nope"}, content_type="application/json").status_code == 400
+    tok = "ExponentPushToken[abcdefghijklmnop]"
+    assert (
+        client.post(
+            "/api/me/push-token", {"token": tok, "platform": "ios"}, content_type="application/json"
+        ).status_code
+        == 204
+    )
+    assert PushDevice.objects.get(token=tok).user == u
+
+    sent = []
+    monkeypatch.setattr(tasks, "send", lambda msgs: sent.extend(msgs) or [])
+
+    class T:
+        user_id, total, reference, delivery = u.pk, 10_000, "PMZTESTE00001", {"titulo": "Código", "codigo": "1234"}
+        service = type("S", (), {"name": "Recarga"})
+
+    monkeypatch.setattr(
+        "payments.models.Transaction.objects",
+        type("M", (), {"select_related": lambda *a: type("Q", (), {"get": lambda *a, **k: T})()})(),
+    )
+    assert tasks.push_payment_confirmed.apply(args=[1]).get() == 1
+    assert sent[0]["to"] == tok and "100,00 MT" in sent[0]["body"] and "1234" in sent[0]["body"]

@@ -12,7 +12,9 @@ import { Alert, Button, Card, Field } from "./ui";
 export function ProfileForm({ initial, onSaved, cta }: { initial: Partial<Me>; onSaved: () => void; cta?: string }) {
   const [f, setF] = useState({
     first_name: initial.first_name ?? "", last_name: initial.last_name ?? "", email: initial.email ?? "",
-    province: initial.province ?? "", district: initial.district ?? "",
+    province: initial.province ?? "",
+    // distrito antigo escrito à mão e fora da lista oficial: pede-se de novo
+    district: DISTRICTS[initial.province ?? ""]?.includes(initial.district ?? "") ? initial.district ?? "" : "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState("");

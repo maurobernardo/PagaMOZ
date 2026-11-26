@@ -7,6 +7,7 @@ import {
   Bell, Fingerprint, HelpCircle, Info, Languages, LogOut, Moon, Shield, Sparkles, Trash2, User, Vibrate,
 } from "lucide-react-native";
 import { useState } from "react";
+import { registerPush, unregisterPush } from "../../lib/push";
 import { Platform, ScrollView, Text, View } from "react-native";
 import { Alert, Group, ListRow, PageTitle, Segmented, Toggle } from "../../components/ui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -42,10 +43,14 @@ export default function Definicoes() {
       if (!granted) return setMsg("Autorize as notificações nas definições do telemóvel.");
     }
     set({ notifyPayments: on });
+    if (on) {
+      const r = await registerPush();
+      if (r === "sem projecto EAS") setMsg(t("Avisos com a app fechada precisam da versão instalada da app (não o Expo Go)."));
+    }
   }
 
   async function wipe() {
-    await api("/api/auth/logout", { body: {} }).catch(() => {});
+    await unregisterPush(); await api("/api/auth/logout", { body: {} }).catch(() => {});
     await setItem(ONBOARDED, "");
     setMe(null);
     set({ ...DEFAULT_PREFS });
@@ -135,7 +140,7 @@ export default function Definicoes() {
 
         {me ? (
           <Group>
-            <ListRow first icon={LogOut} title={t("Sair")} danger onPress={async () => { await api("/api/auth/logout", { body: {} }).catch(() => {}); setMe(null); }} />
+            <ListRow first icon={LogOut} title={t("Sair")} danger onPress={async () => { await unregisterPush(); await api("/api/auth/logout", { body: {} }).catch(() => {}); setMe(null); }} />
           </Group>
         ) : null}
       </ScrollView>

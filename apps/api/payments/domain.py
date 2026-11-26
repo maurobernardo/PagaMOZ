@@ -154,6 +154,9 @@ def transition(txn_id: int, new: str, *, reason: str = "", provider_ref: str = "
             from .tasks import notify_institution
 
             db.on_commit(lambda: notify_institution.delay(txn.pk))
+            from accounts.tasks import push_payment_confirmed
+
+            db.on_commit(lambda: push_payment_confirmed.delay(txn.pk))
             if receipts.ISSUE_ON_CONFIRM:
                 db.on_commit(lambda: receipts.issue_receipt.delay(txn.pk))
         if new == S.REVERSED:

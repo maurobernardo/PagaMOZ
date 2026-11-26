@@ -7,6 +7,7 @@ import { LogoMark } from "../components/brand";
 import { ProfileForm } from "../components/profile-form";
 import { Alert, Button, Card, Field, PageTitle, Steps } from "../components/ui";
 import { api, errorMessage } from "../lib/api";
+import { registerPush } from "../lib/push";
 import { isValidPhone, normalizePhone } from "../lib/format";
 import { t } from "../lib/i18n";
 import type { Me } from "../lib/me";
@@ -50,6 +51,7 @@ export default function Cadastro() {
     setError("");
     try {
       await api("/api/auth/otp/verify", { body: { phone: normalizePhone(phone), code } });
+      registerPush().catch(() => {});
       const m = await api<Me>("/api/me");
       if (m.first_name && m.province && m.district) return router.replace("/");
       setMe(m);

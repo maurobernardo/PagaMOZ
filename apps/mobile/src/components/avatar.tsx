@@ -23,8 +23,9 @@ export function AvatarPicker({ me, onChange, onError }: { me: Me; onChange: (ava
   const [busy, setBusy] = useState(false);
 
   async function pick(camera: boolean) {
-    const perm = camera ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return onError(t("Autorize o acesso às fotos nas definições do telemóvel."));
+    // A galeria abre sem pedir permissão (o sistema mostra o seu próprio seletor); a câmara precisa.
+    if (camera && !(await ImagePicker.requestCameraPermissionsAsync()).granted)
+      return onError(t("Autorize o acesso às fotos nas definições do telemóvel."));
     const opts: ImagePicker.ImagePickerOptions = { mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.8 };
     const r = camera ? await ImagePicker.launchCameraAsync(opts) : await ImagePicker.launchImageLibraryAsync(opts);
     const a = r.assets?.[0];

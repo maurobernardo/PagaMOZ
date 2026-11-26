@@ -1,5 +1,6 @@
 import base64
 import io
+import re
 from datetime import timedelta
 
 from django.conf import settings
@@ -21,7 +22,7 @@ from payments.models import Transaction
 from servicerequests.api import RequestPublicSerializer
 from servicerequests.models import ServiceRequest
 
-from .models import OtpChallenge, SavedObligation, User, phone_validator
+from .models import OtpChallenge, PushDevice, SavedObligation, User, phone_validator
 
 MAX_OTP_PER_HOUR = 5
 
@@ -334,3 +335,29 @@ def avatar_data_url(f) -> str:
     buf = io.BytesIO()
     im.save(buf, "WEBP", quality=80)
     return "data:image/webp;base64," + base64.b64encode(buf.getvalue()).decode()
+
+
+class PushTokenView(APIView):
+    """Regista (ou esquece, com DELETE) o token push da Expo deste telemóvel."""
+
+    @extend_schema(
+        request=inline_serializer(
+            "PushToken", {"token": serializers.CharField(), "platform": serializers.CharField(required=False)}
+        ),
+        responses={204: None},
+    )
+    def post(self, request):
+        token = str(request.data.get("token", ""))
+        if not re.fullmatch(r"Expo(nent)?PushToken\[[A-Za-z0-9_-]{10,100}\]", token):
+            return Response({"detail": "Token inválido."}, status=400)
+        PushDevice.objects.update_or_create(
+            token=token, defaults={"user": request.user, "platform": str(request.data.get("platform", ""))[:10]}
+        )
+        return Response(status=204)
+
+    @extend_schema(
+        request=inline_serializer("PushTokenDelete", {"token": serializers.CharField()}), responses={204: None}
+    )
+    def delete(self, request):
+        PushDevice.objects.filter(user=request.user, token=str(request.data.get("token", ""))).delete()
+        return Response(status=204)

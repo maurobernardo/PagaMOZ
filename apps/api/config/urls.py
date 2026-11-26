@@ -18,6 +18,7 @@ from accounts.api import (
     OtpVerifyView,
     PortalLoginView,
     PortalPendingView,
+    PushTokenView,
 )
 from backoffice import api as bo
 from catalog.api import CategoryList, Me, PortalServiceViewSet, PublicServiceViewSet
@@ -84,6 +85,7 @@ urlpatterns = [
     path("api/auth/logout", LogoutView.as_view(), name="logout"),
     path("api/auth/csrf", CsrfView.as_view(), name="csrf"),
     path("api/me/avatar", AvatarView.as_view(), name="me-avatar"),
+    path("api/me/push-token", PushTokenView.as_view(), name="me-push-token"),
     path("api/auth/portal/login", PortalLoginView.as_view(), name="portal-login"),
     path("api/auth/portal/pending", PortalPendingView.as_view(), name="portal-pending"),
     path("api/auth/google/status", google.status, name="google-status"),

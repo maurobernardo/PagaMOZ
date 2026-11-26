@@ -13,6 +13,9 @@ SECRET_KEY = env("SECRET_KEY", default="dev-insecure-change-me" if DEBUG else en
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 # Desligado por omissão fora de DEBUG: em demo os códigos OTP/MFA aparecem na resposta.
 DEMO_MODE = env.bool("DEMO_MODE", default=DEBUG)
+# Notificações push (Expo). EXPO_ACCESS_TOKEN só se a conta Expo exigir envio autenticado.
+PUSH_ENABLED = env.bool("PUSH_ENABLED", default=True)
+EXPO_ACCESS_TOKEN = env("EXPO_ACCESS_TOKEN", default="")
 # O /admin do Django não passa pelo MFA do portal: só ligado em dev ou explicitamente.
 ADMIN_ENABLED = env.bool("ADMIN_ENABLED", default=DEBUG)
 WEBHOOK_SECRET = env("WEBHOOK_SECRET", default="dev-webhook-secret" if DEBUG else environ.Env.NOTSET)

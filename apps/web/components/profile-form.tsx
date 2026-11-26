@@ -17,7 +17,8 @@ const selectCls = "mt-1.5 block min-h-14 w-full rounded-2xl border bg-white px-4
 export function ProfileForm({ initial, onSaved, cta = "Guardar" }: { initial: Partial<Profile>; onSaved: () => void; cta?: string }) {
   const [f, setF] = useState<Profile>({
     first_name: initial.first_name ?? "", last_name: initial.last_name ?? "", email: initial.email ?? "",
-    province: initial.province ?? "", district: initial.district ?? "",
+    province: initial.province ?? "",
+    district: DISTRICTS[initial.province ?? ""]?.includes(initial.district ?? "") ? initial.district ?? "" : "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState("");

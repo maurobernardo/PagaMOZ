@@ -11,6 +11,8 @@ import { Appearance, Platform, View } from "react-native";
 import { LogoMark } from "../components/brand";
 import { Button } from "../components/ui";
 import { t } from "../lib/i18n";
+import { api } from "../lib/api";
+import { registerPush } from "../lib/push";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { setLang } from "../lib/i18n";
 import { loadPrefs, PrefsProvider, resolveDark, savePrefs, type Prefs } from "../lib/prefs";
@@ -57,6 +59,18 @@ export default function Root() {
       return next;
     });
   }, []);
+
+  // Push: regista o telemóvel se houver sessão; tocar num aviso abre o pagamento.
+  useEffect(() => {
+    if (!prefs?.notifyPayments || Platform.OS === "web") return;
+    api("/api/me").then(() => registerPush()).catch(() => {});
+    const sub = Notifications.addNotificationResponseReceivedListener((r) => {
+      const url = String(r.notification.request.content.data?.url ?? "");
+      const ref = url.match(/pagamento\/(PMZ[0-9A-Z]+)/)?.[1];
+      if (ref) router.push(`/pagamento/${ref}`);
+    });
+    return () => sub.remove();
+  }, [prefs?.notifyPayments]);
 
   const ready = (loaded || !!error) && seen !== null && prefs !== null;
   useEffect(() => {
