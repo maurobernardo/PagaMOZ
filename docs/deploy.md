@@ -1,20 +1,11 @@
 # Pôr o PagaMOZ no ar
 
-## 1. API no VPS (Hostinger, Ubuntu 24.04)
+## 1. API no VPS (Hostinger) — feito
 
-```bash
-# no VPS, uma vez
-curl -fsSL https://get.docker.com | sh
-git clone <repositório> /opt/pagamoz && cd /opt/pagamoz/infra/prod
-cp .env.example .env   # preencher: senhas, SECRET_KEY, domínio da Vercel
-docker compose up -d --build
-docker compose exec api python manage.py seed_demo   # catálogo de demonstração
-```
-
-O Caddy pede o certificado HTTPS sozinho para `API_DOMAIN` (portas 80 e 443 abertas na firewall da Hostinger).
-Teste: `https://srv2066467.hstgr.cloud/api/catalog/categories`.
-
-Actualizar: `git pull && docker compose up -d --build`.
+- Código em `/opt/pagamoz`, `.env` em `/opt/pagamoz/infra/prod/.env` (senhas geradas no VPS, só lá).
+- Projecto Docker `pagamoz`: db, redis, api, worker, beat. A API entra na rede `deploy_default` como `pagamoz-api`.
+- HTTPS pelo Caddy já existente (`/opt/terra/deploy/Caddyfile`, bloco de `Caddyfile.snippet`; cópia antiga em `Caddyfile.bak-antes-pagamoz`).
+- Actualizar (do PC): `git archive HEAD | ssh -i ~/.ssh/pagamoz_vps root@89.117.37.161 "tar -x -C /opt/pagamoz && cd /opt/pagamoz/infra/prod && docker compose -p pagamoz up -d --build"`.
 
 ## 2. Web na Vercel
 
