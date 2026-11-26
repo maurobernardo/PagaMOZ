@@ -1,32 +1,30 @@
-import { Tabs } from "expo-router";
-import { House, LayoutGrid, ShieldCheck, User, type LucideIcon } from "lucide-react-native";
-import { View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { NativeTabs } from "expo-router/native-tabs";
+import { t } from "../../lib/i18n";
 import { C, F } from "../../theme";
 
-/** Ícone do separador: o activo fica numa pílula preta. */
-const icon = (I: LucideIcon) => ({ focused }: { focused: boolean }) => (
-  <View style={{ width: 52, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", backgroundColor: focused ? C.ink : "transparent" }}>
-    <I size={20} color={focused ? C.white : "#8d8c87"} />
-  </View>
-);
-
+/**
+ * Barra de separadores do próprio sistema: Liquid Glass no iOS 26, Material 3 no Android.
+ * O activo fica a preto (ou branco no modo escuro).
+ */
 export default function TabsLayout() {
-  const bottom = useSafeAreaInsets().bottom;
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: C.ink,
-        tabBarInactiveTintColor: "#8d8c87",
-        tabBarLabelStyle: { fontFamily: F.bold, fontSize: 11, marginTop: 2 },
-        tabBarStyle: { backgroundColor: C.white, borderTopColor: C.line, height: 70 + bottom, paddingTop: 8, paddingBottom: bottom + 8 },
-        sceneStyle: { backgroundColor: C.canvas },
-      }}>
-      <Tabs.Screen name="index" options={{ title: "Início", tabBarIcon: icon(House) }} />
-      <Tabs.Screen name="servicos" options={{ title: "Serviços", tabBarIcon: icon(LayoutGrid) }} />
-      <Tabs.Screen name="verificar" options={{ title: "Verificar", tabBarIcon: icon(ShieldCheck) }} />
-      <Tabs.Screen name="conta" options={{ title: "Conta", tabBarIcon: icon(User) }} />
-    </Tabs>
+    <NativeTabs tintColor={C.ink} labelStyle={{ fontFamily: F.bold, fontSize: 11, color: C.muted }} backgroundColor={C.surface}>
+      <NativeTabs.Trigger name="index">
+        <NativeTabs.Trigger.Icon sf={{ default: "house", selected: "house.fill" }} md="home" />
+        <NativeTabs.Trigger.Label>{t("Início")}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="servicos">
+        <NativeTabs.Trigger.Icon sf={{ default: "square.grid.2x2", selected: "square.grid.2x2.fill" }} md="grid_view" />
+        <NativeTabs.Trigger.Label>{t("Serviços")}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="verificar">
+        <NativeTabs.Trigger.Icon sf={{ default: "checkmark.shield", selected: "checkmark.shield.fill" }} md="verified_user" />
+        <NativeTabs.Trigger.Label>{t("Verificar")}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="conta">
+        <NativeTabs.Trigger.Icon sf={{ default: "person", selected: "person.fill" }} md="person" />
+        <NativeTabs.Trigger.Label>{t("Perfil")}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }

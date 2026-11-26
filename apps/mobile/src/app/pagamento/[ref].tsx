@@ -3,131 +3,171 @@ import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { CheckCircle2, Clock3, Copy, Download, KeyRound, RotateCcw, ShieldCheck, XCircle } from "lucide-react-native";
+import { CheckCircle2, Clock3, Copy, Download, KeyRound, Landmark, RotateCcw, XCircle } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
-import { MethodMark } from "../../components/brand";
-import { Alert, Button, Card, Field, H1, H2, Loading, P, Row } from "../../components/ui";
+import { BrandMark } from "../../components/brand";
+import { Alert, Button, Card, Field, H2, Header, Loading, P, Row } from "../../components/ui";
 import { API, api, errorMessage, type Payment } from "../../lib/api";
 import { formatDateTime, formatMZN, METHOD_LABEL, PAYMENT_STATUS } from "../../lib/format";
+import { t } from "../../lib/i18n";
 import { demo3ds } from "../../lib/session";
-import { C, F } from "../../theme";
+import { C, F, R } from "../../theme";
+import * as Notifications from "expo-notifications";
+import { Platform } from "react-native";
+import { usePrefs } from "../../lib/prefs";
 
 const WAITING = ["CRIADA", "PENDENTE"];
 
+/** Estado do pagamento em ecrã escuro: valor grande, blocos de detalhe e o que fazer a seguir. */
 export default function Pagamento() {
   const { ref } = useLocalSearchParams<{ ref: string }>();
   const [p, setP] = useState<Payment | null>(null);
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [copied, setCopied] = useState("");
-  const was = useRef<string>("");
+  const was = useRef("");
+  const { prefs } = usePrefs();
 
   const load = useCallback(async () => {
     try {
       const np = await api<Payment>(`/api/payments/${ref}`);
-      if (was.current && WAITING.includes(was.current) && !WAITING.includes(np.status))
-        Haptics.notificationAsync(["CONFIRMADA", "LIQUIDADA"].includes(np.status) ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Error).catch(() => {});
+      if (was.current && WAITING.includes(was.current) && !WAITING.includes(np.status)) {
+        const ok = ["CONFIRMADA", "LIQUIDADA"].includes(np.status);
+        Haptics.notificationAsync(ok ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Error).catch(() => {});
+        if (ok && prefs.notifyPayments && Platform.OS !== "web")
+          Notifications.scheduleNotificationAsync({ content: { title: t("Pagamento confirmado"), body: `${np.service_name} · ${formatMZN(np.total)}` }, trigger: null }).catch(() => {});
+      }
       was.current = np.status;
       setP(np);
       setError("");
     } catch (e) {
       setError(errorMessage(e));
     }
-  }, [ref]);
+  }, [ref, prefs.notifyPayments]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
   // Enquanto espera, pergunta à API a cada 3 s (a confirmação chega do provedor).
   useEffect(() => {
     if (!p || !WAITING.includes(p.status)) return;
-    const t = setInterval(load, 3000);
-    return () => clearInterval(t);
+    const id = setInterval(load, 3000);
+    return () => clearInterval(id);
   }, [p, load]);
 
-  if (!p) return error ? <View style={{ padding: 16 }}><Alert>{error}</Alert></View> : <Loading />;
-
-  const waiting = WAITING.includes(p.status);
-  const ok = ["CONFIRMADA", "LIQUIDADA"].includes(p.status);
-  const st = PAYMENT_STATUS[p.status] ?? { label: p.status, tone: "info" };
-  const Icon = ok ? CheckCircle2 : waiting ? Clock3 : XCircle;
   const copy = (v: string, what: string) => {
     Clipboard.setStringAsync(v);
     Haptics.selectionAsync().catch(() => {});
-    setError("");
     setCopied(what);
   };
 
-  return (
-    <ScrollView contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 48 }}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={C.ink} />}>
-      <View style={{ backgroundColor: ok ? C.ink : C.white, borderRadius: 32, padding: 22, gap: 12, borderWidth: ok ? 0 : 1, borderColor: C.line }}>
-        <View style={{ width: 56, height: 56, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: ok ? C.white : waiting ? C.waitSoft : C.accentSoft }}>
-          <Icon size={28} color={ok ? C.ink : waiting ? C.wait : C.accent} />
+  const body = () => {
+    if (!p) return error ? <View style={{ padding: 16 }}><Alert>{error}</Alert></View> : <Loading />;
+    const waiting = WAITING.includes(p.status);
+    const ok = ["CONFIRMADA", "LIQUIDADA"].includes(p.status);
+    const st = PAYMENT_STATUS[p.status] ?? { label: p.status, tone: "info" };
+    const Icon = ok ? CheckCircle2 : waiting ? Clock3 : XCircle;
+    const tone = ok ? "#4cc27e" : waiting ? "#f2b94b" : "#ff6b72";
+    const title = ok ? t("Pagamento confirmado") : waiting ? t(p.next_action === "3ds" ? "Confirme no seu banco" : "A aguardar pagamento") : st.label;
+
+    return (
+      <ScrollView contentContainerStyle={{ padding: 18, gap: 14, paddingBottom: 48 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor="#fff" />}>
+        <View style={{ gap: 6 }}>
+          <Text style={{ fontFamily: F.display, fontSize: 28, letterSpacing: -0.8, color: C.onHero }}>{title}</Text>
+          <Text style={{ fontFamily: F.body, fontSize: 15, color: "rgba(255,255,255,0.6)" }}>
+            {ok ? p.institution_name : waiting ? (p.next_action === "3ds" ? t("Código do seu banco") : p.instructions) : p.failure_reason || st.label}
+          </Text>
         </View>
-        <H1 light={ok}>{ok ? "Pagamento confirmado" : waiting ? (p.next_action === "3ds" ? "Confirme no seu banco" : "A aguardar pagamento") : st.label}</H1>
-        <P light={ok} muted={!ok}>
-          {ok ? `${p.institution_name} recebeu o seu pagamento.` : waiting ? (p.next_action === "3ds" ? "O seu banco pede um código de confirmação." : p.instructions) : p.failure_reason || "O pagamento não foi concluído. Não foi cobrado."}
-        </P>
-        <Text style={{ fontFamily: F.display, fontSize: 34, color: ok ? C.white : C.ink }}>{formatMZN(p.total)}</Text>
-      </View>
 
-      {error ? <Alert>{error}</Alert> : null}
-      {copied ? <Alert tone="ok">{copied} copiado.</Alert> : null}
-
-      {waiting && p.next_action === "3ds" ? <ThreeDS p={p} onDone={load} /> : null}
-
-      {waiting && p.bank ? (
-        <Card style={{ gap: 12 }}>
+        {/* Valor e estado */}
+        <Card dark style={{ gap: 14 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-            <MethodMark method="referencia_bancaria" />
-            <H2>Dados para pagar no banco</H2>
+            <BrandMark slug={p.institution_slug} name={p.institution_name} size={46} round />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: F.semi, fontSize: 15, color: C.onHero }} numberOfLines={1}>{p.service_name}</Text>
+              <Text style={{ fontFamily: F.body, fontSize: 12, color: "rgba(255,255,255,0.55)" }}>{formatDateTime(p.created_at)}</Text>
+            </View>
           </View>
-          <P muted size={14}>Balcão, ATM ou banca online, na opção Pagamento de serviços.</P>
-          {[["Entidade", p.bank.entidade], ["Referência", p.bank.referencia.replace(/(\d{3})(?=\d)/g, "$1 ")], ["Montante", formatMZN(p.bank.valor)]].map(([l, v]) => (
-            <Pressable key={l} accessibilityRole="button" accessibilityLabel={`Copiar ${l}`} onPress={() => copy(v.replace(/\s/g, ""), l)}
-              style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: C.canvas, borderRadius: 18, padding: 14 }}>
-              <View>
-                <Text style={{ fontFamily: F.body, fontSize: 12, color: C.muted }}>{l}</Text>
-                <Text style={{ fontFamily: "monospace", fontSize: 20, fontWeight: "700", color: C.ink }}>{v}</Text>
-              </View>
-              <Copy size={20} color={C.ink} />
-            </Pressable>
-          ))}
+          <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" }}>
+            <Text style={{ fontFamily: F.display, fontSize: 36, letterSpacing: -1.2, color: C.onHero }}>{formatMZN(p.total)}</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "rgba(255,255,255,0.08)", borderRadius: R.pill, paddingHorizontal: 12, paddingVertical: 7 }}>
+              <Icon size={14} color={tone} />
+              <Text style={{ fontFamily: F.semi, fontSize: 12, color: C.onHero }}>{st.label}</Text>
+            </View>
+          </View>
         </Card>
-      ) : null}
 
-      {waiting && p.method === "qr" ? (
-        <Card style={{ alignItems: "center", gap: 12 }}>
-          <Image source={{ uri: `${API}/api/payments/${p.reference}/qr.svg` }} style={{ width: 220, height: 220 }} contentFit="contain" accessibilityLabel="Código QR do pagamento" />
-          <H2>Leia com a app do banco</H2>
-          <P muted size={14} style={{ textAlign: "center" }}>Ou mostre este ecrã no balcão. Fica válido enquanto o pagamento estiver pendente.</P>
+        {error ? <Alert>{error}</Alert> : null}
+        {copied ? <Alert tone="ok">{`${copied} ✓`}</Alert> : null}
+
+        {waiting && p.next_action === "3ds" ? <ThreeDS p={p} onDone={load} /> : null}
+
+        {waiting && p.bank ? (
+          <Card dark style={{ gap: 10 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <Landmark size={18} color={C.onHero} />
+              <H2 light>{t("Dados para pagar no banco")}</H2>
+            </View>
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              {[[t("Entidade"), p.bank.entidade], [t("Montante"), formatMZN(p.bank.valor)]].map(([l, v]) => (
+                <Tile key={l} label={l} value={v} onPress={() => copy(v.replace(/\s/g, ""), l)} />
+              ))}
+            </View>
+            <Tile label={t("Referência")} value={p.bank.referencia.replace(/(\d{3})(?=\d)/g, "$1 ")} big onPress={() => copy(p.bank!.referencia, t("Referência"))} />
+          </Card>
+        ) : null}
+
+        {waiting && p.method === "qr" ? (
+          <Card dark style={{ alignItems: "center", gap: 12 }}>
+            <View style={{ backgroundColor: "#ffffff", borderRadius: 20, padding: 12 }}>
+              <Image source={{ uri: `${API}/api/payments/${p.reference}/qr.svg` }} style={{ width: 200, height: 200 }} contentFit="contain" accessibilityLabel="QR" />
+            </View>
+            <H2 light>{t("Leia com a app do banco")}</H2>
+          </Card>
+        ) : null}
+
+        {ok && p.delivery?.codigo ? (
+          <Card style={{ gap: 10 }}>
+            <Text style={{ fontFamily: F.semi, fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase", color: C.muted }}>{p.delivery.titulo}</Text>
+            <Text selectable style={{ fontFamily: "monospace", fontSize: 23, fontWeight: "700", letterSpacing: 1, color: C.ink }}>{p.delivery.codigo}</Text>
+            {p.delivery.instrucao ? <P muted size={14}>{p.delivery.instrucao}</P> : null}
+            <Button icon={Copy} onPress={() => copy(p.delivery!.codigo!, t("Copiar código"))}>{t("Copiar código")}</Button>
+          </Card>
+        ) : null}
+
+        <Card dark style={{ paddingVertical: 6 }}>
+          <Row dark label={t("Método")} value={p.card_last4 ? `${p.card_brand === "visa" ? "Visa" : "Mastercard"} •••• ${p.card_last4}` : METHOD_LABEL[p.method] ?? p.method} />
+          <Row dark label={t("Instituição")} value={p.institution_name} />
+          <Row dark label={t("Referência")} value={p.reference} />
         </Card>
-      ) : null}
 
-      {ok && p.delivery?.codigo ? (
-        <Card dark style={{ gap: 10 }}>
-          <Text style={{ fontFamily: F.bold, fontSize: 12, letterSpacing: 1, textTransform: "uppercase", color: "rgba(255,255,255,0.6)" }}>{p.delivery.titulo}</Text>
-          <Text selectable style={{ fontFamily: "monospace", fontSize: 24, fontWeight: "700", letterSpacing: 1, color: C.white }}>{p.delivery.codigo}</Text>
-          {p.delivery.instrucao ? <P light size={14}>{p.delivery.instrucao}</P> : null}
-          <Button variant="light" icon={Copy} onPress={() => copy(p.delivery!.codigo!, "Código")}>Copiar código</Button>
-        </Card>
-      ) : null}
+        {ok ? <Button variant="light" icon={Download} onPress={() => WebBrowser.openBrowserAsync(`${API}/api/payments/${p.reference}/receipt.pdf`)}>{t("Ver comprovativo (PDF)")}</Button> : null}
+        {!waiting && !ok ? <Button variant="light" icon={RotateCcw} onPress={() => router.replace(`/servico/${p.service}`)}>{t("Tentar de novo")}</Button> : null}
+        <Pressable accessibilityRole="button" onPress={() => router.dismissTo("/")} style={{ alignSelf: "center", padding: 12 }}>
+          <Text style={{ fontFamily: F.semi, fontSize: 15, color: "rgba(255,255,255,0.7)" }}>{t("Voltar ao início")}</Text>
+        </Pressable>
+      </ScrollView>
+    );
+  };
 
-      <Card style={{ gap: 2 }}>
-        <Row label="Serviço" value={p.service_name} />
-        <Row label="Instituição" value={p.institution_name} />
-        <Row label="Método" value={p.card_last4 ? `${p.card_brand === "visa" ? "Visa" : "Mastercard"} •••• ${p.card_last4}` : METHOD_LABEL[p.method] ?? p.method} />
-        <Row label="Estado" value={st.label} />
-        <Row label="Referência" value={p.reference} />
-        <Row label="Data" value={formatDateTime(p.created_at)} />
-      </Card>
+  return (
+    <View style={{ flex: 1, backgroundColor: C.hero }}>
+      <Header dark title={t("Pagamento")} />
+      {body()}
+    </View>
+  );
+}
 
-      {ok ? <Button icon={Download} onPress={() => WebBrowser.openBrowserAsync(`${API}/api/payments/${p.reference}/receipt.pdf`)}>Ver comprovativo (PDF)</Button> : null}
-      {!waiting && !ok ? <Button icon={RotateCcw} onPress={() => router.replace(`/servico/${p.service}`)}>Tentar de novo</Button> : null}
-      <Button variant="secondary" icon={ShieldCheck} onPress={() => router.dismissTo("/")}>Voltar ao início</Button>
-    </ScrollView>
+function Tile({ label, value, onPress, big }: { label: string; value: string; onPress: () => void; big?: boolean }) {
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress}
+      style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 18, padding: 14, gap: 4 }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+        <Text style={{ fontFamily: F.body, fontSize: 12, color: "rgba(255,255,255,0.55)" }}>{label}</Text>
+        <Copy size={14} color="rgba(255,255,255,0.55)" />
+      </View>
+      <Text style={{ fontFamily: "monospace", fontSize: big ? 22 : 17, fontWeight: "700", color: C.onHero }}>{value}</Text>
+    </Pressable>
   );
 }
 
@@ -139,28 +179,26 @@ function ThreeDS({ p, onDone }: { p: Payment; onDone: () => void }) {
   const demo = demo3ds.get(p.reference);
   return (
     <Card style={{ gap: 14 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-        <KeyRound size={22} color={C.ink} />
-        <H2>Código do seu banco</H2>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        <KeyRound size={20} color={C.ink} />
+        <H2>{t("Código do seu banco")}</H2>
       </View>
-      <P muted size={14}>Enviámos o pedido ao banco do cartão. Escreva o código de 6 algarismos que recebeu por SMS.</P>
-      {demo ? <Alert tone="info">{`Demonstração: o código é ${demo}`}</Alert> : null}
+      {demo ? <Alert tone="info">{`Demo: ${demo}`}</Alert> : null}
       {error ? <Alert>{error}</Alert> : null}
-      <Field label="Código" keyboardType="number-pad" maxLength={6} value={code} onChangeText={(v) => setCode(v.replace(/\D/g, ""))} mono />
+      <Field label="SMS" keyboardType="number-pad" maxLength={6} value={code} onChangeText={(v) => setCode(v.replace(/\D/g, ""))} mono />
       <Button busy={busy} disabled={code.length !== 6}
         onPress={async () => {
           setBusy(true);
           setError("");
           try {
             await api(`/api/payments/${p.reference}/3ds`, { body: { code } });
-            onDone();
           } catch (e) {
             setError(errorMessage(e));
-            onDone();
           } finally {
             setBusy(false);
+            onDone();
           }
-        }}>Confirmar</Button>
+        }}>{t("Confirmar")}</Button>
     </Card>
   );
 }

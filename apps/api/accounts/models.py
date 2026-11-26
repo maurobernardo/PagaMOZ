@@ -34,6 +34,9 @@ class User(AbstractUser):
     username = None
     phone = models.CharField("telefone", max_length=13, unique=True, validators=[phone_validator])
     email = models.EmailField(blank=True)
+    # Perfil do cidadão (opcional): onde vive, para lembretes e serviços locais.
+    province = models.CharField("província", max_length=40, blank=True)
+    district = models.CharField("distrito", max_length=60, blank=True)
     # MFA (TOTP) para portal/backoffice.
     mfa_secret = EncryptedCharField(blank=True)  # cifrado em repouso (core.crypto)
     mfa_enabled = models.BooleanField(default=False)

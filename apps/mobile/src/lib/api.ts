@@ -18,6 +18,8 @@ function baseUrl(): string {
   return Platform.OS === "android" ? "http://10.0.2.2:8000" : "http://localhost:8000";
 }
 export const API = baseUrl();
+/** Morada da web (mesmo computador da API, porta 3000, salvo EXPO_PUBLIC_WEB_URL). */
+export const WEB = process.env.EXPO_PUBLIC_WEB_URL ?? API.replace(/:8000$/, ":3000");
 
 let csrf = "";
 async function csrfToken(force = false): Promise<string> {

@@ -657,8 +657,36 @@ paths:
   /api/me:
     get:
       operationId: me_retrieve
+      description: O próprio utilizador. PATCH actualiza o perfil (nome, email, província,
+        distrito).
       tags:
       - me
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+          description: ''
+    patch:
+      operationId: me_partial_update
+      description: O próprio utilizador. PATCH actualiza o perfil (nome, email, província,
+        distrito).
+      tags:
+      - me
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMeRequest'
       security:
       - cookieAuth: []
       responses:
@@ -2374,14 +2402,37 @@ components:
       properties:
         phone:
           type: string
+          readOnly: true
         name:
           type: string
+          readOnly: true
+        first_name:
+          type: string
+          maxLength: 60
+        last_name:
+          type: string
+          maxLength: 60
+        email:
+          oneOf:
+          - type: string
+            format: email
+          - type: string
+            maxLength: 0
+        province:
+          oneOf:
+          - $ref: '#/components/schemas/ProvinceEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        district:
+          type: string
+          maxLength: 60
         memberships:
           type: array
           items:
             $ref: '#/components/schemas/Membership'
+          readOnly: true
         is_staff:
           type: boolean
+          readOnly: true
       required:
       - is_staff
       - memberships
@@ -2426,6 +2477,13 @@ components:
           $ref: '#/components/schemas/RoleEnum'
       required:
       - institution
+      - role
+    MembershipRequest:
+      type: object
+      properties:
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+      required:
       - role
     MethodEnum:
       enum:
@@ -2878,6 +2936,28 @@ components:
           - $ref: '#/components/schemas/BlankEnum'
         is_demo:
           type: boolean
+    PatchedMeRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+          maxLength: 60
+        last_name:
+          type: string
+          maxLength: 60
+        email:
+          oneOf:
+          - type: string
+            format: email
+          - type: string
+            maxLength: 0
+        province:
+          oneOf:
+          - $ref: '#/components/schemas/ProvinceEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        district:
+          type: string
+          maxLength: 60
     PatchedObligationRequest:
       type: object
       properties:
@@ -3352,6 +3432,24 @@ components:
       - pending
       - success_rate_24h
       - total_24h
+    ProvinceEnum:
+      enum:
+      - Maputo Cidade
+      - Maputo Província
+      - Gaza
+      - Inhambane
+      - Sofala
+      - Manica
+      - Tete
+      - Zambézia
+      - Nampula
+      - Cabo Delgado
+      - Niassa
+      type: string
+      description: "* `Maputo Cidade` - Maputo Cidade\n* `Maputo Província` - Maputo
+        Província\n* `Gaza` - Gaza\n* `Inhambane` - Inhambane\n* `Sofala` - Sofala\n*
+        `Manica` - Manica\n* `Tete` - Tete\n* `Zambézia` - Zambézia\n* `Nampula` -
+        Nampula\n* `Cabo Delgado` - Cabo Delgado\n* `Niassa` - Niassa\n* `` - "
     QuoteItem:
       type: object
       properties:

@@ -1,24 +1,29 @@
 import { router, useFocusEffect } from "expo-router";
-import { ChevronRight, KeyRound, LogOut, MessageSquareText, User } from "lucide-react-native";
+import { CheckCircle2, Clock3, KeyRound, LogOut, MapPin, MessageSquareText, Pencil, Settings, XCircle } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { FlatList, KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BrandMark } from "../../components/brand";
-import { Alert, Button, Card, Eyebrow, Field, H1, H2, Loading, P } from "../../components/ui";
-import { api, ApiError, errorMessage, type Payment } from "../../lib/api";
+import { Alert, Button, Card, Field, Loading, P, PageTitle, Progress, Ring, RoundButton, Segmented } from "../../components/ui";
+import { api, errorMessage, type Payment } from "../../lib/api";
 import { formatDateTime, formatMZN, isValidPhone, normalizePhone, PAYMENT_STATUS } from "../../lib/format";
-import { C, F, R } from "../../theme";
-
-type Me = { phone: string };
+import { t } from "../../lib/i18n";
+import { initials, prettyPhone, useMe, type Me } from "../../lib/me";
+import { C, F, shadow } from "../../theme";
 
 export default function Conta() {
-  const [me, setMe] = useState<Me | null | undefined>(undefined);
-  const load = useCallback(() => {
-    api<Me>("/api/me").then(setMe).catch((e) => setMe(e instanceof ApiError && [401, 403].includes(e.status) ? null : null));
-  }, []);
-  useFocusEffect(load);
-  if (me === undefined) return <Loading />;
-  return me ? <History me={me} onLogout={() => setMe(null)} /> : <Login onDone={load} />;
+  const { me, setMe, reload } = useMe();
+  if (me === undefined) return <View style={{ flex: 1, backgroundColor: C.canvas }}><Loading /></View>;
+  return me ? <Profile me={me} onLogout={() => setMe(null)} /> : <Login onDone={reload} />;
+}
+
+function TopBar({ title, sub }: { title: string; sub?: string }) {
+  return (
+    <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
+      <View style={{ flex: 1 }}><PageTitle title={title} sub={sub} /></View>
+      <RoundButton icon={Settings} label={t("Definições")} onPress={() => router.push("/definicoes")} />
+    </View>
+  );
 }
 
 /** Entrar com o número de telefone e um código por SMS. Sem palavra-passe. */
@@ -32,7 +37,7 @@ function Login({ onDone }: { onDone: () => void }) {
   const [error, setError] = useState("");
 
   async function request() {
-    if (!isValidPhone(phone)) return setError("Número inválido. Exemplo: 84 123 4567.");
+    if (!isValidPhone(phone)) return setError(`${t("Verifique o que escreveu.")} (84 123 4567)`);
     setBusy(true);
     setError("");
     try {
@@ -59,44 +64,39 @@ function Login({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <FlatList data={[]} renderItem={() => null} keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingTop: top + 12, paddingHorizontal: 16, paddingBottom: 40, gap: 16 }}
-        ListHeaderComponent={
-          <View style={{ gap: 16 }}>
-            <View style={{ backgroundColor: C.ink, borderRadius: 32, padding: 22, gap: 12 }}>
-              <Eyebrow dark icon={User}>A minha conta</Eyebrow>
-              <H1 light>Entre com o seu número</H1>
-              <P light>Veja todos os seus pagamentos e comprovativos. Enviamos um código por SMS, sem palavra-passe.</P>
-            </View>
-            <Card style={{ gap: 14 }}>
-              {error ? <Alert>{error}</Alert> : null}
-              {!sent ? (
-                <>
-                  <Field label="Número de telefone" keyboardType="phone-pad" placeholder="84 123 4567" value={phone} onChangeText={setPhone} autoComplete="tel" />
-                  <Button onPress={request} busy={busy} icon={MessageSquareText}>Receber código</Button>
-                </>
-              ) : (
-                <>
-                  <P muted>{`Enviámos um código para ${phone}.`}</P>
-                  {demo ? <Alert tone="info">{`Demonstração: o código é ${demo}`}</Alert> : null}
-                  <Field label="Código de 6 algarismos" keyboardType="number-pad" maxLength={6} value={code} onChangeText={(v) => setCode(v.replace(/\D/g, ""))} autoComplete="sms-otp" mono />
-                  <Button onPress={verify} busy={busy} disabled={code.length !== 6} icon={KeyRound}>Entrar</Button>
-                  <Button variant="ghost" onPress={() => { setSent(false); setCode(""); }}>Mudar de número</Button>
-                </>
-              )}
-            </Card>
-          </View>
-        } />
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.canvas }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <ScrollView contentContainerStyle={{ paddingTop: top + 16, paddingHorizontal: 18, paddingBottom: 120, gap: 18 }} keyboardShouldPersistTaps="handled">
+        <TopBar title={t("Entre com o seu número")} sub={t("Veja todos os seus pagamentos e comprovativos. Enviamos um código por SMS, sem palavra-passe.")} />
+        <Card style={{ gap: 14 }}>
+          {error ? <Alert>{error}</Alert> : null}
+          {!sent ? (
+            <>
+              <Field label={t("Número de telefone")} keyboardType="phone-pad" placeholder="84 123 4567" value={phone} onChangeText={setPhone} autoComplete="tel" />
+              <Button onPress={request} busy={busy} icon={MessageSquareText}>{t("Receber código")}</Button>
+            </>
+          ) : (
+            <>
+              <P muted>{phone}</P>
+              {demo ? <Alert tone="info">{`Demo: ${demo}`}</Alert> : null}
+              <Field label={t("Código de 6 algarismos")} keyboardType="number-pad" maxLength={6} value={code} onChangeText={(v) => setCode(v.replace(/\D/g, ""))} autoComplete="sms-otp" mono />
+              <Button onPress={verify} busy={busy} disabled={code.length !== 6} icon={KeyRound}>{t("Entrar")}</Button>
+              <Button variant="ghost" onPress={() => { setSent(false); setCode(""); }}>{t("Mudar de número")}</Button>
+            </>
+          )}
+        </Card>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-function History({ me, onLogout }: { me: Me; onLogout: () => void }) {
+type Filter = "all" | "ok" | "wait" | "bad";
+const toneOf = (s: string): Exclude<Filter, "all"> => (["CONFIRMADA", "LIQUIDADA"].includes(s) ? "ok" : ["CRIADA", "PENDENTE"].includes(s) ? "wait" : "bad");
+
+function Profile({ me, onLogout }: { me: Me; onLogout: () => void }) {
   const top = useSafeAreaInsets().top;
   const [items, setItems] = useState<Payment[] | null>(null);
   const [error, setError] = useState("");
-  const [refreshing, setRefreshing] = useState(false);
+  const [filter, setFilter] = useState<Filter>("all");
   const load = useCallback(async () => {
     try {
       const r = await api<Payment[] | { results: Payment[] }>("/api/me/payments");
@@ -107,42 +107,80 @@ function History({ me, onLogout }: { me: Me; onLogout: () => void }) {
   }, []);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
+  const list = items ?? [];
+  const done = list.filter((p) => toneOf(p.status) === "ok");
+  const shown = filter === "all" ? list : list.filter((p) => toneOf(p.status) === filter);
+  const where = [me.district, me.province].filter(Boolean).join(", ");
+
   return (
-    <FlatList
-      data={items ?? []}
-      keyExtractor={(p) => p.reference}
-      onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }}
-      refreshing={refreshing}
-      contentContainerStyle={{ paddingTop: top + 12, paddingHorizontal: 16, paddingBottom: 40, gap: 10 }}
-      ListHeaderComponent={
-        <View style={{ gap: 16, marginBottom: 6 }}>
-          <View style={{ backgroundColor: C.ink, borderRadius: 32, padding: 22, gap: 12 }}>
-            <Eyebrow dark icon={User}>A minha conta</Eyebrow>
-            <H1 light>{me.phone.replace(/^\+258(\d{2})(\d{3})(\d{4})$/, "$1 $2 $3")}</H1>
-            <Button variant="light" icon={LogOut} onPress={async () => { await api("/api/auth/logout", { body: {} }).catch(() => {}); onLogout(); }}>Sair</Button>
-          </View>
-          <H2>Os meus pagamentos</H2>
-          {error ? <Alert>{error}</Alert> : null}
+    <ScrollView style={{ backgroundColor: C.canvas }} contentContainerStyle={{ paddingTop: top + 16, paddingHorizontal: 18, paddingBottom: 120, gap: 18 }}>
+      <TopBar title={t("Perfil")} />
+
+      <Card style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+        <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: C.ink, alignItems: "center", justifyContent: "center" }}>
+          <Text style={{ fontFamily: F.display, fontSize: 22, color: C.white }}>{initials(me)}</Text>
         </View>
-      }
-      ListEmptyComponent={items === null ? <Loading /> : <P muted>Ainda não pagou nada com esta conta.</P>}
-      renderItem={({ item: p }) => {
-        const st = PAYMENT_STATUS[p.status] ?? { label: p.status, tone: "info" };
-        const tone = { ok: C.ok, wait: C.wait, bad: C.accent, info: C.muted }[st.tone];
-        return (
-          <Pressable accessibilityRole="button" onPress={() => router.push(`/pagamento/${p.reference}`)}
-            style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: C.white, borderRadius: R.card, borderWidth: 1, borderColor: pressed ? C.ink : C.line, padding: 14 })}>
-            <BrandMark slug={p.institution_slug} name={p.institution_name} size={44} />
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: F.bold, fontSize: 15 }} numberOfLines={1}>{p.service_name}</Text>
-              <Text style={{ fontFamily: F.body, fontSize: 12, color: C.muted }}>{formatDateTime(p.created_at)}</Text>
-              <Text style={{ fontFamily: F.bold, fontSize: 12, color: tone }}>{st.label}</Text>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={{ fontFamily: F.display, fontSize: 19, color: C.ink }} numberOfLines={1}>{me.name || prettyPhone(me.phone)}</Text>
+          <Text style={{ fontFamily: F.body, fontSize: 13, color: C.muted }}>{prettyPhone(me.phone)}</Text>
+          {where ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+              <MapPin size={12} color={C.muted} />
+              <Text style={{ fontFamily: F.body, fontSize: 12, color: C.muted }} numberOfLines={1}>{where}</Text>
             </View>
-            <Text style={{ fontFamily: F.display, fontSize: 15 }}>{formatMZN(p.total)}</Text>
-            <ChevronRight size={18} color={C.muted} />
-          </Pressable>
-        );
-      }}
-    />
+          ) : null}
+        </View>
+        <RoundButton icon={Pencil} label={t("Editar perfil")} onPress={() => router.push("/perfil")} />
+      </Card>
+
+      <View style={{ flexDirection: "row", gap: 12 }}>
+        <Card style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 20 }}>
+          <Ring value={list.length ? done.length / list.length : 0} size={116}>
+            <Text style={{ fontFamily: F.display, fontSize: 26, color: C.ink }}>{done.length}/{list.length}</Text>
+            <Text style={{ fontFamily: F.body, fontSize: 11, color: C.muted }}>{t("Pagos")}</Text>
+          </Ring>
+        </Card>
+        <Card dark style={{ flex: 1, justifyContent: "space-between", gap: 10 }}>
+          <Text style={{ fontFamily: F.display, fontSize: 30, color: C.onHero }}>“</Text>
+          <Text style={{ fontFamily: F.light, fontSize: 20, lineHeight: 26, color: C.onHero }} adjustsFontSizeToFit numberOfLines={1}>
+            {formatMZN(done.reduce((a, p) => a + p.total, 0)).replace(",00", "")}
+          </Text>
+          <Text style={{ fontFamily: F.body, fontSize: 12, color: "rgba(255,255,255,0.6)" }}>{t("Total pago")}</Text>
+        </Card>
+      </View>
+
+      <Segmented<Filter> value={filter} onChange={setFilter}
+        options={[{ key: "all", label: t("Todos") }, { key: "ok", label: t("Pagos") }, { key: "wait", label: t("Pendentes") }, { key: "bad", label: t("Falhados") }]} />
+
+      {error ? <Alert>{error}</Alert> : null}
+      {items === null ? <Loading /> : shown.length === 0 ? <P muted>{t("Ainda não pagou nada com esta conta.")}</P> : (
+        <View style={{ gap: 10 }}>
+          {shown.map((p) => {
+            const tone = toneOf(p.status);
+            const color = { ok: C.ok, wait: C.wait, bad: C.accent }[tone];
+            const Icon = { ok: CheckCircle2, wait: Clock3, bad: XCircle }[tone];
+            return (
+              <Pressable key={p.reference} accessibilityRole="button" onPress={() => router.push(`/pagamento/${p.reference}`)}
+                style={({ pressed }) => ({ backgroundColor: C.surface, borderRadius: 20, padding: 14, gap: 10, transform: [{ scale: pressed ? 0.985 : 1 }], ...shadow() })}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                  <BrandMark slug={p.institution_slug} name={p.institution_name} size={42} round />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontFamily: F.semi, fontSize: 15, color: C.ink }} numberOfLines={1}>{p.service_name}</Text>
+                    <Text style={{ fontFamily: F.body, fontSize: 12, color: C.muted }}>{formatDateTime(p.created_at)} · {formatMZN(p.total)}</Text>
+                  </View>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                    <Text style={{ fontFamily: F.semi, fontSize: 12, color }}>{PAYMENT_STATUS[p.status]?.label}</Text>
+                    <Icon size={15} color={color} />
+                  </View>
+                </View>
+                <Progress value={tone === "wait" ? 0.5 : 1} tone={color} />
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
+
+      <Button variant="danger" icon={LogOut} onPress={async () => { await api("/api/auth/logout", { body: {} }).catch(() => {}); onLogout(); }}>{t("Sair")}</Button>
+    </ScrollView>
   );
 }

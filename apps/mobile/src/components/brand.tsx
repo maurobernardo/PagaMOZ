@@ -3,26 +3,16 @@ import {
   Building, Car, CreditCard, GraduationCap, HeartPulse, IdCard, Landmark, LayoutGrid, QrCode, Zap, type LucideIcon,
 } from "lucide-react-native";
 import { Text, View } from "react-native";
-import Svg, { Path, Rect } from "react-native-svg";
+import Svg, { Path } from "react-native-svg";
 import { C, F } from "../theme";
 
-/** Logótipo PagaMOZ (igual à web): "P" branco num quadrado preto com um visto vermelho. */
-export function LogoMark({ size = 36, inverted = false }: { size?: number; inverted?: boolean }) {
+/** Logótipo PagaMOZ: só o "P" com o visto vermelho, sem fundo nem nome. */
+export function LogoMark({ size = 36, color }: { size?: number; color?: string }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 40 40">
-      <Rect width={40} height={40} rx={11} fill={inverted ? C.white : C.ink} />
-      <Path d="M13 31V9h8.5a7.5 7.5 0 0 1 0 15H17" fill="none" stroke={inverted ? C.ink : C.white} strokeWidth={4.2} strokeLinecap="round" strokeLinejoin="round" />
+    <Svg width={size} height={size} viewBox="8 5 24 30">
+      <Path d="M13 31V9h8.5a7.5 7.5 0 0 1 0 15H17" fill="none" stroke={color ?? C.ink} strokeWidth={4.2} strokeLinecap="round" strokeLinejoin="round" />
       <Path d="M18.3 16.7l2.1 2.1 3.6-3.8" fill="none" stroke={C.accent} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
-  );
-}
-
-export function Logo({ inverted = false }: { inverted?: boolean }) {
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-      <LogoMark inverted={inverted} />
-      <Text style={{ fontFamily: F.displayX, fontSize: 22, letterSpacing: -0.6, color: inverted ? C.white : C.ink }}>pagamoz</Text>
-    </View>
   );
 }
 
@@ -43,7 +33,7 @@ export function BrandMark({ slug, name, size = 48, round = false }: { slug: stri
   const src = LOGOS[slug];
   if (src)
     return (
-      <View style={{ width: size, height: size, borderRadius: radius, backgroundColor: C.white, borderWidth: 1, borderColor: C.line, padding: size * 0.1, overflow: "hidden" }}>
+      <View style={{ width: size, height: size, borderRadius: radius, backgroundColor: "#ffffff", borderWidth: 1, borderColor: C.line, padding: size * 0.1, overflow: "hidden" }}>
         <Image source={src} style={{ flex: 1 }} contentFit="contain" accessibilityLabel={name} />
       </View>
     );

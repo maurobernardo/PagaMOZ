@@ -114,11 +114,37 @@ class MembershipSerializer(serializers.ModelSerializer):
         fields = ["institution", "role"]
 
 
+PROVINCES = [
+    "Maputo Cidade",
+    "Maputo Província",
+    "Gaza",
+    "Inhambane",
+    "Sofala",
+    "Manica",
+    "Tete",
+    "Zambézia",
+    "Nampula",
+    "Cabo Delgado",
+    "Niassa",
+]
+
+
 class MeSerializer(serializers.Serializer):
-    phone = serializers.CharField()
-    name = serializers.CharField(source="get_full_name")
-    memberships = MembershipSerializer(many=True)
-    is_staff = serializers.BooleanField()
+    phone = serializers.CharField(read_only=True)
+    name = serializers.CharField(source="get_full_name", read_only=True)
+    first_name = serializers.CharField(max_length=60, required=False, allow_blank=True)
+    last_name = serializers.CharField(max_length=60, required=False, allow_blank=True)
+    email = serializers.EmailField(required=False, allow_blank=True)
+    province = serializers.ChoiceField([*PROVINCES, ""], required=False)
+    district = serializers.CharField(max_length=60, required=False, allow_blank=True)
+    memberships = MembershipSerializer(many=True, read_only=True)
+    is_staff = serializers.BooleanField(read_only=True)
+
+    def update(self, instance, validated):
+        for k, v in validated.items():
+            setattr(instance, k, v.strip() if isinstance(v, str) else v)
+        instance.save(update_fields=list(validated))
+        return instance
 
 
 # ---------- Público (cidadão) ----------
@@ -195,7 +221,11 @@ class PortalServiceViewSet(
         record("service.update", request=self.request, institution=self.institution, target=obj, fields=changed)
 
 
-class Me(generics.RetrieveAPIView):
+class Me(generics.RetrieveUpdateAPIView):
+    """O próprio utilizador. PATCH actualiza o perfil (nome, email, província, distrito)."""
+
+    http_method_names = ["get", "patch", "head", "options"]
+
     serializer_class = MeSerializer
     permission_classes = [permissions.IsAuthenticated]
 

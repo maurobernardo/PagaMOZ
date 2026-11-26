@@ -92,3 +92,13 @@ def test_otp_throttle_not_consumed_by_other_requests():
 def test_csrf_endpoint_returns_token(client):
     r = client.get("/api/auth/csrf")
     assert r.status_code == 200 and len(r.json()["csrf"]) >= 32
+
+
+def test_profile_patch_updates_name_and_province(client, django_user_model):
+    u = django_user_model.objects.create_user("+258841111111")
+    client.force_login(u)
+    r = client.patch("/api/me", {"first_name": "Ana", "province": "Gaza", "district": "Xai-Xai"}, content_type="application/json")
+    assert r.status_code == 200 and r.json()["province"] == "Gaza"
+    u.refresh_from_db()
+    assert (u.first_name, u.district) == ("Ana", "Xai-Xai")
+    assert client.patch("/api/me", {"province": "Lisboa"}, content_type="application/json").status_code == 400

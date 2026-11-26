@@ -5,7 +5,12 @@ import { Animated, PanResponder, Pressable, Text, View, useWindowDimensions } fr
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BrandMark, LogoMark } from "../components/brand";
 import { ONBOARDED, setItem } from "../lib/storage";
-import { C, F } from "../theme";
+import { F } from "../theme";
+import { t } from "../lib/i18n";
+
+// Ecrã sempre escuro, nos dois temas.
+const INK = "#0b0b0c";
+const WHITE = "#ffffff";
 
 async function start(to: "/" | "/conta") {
   await setItem(ONBOARDED, "1");
@@ -17,33 +22,30 @@ export default function BemVindo() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   return (
-    <View style={{ flex: 1, backgroundColor: C.ink, paddingTop: insets.top + 16, paddingBottom: insets.bottom + 20, paddingHorizontal: 24 }}>
+    <View style={{ flex: 1, backgroundColor: INK, paddingTop: insets.top + 16, paddingBottom: insets.bottom + 20, paddingHorizontal: 24 }}>
       <Stripes />
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <LogoMark size={32} inverted />
-        <Text style={{ fontFamily: F.displayX, fontSize: 20, color: C.white, letterSpacing: -0.5 }}>pagamoz</Text>
-      </View>
+      <LogoMark size={36} color={WHITE} />
 
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
         <View style={{ width: Math.min(width - 48, 320), height: 300 }}>
           <Receipt rotate="-14deg" x={-34} y={26} tone="#2a2a2c" org="adrmm" name="Fatura de água" amount="1 240,00" />
           <Receipt rotate="-5deg" x={-10} y={10} tone="#ededea" org="vodacom" name="Recarga de saldo" amount="200,00" dark={false} />
-          <Receipt rotate="7deg" x={22} y={0} tone={C.white} org="edm" name="Credelec" amount="500,00" dark={false} front />
+          <Receipt rotate="7deg" x={22} y={0} tone={WHITE} org="edm" name="Credelec" amount="500,00" dark={false} front />
         </View>
       </View>
 
       <View style={{ gap: 14 }}>
-        <Text style={{ fontFamily: F.display, fontSize: 38, lineHeight: 42, letterSpacing: -1, color: C.white, textAlign: "center" }}>
+        <Text style={{ fontFamily: F.light, fontSize: 36, lineHeight: 42, letterSpacing: -1.2, color: WHITE, textAlign: "center" }}>
           Pague tudo{"\n"}sem ir ao balcão
         </Text>
         <Text style={{ fontFamily: F.body, fontSize: 15, lineHeight: 22, color: "rgba(255,255,255,0.65)", textAlign: "center" }}>
-          Luz, água, recargas, impostos e documentos. O dinheiro vai direito para a instituição e recebe comprovativo na hora.
+          {t("Luz, água, recargas, impostos e documentos. O dinheiro vai direito para a instituição e recebe comprovativo na hora.")}
         </Text>
         <View style={{ height: 10 }} />
         <SwipeToStart onDone={() => start("/")} />
         <Pressable accessibilityRole="button" onPress={() => start("/conta")} style={{ alignSelf: "center", padding: 8 }}>
           <Text style={{ fontFamily: F.body, fontSize: 14, color: "rgba(255,255,255,0.6)" }}>
-            Já tem conta? <Text style={{ fontFamily: F.bold, color: C.white }}>Entrar</Text>
+            {t("Já tem conta?")} <Text style={{ fontFamily: F.bold, color: WHITE }}>{t("Entrar")}</Text>
           </Text>
         </Pressable>
       </View>
@@ -63,8 +65,8 @@ function Stripes() {
 }
 
 function Receipt({ rotate, x, y, tone, org, name, amount, dark = true, front }: { rotate: string; x: number; y: number; tone: string; org: string; name: string; amount: string; dark?: boolean; front?: boolean }) {
-  const fg = dark ? C.white : C.ink;
-  const sub = dark ? "rgba(255,255,255,0.55)" : C.muted;
+  const fg = dark ? WHITE : INK;
+  const sub = dark ? "rgba(255,255,255,0.55)" : "#6e6e6a";
   return (
     <View style={{
       position: "absolute", left: "50%", top: 20, width: 210, height: 270, marginLeft: -105 + x, marginTop: y,
@@ -74,7 +76,7 @@ function Receipt({ rotate, x, y, tone, org, name, amount, dark = true, front }: 
     }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <BrandMark slug={org} name={name} size={40} />
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: dark ? "rgba(255,255,255,0.1)" : C.canvas, borderRadius: 99, paddingHorizontal: 10, paddingVertical: 4 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: dark ? "rgba(255,255,255,0.1)" : "#f4f4f1", borderRadius: 99, paddingHorizontal: 10, paddingVertical: 4 }}>
           <Check size={12} color={fg} strokeWidth={3} />
           <Text style={{ fontFamily: F.bold, fontSize: 11, color: fg }}>Pago</Text>
         </View>
@@ -84,7 +86,7 @@ function Receipt({ rotate, x, y, tone, org, name, amount, dark = true, front }: 
         <Text style={{ fontFamily: F.display, fontSize: 30, letterSpacing: -0.8, color: fg }}>{amount}<Text style={{ fontSize: 16 }}> MT</Text></Text>
       </View>
       <View style={{ gap: 8 }}>
-        <View style={{ height: 1, backgroundColor: dark ? "rgba(255,255,255,0.12)" : C.line }} />
+        <View style={{ height: 1, backgroundColor: dark ? "rgba(255,255,255,0.12)" : "#e9e8e3" }} />
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <Text style={{ fontFamily: "monospace", fontSize: 11, color: sub }}>PMZ••••••7K2Q</Text>
           <Text style={{ fontFamily: F.bold, fontSize: 11, color: sub }}>Comprovativo</Text>
@@ -113,14 +115,14 @@ function SwipeToStart({ onDone }: { onDone: () => void }) {
   const fade = x.interpolate({ inputRange: [0, Math.max(1, max)], outputRange: [1, 0] });
 
   return (
-    <View onLayout={(e) => setW(e.nativeEvent.layout.width)} accessible accessibilityRole="button" accessibilityLabel="Começar" onAccessibilityTap={onDone}
+    <View onLayout={(e) => setW(e.nativeEvent.layout.width)} accessible accessibilityRole="button" accessibilityLabel={t("Começar")} onAccessibilityTap={onDone}
       style={{ height: knob + 8, borderRadius: 99, backgroundColor: "rgba(255,255,255,0.1)", borderWidth: 1, borderColor: "rgba(255,255,255,0.16)", justifyContent: "center", padding: 4 }}>
-      <Animated.Text style={{ position: "absolute", alignSelf: "center", fontFamily: F.bold, fontSize: 16, color: C.white, opacity: fade }}>Deslize para começar</Animated.Text>
+      <Animated.Text style={{ position: "absolute", alignSelf: "center", fontFamily: F.bold, fontSize: 16, color: WHITE, opacity: fade }}>{t("Deslize para começar")}</Animated.Text>
       <Animated.View {...pan.panHandlers} style={{ transform: [{ translateX: x }] }}>
-        <Pressable onPress={onDone} style={{ width: knob, height: knob, borderRadius: knob / 2, backgroundColor: C.white, alignItems: "center", justifyContent: "center", flexDirection: "row" }}>
-          <ChevronRight size={18} color={C.ink} style={{ marginRight: -10, opacity: 0.35 }} />
-          <ChevronRight size={18} color={C.ink} style={{ marginRight: -10, opacity: 0.65 }} />
-          <ChevronRight size={18} color={C.ink} />
+        <Pressable onPress={onDone} style={{ width: knob, height: knob, borderRadius: knob / 2, backgroundColor: WHITE, alignItems: "center", justifyContent: "center", flexDirection: "row" }}>
+          <ChevronRight size={18} color={INK} style={{ marginRight: -10, opacity: 0.35 }} />
+          <ChevronRight size={18} color={INK} style={{ marginRight: -10, opacity: 0.65 }} />
+          <ChevronRight size={18} color={INK} />
         </Pressable>
       </Animated.View>
     </View>

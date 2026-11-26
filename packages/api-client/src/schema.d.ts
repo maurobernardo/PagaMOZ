@@ -418,13 +418,15 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description O próprio utilizador. PATCH actualiza o perfil (nome, email, província, distrito). */
         get: operations["me_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /** @description O próprio utilizador. PATCH actualiza o perfil (nome, email, província, distrito). */
+        patch: operations["me_partial_update"];
         trace?: never;
     };
     "/api/me/obligations": {
@@ -1175,10 +1177,15 @@ export interface components {
          */
         KindEnum: "falta_no_provedor" | "falta_na_plataforma" | "valor_divergente" | "estado_divergente";
         Me: {
-            phone: string;
-            name: string;
-            memberships: components["schemas"]["Membership"][];
-            is_staff: boolean;
+            readonly phone: string;
+            readonly name: string;
+            first_name?: string;
+            last_name?: string;
+            email?: string;
+            province?: components["schemas"]["ProvinceEnum"] | components["schemas"]["BlankEnum"];
+            district?: string;
+            readonly memberships: components["schemas"]["Membership"][];
+            readonly is_staff: boolean;
         };
         Member: {
             readonly id: number;
@@ -1191,6 +1198,9 @@ export interface components {
         };
         Membership: {
             readonly institution: components["schemas"]["InstitutionPublic"];
+            role: components["schemas"]["RoleEnum"];
+        };
+        MembershipRequest: {
             role: components["schemas"]["RoleEnum"];
         };
         /**
@@ -1441,6 +1451,13 @@ export interface components {
             commission_payer?: components["schemas"]["CommissionPayerEnum"] | components["schemas"]["BlankEnum"];
             is_demo?: boolean;
         };
+        PatchedMeRequest: {
+            first_name?: string;
+            last_name?: string;
+            email?: string;
+            province?: components["schemas"]["ProvinceEnum"] | components["schemas"]["BlankEnum"];
+            district?: string;
+        };
         PatchedObligationRequest: {
             label?: string;
             service?: number;
@@ -1627,6 +1644,22 @@ export interface components {
             success_rate_24h: number | null;
             pending: number;
         };
+        /**
+         * @description * `Maputo Cidade` - Maputo Cidade
+         *     * `Maputo Província` - Maputo Província
+         *     * `Gaza` - Gaza
+         *     * `Inhambane` - Inhambane
+         *     * `Sofala` - Sofala
+         *     * `Manica` - Manica
+         *     * `Tete` - Tete
+         *     * `Zambézia` - Zambézia
+         *     * `Nampula` - Nampula
+         *     * `Cabo Delgado` - Cabo Delgado
+         *     * `Niassa` - Niassa
+         *     * `` -
+         * @enum {string}
+         */
+        ProvinceEnum: "Maputo Cidade" | "Maputo Província" | "Gaza" | "Inhambane" | "Sofala" | "Manica" | "Tete" | "Zambézia" | "Nampula" | "Cabo Delgado" | "Niassa";
         QuoteItem: {
             titulo: string;
             referencia: string;
@@ -2604,6 +2637,31 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+        };
+    };
+    me_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedMeRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedMeRequest"];
+                "multipart/form-data": components["schemas"]["PatchedMeRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {

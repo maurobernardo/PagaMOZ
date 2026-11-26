@@ -1,10 +1,11 @@
 import * as DocumentPicker from "expo-document-picker";
-import { router, Stack, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, ArrowRight, CheckCircle2, CreditCard, FileCheck2, Info, Lock, Search, Upload } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { BrandMark, MethodMark } from "../../components/brand";
-import { Alert, Button, Card, Field, H2, Loading, P, Row, Steps } from "../../components/ui";
+import { Alert, Button, Card, Field, H2, Header, Loading, P, Row, Steps } from "../../components/ui";
+import { t } from "../../lib/i18n";
 import { api, ApiError, errorMessage, fieldErrors, newKey, type Payment, type Schemas, type Service } from "../../lib/api";
 import { cardSummary, formatCardNumber, formatExp } from "../../lib/card";
 import { formatMZN, isValidPhone, METHOD_LABEL, normalizePhone, WALLET_PREFIXES } from "../../lib/format";
@@ -17,7 +18,7 @@ type Confirmed = {
   details?: [string, string][]; items?: { titulo: string; referencia: string; detalhe: string; valor: number }[];
 };
 type Picked = { uri: string; name: string; mimeType: string };
-const STEPS = ["Dados", "Confirmar", "Pagar"];
+const STEPS = () => [t("Dados"), t("Confirmar"), t("Pagar")];
 const WALLETS = Object.keys(WALLET_PREFIXES);
 
 export default function Servico() {
@@ -27,9 +28,12 @@ export default function Servico() {
   useEffect(() => {
     api<Service>(`/api/catalog/services/${id}`).then(setS).catch((e) => setLoadErr(errorMessage(e)));
   }, [id]);
-  if (loadErr) return <View style={{ padding: 16 }}><Alert>{loadErr}</Alert></View>;
-  if (!s) return <Loading />;
-  return <PayFlow s={s} />;
+  return (
+    <View style={{ flex: 1, backgroundColor: C.canvas }}>
+      <Header title={s?.group?.option ?? ""} />
+      {loadErr ? <View style={{ padding: 16 }}><Alert>{loadErr}</Alert></View> : !s ? <Loading /> : <PayFlow s={s} />}
+    </View>
+  );
 }
 
 function PayFlow({ s }: { s: Service }) {
@@ -61,14 +65,14 @@ function PayFlow({ s }: { s: Service }) {
         if (f.required && !files[f.name]) errs[f.name] = "Escolha o ficheiro.";
       } else if (f.type !== "select") {
         const v = (values[f.name] ?? "").trim();
-        if (f.required && !v) errs[f.name] = "Preencha este campo.";
-        else if (v && f.pattern && !new RegExp(f.pattern).test(f.type === "phone" ? v.replace(/\D/g, "").slice(-9) : v)) errs[f.name] = "Verifique o que escreveu.";
+        if (f.required && !v) errs[f.name] = t("Preencha este campo.");
+        else if (v && f.pattern && !new RegExp(f.pattern).test(f.type === "phone" ? v.replace(/\D/g, "").slice(-9) : v)) errs[f.name] = t("Verifique o que escreveu.");
       }
     }
     const cents = Math.round(Number(amountMt.replace(",", ".")) * 100);
-    if (s.pricing === "aberto" && !(cents > 0)) errs.valor = "Indique o valor.";
+    if (s.pricing === "aberto" && !(cents > 0)) errs.valor = t("Indique o valor.");
     setErrors(errs);
-    if (Object.keys(errs).length) return setError("Corrija os campos assinalados.");
+    if (Object.keys(errs).length) return setError(t("Corrija os campos assinalados."));
 
     setBusy(true);
     setError("");
@@ -146,14 +150,13 @@ function PayFlow({ s }: { s: Service }) {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <Stack.Screen options={{ title: s.group?.option ?? "" }} />
       <ScrollView ref={scroll} contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
-        <View style={{ backgroundColor: C.ink, borderRadius: 32, padding: 20, gap: 14 }}>
+        <View style={{ backgroundColor: C.hero, borderRadius: 28, padding: 20, gap: 14 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
             <BrandMark slug={s.institution.slug} name={s.institution.name} size={52} />
             <Text style={{ flex: 1, fontFamily: F.bold, fontSize: 12, letterSpacing: 1, textTransform: "uppercase", color: "rgba(255,255,255,0.6)" }} numberOfLines={2}>{s.institution.name}</Text>
           </View>
-          <Text style={{ fontFamily: F.display, fontSize: 28, lineHeight: 32, color: C.white }}>{s.name}</Text>
+          <Text style={{ fontFamily: F.display, fontSize: 26, lineHeight: 31, letterSpacing: -0.6, color: C.onHero }}>{s.name}</Text>
           {s.guide?.length ? (
             <View style={{ gap: 6 }}>
               {s.guide.map((g) => (
@@ -166,7 +169,7 @@ function PayFlow({ s }: { s: Service }) {
           ) : null}
         </View>
 
-        <Steps steps={STEPS} current={step} />
+        <Steps steps={STEPS()} current={step} />
         {error ? <Alert>{error}</Alert> : null}
 
         {step === 0 && (
@@ -197,7 +200,7 @@ function PayFlow({ s }: { s: Service }) {
             ))}
             {s.pricing === "aberto" && (
               <View style={{ gap: 10 }}>
-                <Field label="Valor a pagar (MT)" keyboardType="decimal-pad" value={amountMt} onChangeText={setAmountMt} error={errors.valor}
+                <Field label={t("Valor a pagar (MT)")} keyboardType="decimal-pad" value={amountMt} onChangeText={setAmountMt} error={errors.valor}
                   hint={s.min_amount ? `Mínimo ${formatMZN(s.min_amount)}` : undefined} />
                 <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
                   {[50, 100, 200, 500, 1000].map((v) => {
@@ -223,7 +226,7 @@ function PayFlow({ s }: { s: Service }) {
                   }
                 }}
                 style={{ flexDirection: "row", alignItems: "center", gap: 14, padding: 16, borderRadius: 20, borderWidth: 1.5, borderStyle: "dashed", borderColor: errors[f.name] ? C.accent : files[f.name] ? C.ink : "#cfcec8" }}>
-                <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: C.ink, alignItems: "center", justifyContent: "center" }}>
+                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: C.ink, alignItems: "center", justifyContent: "center" }}>
                   {files[f.name] ? <FileCheck2 size={20} color={C.white} /> : <Upload size={20} color={C.white} />}
                 </View>
                 <View style={{ flex: 1 }}>
@@ -233,16 +236,16 @@ function PayFlow({ s }: { s: Service }) {
               </Pressable>
             ))}
             <Button onPress={submitData} busy={busy} icon={s.lookup || s.pricing === "consulta" ? Search : ArrowRight}>
-              {s.pricing === "consulta" ? "Consultar valor" : s.lookup ? "Verificar e continuar" : "Continuar"}
+              {t(s.pricing === "consulta" ? "Consultar valor" : s.lookup ? "Verificar e continuar" : "Continuar")}
             </Button>
           </Card>
         )}
 
         {step === 1 && confirmed && (
           <Card style={{ gap: 14 }}>
-            <H2>Confirme o valor</H2>
+            <H2>{t("Confirme o valor")}</H2>
             <P muted>{confirmed.description}</P>
-            {confirmed.holder ? <Row label="Titular" value={confirmed.holder} /> : null}
+            {confirmed.holder ? <Row label={t("Titular")} value={confirmed.holder} /> : null}
             {confirmed.details?.map(([l, v]) => <Row key={l} label={l} value={v} />)}
             {confirmed.items?.length ? (
               <View style={{ borderRadius: 20, borderWidth: 1, borderColor: C.line, overflow: "hidden" }}>
@@ -257,17 +260,17 @@ function PayFlow({ s }: { s: Service }) {
                 ))}
               </View>
             ) : null}
-            <Row label="Valor" value={formatMZN(confirmed.amount)} />
-            <Row label="Comissão" value={!confirmed.commission || confirmed.commission_payer === "instituicao" ? "Paga pela instituição" : formatMZN(confirmed.commission)} />
-            <Row label="Total a pagar" value={formatMZN(confirmed.total)} strong />
-            <Button onPress={() => go(2)} icon={ArrowRight}>Continuar para pagamento</Button>
-            <Button variant="ghost" onPress={() => go(0)} icon={ArrowLeft}>Alterar dados</Button>
+            <Row label={t("Valor")} value={formatMZN(confirmed.amount)} />
+            <Row label={t("Comissão")} value={!confirmed.commission || confirmed.commission_payer === "instituicao" ? t("Paga pela instituição") : formatMZN(confirmed.commission)} />
+            <Row label={t("Total a pagar")} value={formatMZN(confirmed.total)} strong />
+            <Button onPress={() => go(2)} icon={ArrowRight}>{t("Continuar para pagamento")}</Button>
+            <Button variant="ghost" onPress={() => go(0)} icon={ArrowLeft}>{t("Alterar dados")}</Button>
           </Card>
         )}
 
         {step === 2 && confirmed && (
           <Card style={{ gap: 16 }}>
-            <H2>Como quer pagar?</H2>
+            <H2>{t("Como quer pagar?")}</H2>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
               {Object.entries(METHOD_LABEL).map(([k, label]) => {
                 const on = method === k;
@@ -289,31 +292,31 @@ function PayFlow({ s }: { s: Service }) {
             )}
             {method === "cartao" && (
               <View style={{ gap: 14 }}>
-                <View style={{ backgroundColor: C.ink, borderRadius: 22, padding: 18, gap: 18 }}>
+                <View style={{ backgroundColor: C.hero, borderRadius: 22, padding: 18, gap: 18 }}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                    <CreditCard size={26} color={C.white} />
+                    <CreditCard size={26} color={C.onHero} />
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><Lock size={14} color="rgba(255,255,255,0.6)" /><Text style={{ fontFamily: F.semi, fontSize: 12, color: "rgba(255,255,255,0.6)" }}>Cifrado</Text></View>
                   </View>
-                  <Text style={{ fontFamily: "monospace", fontSize: 20, letterSpacing: 2, color: C.white }}>{formatCardNumber(card.number) || "•••• •••• •••• ••••"}</Text>
+                  <Text style={{ fontFamily: "monospace", fontSize: 20, letterSpacing: 2, color: C.onHero }}>{formatCardNumber(card.number) || "•••• •••• •••• ••••"}</Text>
                   <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                     <Text style={{ fontFamily: F.semi, fontSize: 13, color: "rgba(255,255,255,0.8)" }} numberOfLines={1}>{card.holder.toUpperCase() || "NOME NO CARTÃO"}</Text>
                     <Text style={{ fontFamily: F.semi, fontSize: 13, color: "rgba(255,255,255,0.8)" }}>{card.exp || "MM/AA"}</Text>
                   </View>
                 </View>
-                <Field label="Número do cartão" keyboardType="number-pad" value={formatCardNumber(card.number)} onChangeText={(v) => setCard({ ...card, number: v })} error={errors.number} autoComplete="cc-number" mono />
+                <Field label={t("Número do cartão")} keyboardType="number-pad" value={formatCardNumber(card.number)} onChangeText={(v) => setCard({ ...card, number: v })} error={errors.number} autoComplete="cc-number" mono />
                 <View style={{ flexDirection: "row", gap: 12 }}>
-                  <View style={{ flex: 1 }}><Field label="Validade" keyboardType="number-pad" placeholder="MM/AA" value={card.exp} onChangeText={(v) => setCard({ ...card, exp: formatExp(v) })} error={errors.exp} autoComplete="cc-exp" /></View>
+                  <View style={{ flex: 1 }}><Field label={t("Validade")} keyboardType="number-pad" placeholder="MM/AA" value={card.exp} onChangeText={(v) => setCard({ ...card, exp: formatExp(v) })} error={errors.exp} autoComplete="cc-exp" /></View>
                   <View style={{ flex: 1 }}><Field label="CVV" keyboardType="number-pad" secureTextEntry maxLength={3} value={card.cvv} onChangeText={(v) => setCard({ ...card, cvv: v.replace(/\D/g, "") })} error={errors.cvv} autoComplete="cc-csc" /></View>
                 </View>
-                <Field label="Nome no cartão" autoCapitalize="characters" value={card.holder} onChangeText={(v) => setCard({ ...card, holder: v })} error={errors.holder} autoComplete="cc-name" />
-                <P muted size={13}>O número completo e o CVV não saem do seu telemóvel. O seu banco pode pedir um código de confirmação.</P>
+                <Field label={t("Nome no cartão")} autoCapitalize="characters" value={card.holder} onChangeText={(v) => setCard({ ...card, holder: v })} error={errors.holder} autoComplete="cc-name" />
+                <P muted size={13}>{t("O número completo e o CVV não saem do seu telemóvel. O seu banco pode pedir um código de confirmação.")}</P>
               </View>
             )}
             {method === "referencia_bancaria" && <Alert tone="info">Depois de continuar recebe a entidade e a referência para pagar no balcão, ATM ou banca online.</Alert>}
             {method === "qr" && <Alert tone="info">Depois de continuar aparece o código QR para ler com a app do banco ou da carteira.</Alert>}
 
-            <Button onPress={pay} busy={busy} icon={Lock}>{`Pagar ${formatMZN(confirmed.total)}`}</Button>
-            <Button variant="ghost" onPress={() => go(1)} icon={ArrowLeft}>Voltar</Button>
+            <Button onPress={pay} busy={busy} icon={Lock}>{`${t("Pagar")} ${formatMZN(confirmed.total)}`}</Button>
+            <Button variant="ghost" onPress={() => go(1)} icon={ArrowLeft}>{t("Voltar")}</Button>
           </Card>
         )}
       </ScrollView>
