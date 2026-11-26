@@ -19,11 +19,11 @@ export function LogoMark({ size = 36, color }: { size?: number; color?: string }
 // Os mesmos ficheiros de apps/web/public/logos (ver LEIA-ME.md lá).
 const LOGOS: Record<string, number> = {
   adrmm: require("../../assets/logos/adrmm.webp"), at: require("../../assets/logos/at.webp"), cmm: require("../../assets/logos/cmm.webp"),
-  dstv: require("../../assets/logos/dstv.svg"), edm: require("../../assets/logos/edm.png"), emola: require("../../assets/logos/emola.webp"),
-  emose: require("../../assets/logos/emose.png"), hcm: require("../../assets/logos/hcm.webp"), inatter: require("../../assets/logos/inatter.webp"),
-  inss: require("../../assets/logos/inss.png"), mastercard: require("../../assets/logos/mastercard.svg"), mkesh: require("../../assets/logos/mkesh.webp"),
-  movitel: require("../../assets/logos/movitel.jpg"), mpesa: require("../../assets/logos/mpesa.svg"), senami: require("../../assets/logos/senami.webp"),
-  tmcel: require("../../assets/logos/tmcel.png"), tvcabo: require("../../assets/logos/tvcabo.svg"), uem: require("../../assets/logos/uem.png"),
+  dstv: require("../../assets/logos/dstv.svg"), edm: require("../../assets/logos/edm.webp"), emola: require("../../assets/logos/emola.webp"),
+  emose: require("../../assets/logos/emose.webp"), hcm: require("../../assets/logos/hcm.webp"), inatter: require("../../assets/logos/inatter.webp"),
+  inss: require("../../assets/logos/inss.webp"), mastercard: require("../../assets/logos/mastercard.svg"), mkesh: require("../../assets/logos/mkesh.webp"),
+  movitel: require("../../assets/logos/movitel.webp"), mpesa: require("../../assets/logos/mpesa.svg"), senami: require("../../assets/logos/senami.webp"),
+  tmcel: require("../../assets/logos/tmcel.webp"), tvcabo: require("../../assets/logos/tvcabo.svg"), uem: require("../../assets/logos/uem.webp"),
   "fipag": require("../../assets/logos/fipag.webp"),
   "gotv": require("../../assets/logos/gotv.webp"),
   "isctem": require("../../assets/logos/isctem.webp"),
@@ -38,7 +38,7 @@ const LOGOS: Record<string, number> = {
   "hcn": require("../../assets/logos/hcn.webp"),
   "hollard": require("../../assets/logos/hollard.webp"),
   "cmcm": require("../../assets/logos/cmcm.webp"),
-  visa: require("../../assets/logos/visa.svg"), vodacom: require("../../assets/logos/vodacom.svg"), zap: require("../../assets/logos/zap.png"),
+  visa: require("../../assets/logos/visa.svg"), vodacom: require("../../assets/logos/vodacom.svg"), zap: require("../../assets/logos/zap.webp"),
 };
 
 /** Logótipo da marca; sem ficheiro mostra as iniciais num quadrado preto. */
