@@ -6,7 +6,7 @@ import { Avatar } from "../../components/avatar";
 import { shortName, type Me as FullMe } from "../../lib/me";
 import { Image } from "expo-image";
 import { useCallback, useState } from "react";
-import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
+import { Platform, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BrandMark, categoryIcon, LogoMark } from "../../components/brand";
 import { RoundButton } from "../../components/ui";
@@ -36,7 +36,7 @@ const QUICK: { label: string; find: (s: Service) => boolean; group?: string }[] 
 const HERO_LOGOS: [string, string][] = [["edm", "EDM"], ["fipag", "FIPAG"], ["vodacom", "Vodacom"], ["dstv", "DStv"], ["uem", "UEM"], ["at", "AT"]];
 
 export default function Home() {
-  const top = useSafeAreaInsets().top;
+  const { top, bottom: bottomInset } = useSafeAreaInsets();
   const cats = useCategories();
   const { data: services, refreshing, refresh, offline } = useServices();
   const [me, setMe] = useState<Me | null>(null);
@@ -255,9 +255,8 @@ export default function Home() {
     </ScrollView>
     {/* Assistente: botão flutuante, sempre à mão */}
     <Pressable accessibilityRole="button" accessibilityLabel={t("Assistente")} onPress={() => router.push("/assistente")}
-      style={({ pressed }) => ({ position: "absolute", right: 18, bottom: 24, flexDirection: "row", alignItems: "center", gap: 8, height: 56, paddingHorizontal: 20, borderRadius: 28, backgroundColor: C.ink, transform: [{ scale: pressed ? 0.95 : 1 }], shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 8 })}>
-      <MessageCircle size={20} color={C.white} />
-      <Text style={{ fontFamily: F.semi, fontSize: 15, color: C.white }}>{t("Assistente")}</Text>
+      style={({ pressed }) => ({ position: "absolute", right: 18, bottom: Platform.OS === "ios" ? bottomInset + 64 : 20, alignItems: "center", justifyContent: "center", width: 58, height: 58, borderRadius: 29, backgroundColor: C.ink, transform: [{ scale: pressed ? 0.95 : 1 }], shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 8 })}>
+      <MessageCircle size={24} color={C.white} />
     </Pressable>
     </View>
   );
