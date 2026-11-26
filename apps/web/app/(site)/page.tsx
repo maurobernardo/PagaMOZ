@@ -32,18 +32,19 @@ export default async function Home() {
       {/* ---------- Hero ---------- */}
       <section className="relative isolate overflow-hidden bg-ink pt-24 text-white sm:pt-28">
         <HeroBackdrop />
-        <div className="relative mx-auto max-w-5xl px-5 text-center sm:px-8">
+        <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-5 sm:px-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+          <div className="text-center lg:text-left">
           <div className="animate-rise"><Eyebrow dark icon={MapPin}>Pagamentos de serviços em Moçambique</Eyebrow></div>
-          <h1 className="mx-auto mt-6 max-w-4xl animate-rise text-[2.6rem] font-bold leading-[1.02] tracking-[-0.035em] [animation-delay:80ms] sm:text-7xl">
+          <h1 className="mx-auto mt-6 max-w-4xl animate-rise text-[2.6rem] lg:mx-0 font-bold leading-[1.02] tracking-[-0.035em] [animation-delay:80ms] sm:text-7xl lg:text-[4.2rem]">
             Pague contas e taxas,{" "}
             <span className="bg-gradient-to-r from-white via-white/75 to-white/35 bg-clip-text text-transparent">sem ir ao balcão.</span>
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl animate-rise text-lg text-white/65 [animation-delay:160ms]">
+          <p className="mx-auto mt-6 max-w-2xl animate-rise text-lg lg:mx-0 text-white/65 [animation-delay:160ms]">
             EDM, águas, Autoridade Tributária, INATTER, SENAMI, propinas e mais, num só lugar. Pague com M-Pesa, e-Mola,
             mKesh ou cartão e receba um comprovativo que qualquer pessoa consegue verificar.
           </p>
 
-          <form action="/servicos" role="search" className="glass-dark mx-auto mt-10 flex max-w-xl animate-rise items-center gap-2 rounded-full p-2 [animation-delay:240ms]">
+          <form action="/servicos" role="search" className="glass-dark mx-auto mt-10 flex max-w-xl lg:mx-0 animate-rise items-center gap-2 rounded-full p-2 [animation-delay:240ms]">
             <label htmlFor="q" className="sr-only">Pesquisar serviço</label>
             <Search className="ml-3 h-5 w-5 shrink-0 text-white/50" aria-hidden />
             <input id="q" name="q" type="search" placeholder="Credelec, fatura de água, multa, propina…"
@@ -53,7 +54,7 @@ export default async function Home() {
             </button>
           </form>
 
-          <div className="mt-6 flex animate-rise flex-wrap justify-center gap-2 [animation-delay:300ms]">
+          <div className="mt-6 flex animate-rise flex-wrap justify-center gap-2 lg:justify-start [animation-delay:300ms]">
             {[["Credelec", "Credelec"], ["Água", "água"], ["Multas", "multas"], ["Passaporte", "passaporte"]].map(([l, q]) => (
               <Link key={q} href={`/servicos?q=${encodeURIComponent(q)}`} className="glass-dark inline-flex min-h-9 items-center rounded-full px-4 text-sm font-semibold text-white/75 transition hover:text-white">
                 {l}
@@ -63,12 +64,16 @@ export default async function Home() {
               <Building2 className="h-4 w-4" /> Sou instituição <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
-          <ul aria-label="Algumas instituições" className="mt-10 flex animate-rise flex-wrap items-center justify-center gap-3 [animation-delay:340ms]">
+          <ul aria-label="Algumas instituições" className="mt-10 flex animate-rise flex-wrap items-center justify-center gap-3 lg:justify-start [animation-delay:340ms]">
             {[["edm", "EDM"], ["fipag", "FIPAG"], ["adrmm", "AdRMM"], ["vodacom", "Vodacom"], ["movitel", "Movitel"], ["dstv", "DStv"], ["startimes", "StarTimes"], ["at", "AT"], ["inss", "INSS"], ["uem", "UEM"], ["ucm", "UCM"], ["isutc", "ISUTC"]].map(([slug, name]) => (
               <li key={slug} title={name}><BrandMark slug={slug} name={name} size={44} className="!rounded-full ring-2 ring-white/15" /></li>
             ))}
           </ul>
 
+          </div>
+          {/* A app real, em telemóvel 3D */}
+          <img src="/mockup-3d.webp" alt="Ecrã de início da app PagaMOZ" width={900} height={1393}
+            className="mx-auto w-[260px] animate-rise drop-shadow-[0_40px_60px_rgba(0,0,0,0.6)] [animation-delay:200ms] sm:w-[320px] lg:w-full lg:max-w-[400px]" />
         </div>
 
         <div className="relative mx-auto mt-14 max-w-6xl animate-rise px-5 [animation-delay:380ms] sm:mt-16 sm:px-8">
