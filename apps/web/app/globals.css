@@ -53,6 +53,9 @@ html {
 
 body {
   font-family: var(--font-sans);
+  /* Telemóvel primeiro: palavras longas ("telecomunicações") partem em vez de alargar a página. */
+  overflow-wrap: anywhere;
+  hyphens: auto;
   
 }
 

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Logo } from "./logo";
 import { Eyebrow } from "./eyebrow";
+import { Prefs } from "./prefs";
 
 export type NavItem = { href: string; label: string; icon: LucideIcon; exact?: boolean; count?: number };
 export type Alert = { label: string; href: string };
@@ -100,6 +101,7 @@ export function AppShell({ nav, eyebrow, org, orgSub, userName, greeting, alerts
           </button>
           <div className="hidden sm:block"><Eyebrow icon={LayoutGrid}>{eyebrow}</Eyebrow></div>
           <div className="ml-auto flex items-center gap-2">
+            <Prefs />
             <Notifications alerts={alerts} />
             <span title={userName} className="grid h-11 w-11 place-items-center rounded-full bg-ink font-display text-sm font-bold text-white">
               {initials(userName)}

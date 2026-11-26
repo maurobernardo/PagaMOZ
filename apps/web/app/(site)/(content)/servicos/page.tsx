@@ -86,7 +86,7 @@ export default async function Servicos({ searchParams }: { searchParams: Promise
         {services.length === 0 ? (
           <Empty icon={<SearchX className="h-5 w-5" />} title="Nenhum serviço encontrado.">Experimente outra palavra ou veja todas as categorias.</Empty>
         ) : (
-          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {services.map((s) => {
               if (!s.group) return <ServiceCard key={s.id} s={s} />;
               if (services.find((x) => x.group?.key === s.group!.key) !== s) return null; // um cartão por assunto

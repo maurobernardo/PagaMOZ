@@ -205,8 +205,8 @@ function Gauge({ value }: { value: number }) {
   return (
     <div className="relative mt-4 w-full max-w-[240px]">
       <svg viewBox="0 0 200 112" className="w-full" role="img" aria-label={`${value.toFixed(1)} por cento liquidado`}>
-        <path d="M20 100a80 80 0 0 1 160 0" fill="none" stroke="#f4f4f1" strokeWidth="22" strokeLinecap="round" />
-        <path d="M20 100a80 80 0 0 1 160 0" fill="none" stroke="#0b0b0c" strokeWidth="22" strokeLinecap="round"
+        <path d="M20 100a80 80 0 0 1 160 0" fill="none" stroke="var(--color-canvas)" strokeWidth="22" strokeLinecap="round" />
+        <path d="M20 100a80 80 0 0 1 160 0" fill="none" stroke="var(--color-ink)" strokeWidth="22" strokeLinecap="round"
           strokeDasharray={`${(value / 100) * c} ${c}`} className="transition-[stroke-dasharray] duration-700" />
       </svg>
       <p className="absolute inset-x-0 bottom-1 text-center font-display text-4xl font-bold tabular-nums">
