@@ -171,3 +171,6 @@ html[data-theme="dark"] html[data-theme="dark"] .theme-flip .glass-dark {
   background: rgb(255 255 255 / 0.06);
   border-color: rgb(255 255 255 / 0.12);
 }
+
+/* Tabelas deslizam para o lado; aqui as palavras não se partem. */
+table { overflow-wrap: normal; hyphens: manual; }

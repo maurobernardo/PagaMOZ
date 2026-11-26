@@ -26,4 +26,4 @@ export function TableEmpty({ cols, children }: { cols: number; children: ReactNo
 }
 
 export const filterInput =
-  "min-h-10 rounded-full border-0 bg-white px-4 text-sm text-ink shadow-[var(--shadow-soft)] ring-1 ring-inset ring-line focus:outline-none focus:ring-2 focus:ring-ink";
+  "min-h-10 min-w-0 flex-1 basis-36 rounded-full border-0 bg-white px-4 text-sm text-ink shadow-[var(--shadow-soft)] ring-1 ring-inset ring-line focus:outline-none focus:ring-2 focus:ring-ink";

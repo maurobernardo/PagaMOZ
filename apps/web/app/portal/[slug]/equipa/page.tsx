@@ -64,7 +64,7 @@ export default function Equipa() {
                   <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-ink font-display text-sm font-bold text-white">
                     {who.split(" ").slice(0, 2).map((x) => x[0]).join("").toUpperCase()}
                   </span>
-                  <span className="min-w-0 flex-1">
+                  <span className="min-w-0 flex-1 basis-40">
                     <span className="block truncate font-semibold">{who}</span>
                     <span className="text-sm text-muted">{m.phone}</span>
                   </span>
