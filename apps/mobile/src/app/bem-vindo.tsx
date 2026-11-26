@@ -12,7 +12,7 @@ import { t } from "../lib/i18n";
 const INK = "#0b0b0c";
 const WHITE = "#ffffff";
 
-async function start(to: "/" | "/conta") {
+async function start(to: "/cadastro" | "/cadastro?entrar=1") {
   await setItem(ONBOARDED, "1");
   router.replace(to);
 }
@@ -42,8 +42,8 @@ export default function BemVindo() {
           {t("Luz, água, recargas, impostos e documentos. O dinheiro vai direito para a instituição e recebe comprovativo na hora.")}
         </Text>
         <View style={{ height: 10 }} />
-        <SwipeToStart onDone={() => start("/")} />
-        <Pressable accessibilityRole="button" onPress={() => start("/conta")} style={{ alignSelf: "center", padding: 8 }}>
+        <SwipeToStart onDone={() => start("/cadastro")} />
+        <Pressable accessibilityRole="button" onPress={() => start("/cadastro?entrar=1")} style={{ alignSelf: "center", padding: 8 }}>
           <Text style={{ fontFamily: F.body, fontSize: 14, color: "rgba(255,255,255,0.6)" }}>
             {t("Já tem conta?")} <Text style={{ fontFamily: F.bold, color: WHITE }}>{t("Entrar")}</Text>
           </Text>

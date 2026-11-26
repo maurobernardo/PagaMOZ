@@ -1,3 +1,4 @@
+import places from "./districts.json";
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { api, ApiError } from "./api";
@@ -14,11 +15,9 @@ export function useMe() {
   return { me, setMe, reload };
 }
 
-/** As 11 províncias de Moçambique (igual à API). */
-export const PROVINCES = [
-  "Maputo Cidade", "Maputo Província", "Gaza", "Inhambane", "Sofala", "Manica",
-  "Tete", "Zambézia", "Nampula", "Cabo Delgado", "Niassa",
-];
+/** Províncias e distritos oficiais (Lei 26/2013), os mesmos que a API valida. */
+export const DISTRICTS: Record<string, string[]> = places.provincias;
+export const PROVINCES = Object.keys(DISTRICTS);
 
 export const initials = (m: Me) =>
   ((m.first_name?.[0] ?? "") + (m.last_name?.[0] ?? "")).toUpperCase() || m.phone.slice(-2);

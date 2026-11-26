@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowUpRight, Bookmark, FileText, LayoutGrid, LogOut, ReceiptText, Trash2, Wallet } from "lucide-react";
+import { ArrowUpRight, Bookmark, FileText, LayoutGrid, LogOut, Pencil, ReceiptText, Trash2, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ProfileForm } from "@/components/profile-form";
 import { CategoryIcon } from "@/components/category-icon";
 import { MethodIcon } from "@/components/method-icon";
 import { useToast } from "@/components/toast";
@@ -19,6 +20,7 @@ export default function Conta() {
   const toast = useToast();
   const dialog = useDialog();
   const [me, setMe] = useState<Schemas["Me"] | null>(null);
+  const [editing, setEditing] = useState(false);
   const [payments, setPayments] = useState<Payment[] | null>(null);
   const [requests, setRequests] = useState<ServiceRequest[] | null>(null);
   const [wallet, setWallet] = useState<Obligation[] | null>(null);
@@ -58,6 +60,12 @@ export default function Conta() {
   return (
     <div className="space-y-6">
       {dialog.ui}
+      {editing ? (
+        <section className="rounded-[var(--radius-card)] border border-line bg-white p-6 sm:p-8">
+          <h2 className="mb-5 text-xl font-bold">Os seus dados</h2>
+          <ProfileForm initial={me as never} onSaved={() => { setEditing(false); api.GET("/api/me").then((r) => r.data && setMe(r.data)); }} />
+        </section>
+      ) : null}
       {/* Cabeçalho */}
       <section className="rounded-[2rem] bg-ink p-7 text-white sm:p-9">
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -65,13 +73,16 @@ export default function Conta() {
             <span className="grid h-14 w-14 place-items-center rounded-full bg-white font-display text-lg font-bold text-ink">{initials || <Wallet className="h-6 w-6" />}</span>
             <div>
               <h1 className="text-3xl font-bold">A minha conta</h1>
-              <p className="text-white/60">{me.name ? `${me.name} · ` : ""}{me.phone}</p>
+              <p className="text-white/60">{me.name ? `${me.name} · ` : ""}{me.phone}{me.district ? ` · ${me.district}, ${me.province}` : ""}</p>
             </div>
           </div>
           <div className="glass-dark inline-flex rounded-full p-1.5">
             <Link href="/servicos" className="inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-ink hover:bg-white/90">
               <LayoutGrid className="h-4 w-4" /> Pagar serviço
             </Link>
+            <button onClick={() => setEditing(!editing)} className="inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold text-white/80 hover:bg-white/10 hover:text-white">
+              <Pencil className="h-4 w-4" /> Editar dados
+            </button>
             <button onClick={logout} className="inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold text-white/80 hover:bg-white/10 hover:text-white">
               <LogOut className="h-4 w-4" /> Sair
             </button>

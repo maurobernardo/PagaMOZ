@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from payments.models import Method, Transaction
 
+from .branding import brand
 from .models import Receipt, canonical, sign
 from .pdf import render
 
@@ -58,7 +59,9 @@ def issue(txn_id: int) -> Receipt:
     r.content = _content(txn, r.code, issued)
     r.content_hash = hashlib.sha256(canonical(r.content)).hexdigest()
     r.signature = sign(r.content)
-    pdf = render({**r.content, "_hash": r.content_hash}, verify_url(r.code), r.is_demo)
+    pdf = render(
+        {**r.content, "_hash": r.content_hash}, verify_url(r.code), r.is_demo, brand=brand(txn.institution.slug)
+    )
     r.pdf_sha256 = hashlib.sha256(pdf).hexdigest()
     r.pdf.save(f"{r.code}.pdf", ContentFile(pdf), save=False)
     try:

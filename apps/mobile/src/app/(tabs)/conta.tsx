@@ -1,186 +1,144 @@
-import { router, useFocusEffect } from "expo-router";
-import { CheckCircle2, Clock3, KeyRound, LogOut, MapPin, MessageSquareText, Pencil, Settings, XCircle } from "lucide-react-native";
-import { useCallback, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import Constants from "expo-constants";
+import * as LocalAuthentication from "expo-local-authentication";
+import * as Notifications from "expo-notifications";
+import { router } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
+import {
+  Bell, Fingerprint, HelpCircle, Info, Languages, LogOut, Moon, Shield, Sparkles, Trash2, User, Vibrate,
+} from "lucide-react-native";
+import { useState } from "react";
+import { Platform, ScrollView, Text, View } from "react-native";
+import { Alert, Group, ListRow, PageTitle, Segmented, Toggle } from "../../components/ui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { BrandMark } from "../../components/brand";
-import { Alert, Button, Card, Field, Loading, P, PageTitle, Progress, Ring, RoundButton, Segmented } from "../../components/ui";
-import { api, errorMessage, type Payment } from "../../lib/api";
-import { formatDateTime, formatMZN, isValidPhone, normalizePhone, PAYMENT_STATUS } from "../../lib/format";
+import { ChevronRight, Pencil, UserPlus } from "lucide-react-native";
+import { Pressable } from "react-native";
+import { initials, prettyPhone } from "../../lib/me";
+import { R, shadow } from "../../theme";
+import { api, WEB } from "../../lib/api";
 import { t } from "../../lib/i18n";
-import { initials, prettyPhone, useMe, type Me } from "../../lib/me";
-import { C, F, shadow } from "../../theme";
+import { useMe } from "../../lib/me";
+import { DEFAULT_PREFS, usePrefs, type Lang, type ThemePref } from "../../lib/prefs";
+import { ONBOARDED, setItem } from "../../lib/storage";
+import { C, F } from "../../theme";
 
-export default function Conta() {
-  const { me, setMe, reload } = useMe();
-  if (me === undefined) return <View style={{ flex: 1, backgroundColor: C.canvas }}><Loading /></View>;
-  return me ? <Profile me={me} onLogout={() => setMe(null)} /> : <Login onDone={reload} />;
-}
-
-function TopBar({ title, sub }: { title: string; sub?: string }) {
-  return (
-    <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
-      <View style={{ flex: 1 }}><PageTitle title={title} sub={sub} /></View>
-      <RoundButton icon={Settings} label={t("Definições")} onPress={() => router.push("/definicoes")} />
-    </View>
-  );
-}
-
-/** Entrar com o número de telefone e um código por SMS. Sem palavra-passe. */
-function Login({ onDone }: { onDone: () => void }) {
+export default function Definicoes() {
   const top = useSafeAreaInsets().top;
-  const [phone, setPhone] = useState("");
-  const [code, setCode] = useState("");
-  const [sent, setSent] = useState(false);
-  const [demo, setDemo] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const { prefs, set } = usePrefs();
+  const { me, setMe } = useMe();
+  const [msg, setMsg] = useState("");
 
-  async function request() {
-    if (!isValidPhone(phone)) return setError(`${t("Verifique o que escreveu.")} (84 123 4567)`);
-    setBusy(true);
-    setError("");
-    try {
-      const r = await api<{ demo_code?: string }>("/api/auth/otp/request", { body: { phone: normalizePhone(phone) } });
-      setDemo(r.demo_code ?? "");
-      setSent(true);
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setBusy(false);
-    }
+  async function toggleBiometric(on: boolean) {
+    if (!on) return set({ biometric: false });
+    const ok = (await LocalAuthentication.hasHardwareAsync()) && (await LocalAuthentication.isEnrolledAsync());
+    if (!ok) return setMsg("Este telemóvel não tem impressão digital ou rosto configurados.");
+    const r = await LocalAuthentication.authenticateAsync({ promptMessage: "PagaMOZ" });
+    if (r.success) set({ biometric: true });
   }
 
-  async function verify() {
-    setBusy(true);
-    setError("");
-    try {
-      await api("/api/auth/otp/verify", { body: { phone: normalizePhone(phone), code } });
-      onDone();
-    } catch (e) {
-      setError(errorMessage(e));
-      setBusy(false);
+  async function toggleNotify(on: boolean) {
+    if (on && Platform.OS !== "web") {
+      const { granted } = await Notifications.requestPermissionsAsync();
+      if (!granted) return setMsg("Autorize as notificações nas definições do telemóvel.");
     }
+    set({ notifyPayments: on });
+  }
+
+  async function wipe() {
+    await api("/api/auth/logout", { body: {} }).catch(() => {});
+    await setItem(ONBOARDED, "");
+    setMe(null);
+    set({ ...DEFAULT_PREFS });
+    setMsg(t("Dados apagados."));
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.canvas }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <ScrollView contentContainerStyle={{ paddingTop: top + 16, paddingHorizontal: 18, paddingBottom: 120, gap: 18 }} keyboardShouldPersistTaps="handled">
-        <TopBar title={t("Entre com o seu número")} sub={t("Veja todos os seus pagamentos e comprovativos. Enviamos um código por SMS, sem palavra-passe.")} />
-        <Card style={{ gap: 14 }}>
-          {error ? <Alert>{error}</Alert> : null}
-          {!sent ? (
-            <>
-              <Field label={t("Número de telefone")} keyboardType="phone-pad" placeholder="84 123 4567" value={phone} onChangeText={setPhone} autoComplete="tel" />
-              <Button onPress={request} busy={busy} icon={MessageSquareText}>{t("Receber código")}</Button>
-            </>
-          ) : (
-            <>
-              <P muted>{phone}</P>
-              {demo ? <Alert tone="info">{`Demo: ${demo}`}</Alert> : null}
-              <Field label={t("Código de 6 algarismos")} keyboardType="number-pad" maxLength={6} value={code} onChangeText={(v) => setCode(v.replace(/\D/g, ""))} autoComplete="sms-otp" mono />
-              <Button onPress={verify} busy={busy} disabled={code.length !== 6} icon={KeyRound}>{t("Entrar")}</Button>
-              <Button variant="ghost" onPress={() => { setSent(false); setCode(""); }}>{t("Mudar de número")}</Button>
-            </>
-          )}
-        </Card>
-      </ScrollView>
-    </KeyboardAvoidingView>
-  );
-}
+    <View style={{ flex: 1, backgroundColor: C.canvas }}>
+      <ScrollView contentContainerStyle={{ paddingTop: top + 16, paddingHorizontal: 18, gap: 22, paddingBottom: 120 }}>
+        <PageTitle title={t("Definições")} />
+        {msg ? <Alert tone="info">{msg}</Alert> : null}
 
-type Filter = "all" | "ok" | "wait" | "bad";
-const toneOf = (s: string): Exclude<Filter, "all"> => (["CONFIRMADA", "LIQUIDADA"].includes(s) ? "ok" : ["CRIADA", "PENDENTE"].includes(s) ? "wait" : "bad");
-
-function Profile({ me, onLogout }: { me: Me; onLogout: () => void }) {
-  const top = useSafeAreaInsets().top;
-  const [items, setItems] = useState<Payment[] | null>(null);
-  const [error, setError] = useState("");
-  const [filter, setFilter] = useState<Filter>("all");
-  const load = useCallback(async () => {
-    try {
-      const r = await api<Payment[] | { results: Payment[] }>("/api/me/payments");
-      setItems(Array.isArray(r) ? r : r.results);
-    } catch (e) {
-      setError(errorMessage(e));
-    }
-  }, []);
-  useFocusEffect(useCallback(() => { load(); }, [load]));
-
-  const list = items ?? [];
-  const done = list.filter((p) => toneOf(p.status) === "ok");
-  const shown = filter === "all" ? list : list.filter((p) => toneOf(p.status) === filter);
-  const where = [me.district, me.province].filter(Boolean).join(", ");
-
-  return (
-    <ScrollView style={{ backgroundColor: C.canvas }} contentContainerStyle={{ paddingTop: top + 16, paddingHorizontal: 18, paddingBottom: 120, gap: 18 }}>
-      <TopBar title={t("Perfil")} />
-
-      <Card style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
-        <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: C.ink, alignItems: "center", justifyContent: "center" }}>
-          <Text style={{ fontFamily: F.display, fontSize: 22, color: C.white }}>{initials(me)}</Text>
-        </View>
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ fontFamily: F.display, fontSize: 19, color: C.ink }} numberOfLines={1}>{me.name || prettyPhone(me.phone)}</Text>
-          <Text style={{ fontFamily: F.body, fontSize: 13, color: C.muted }}>{prettyPhone(me.phone)}</Text>
-          {where ? (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-              <MapPin size={12} color={C.muted} />
-              <Text style={{ fontFamily: F.body, fontSize: 12, color: C.muted }} numberOfLines={1}>{where}</Text>
+        {/* Perfil no topo: um toque e está no perfil completo */}
+        {me ? (
+          <Pressable accessibilityRole="button" onPress={() => router.push("/perfil")}
+            style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: C.surface, borderRadius: R.card, padding: 16, transform: [{ scale: pressed ? 0.985 : 1 }], ...shadow() })}>
+            <View style={{ width: 58, height: 58, borderRadius: 29, backgroundColor: C.ink, alignItems: "center", justifyContent: "center" }}>
+              <Text style={{ fontFamily: F.display, fontSize: 21, color: C.white }}>{initials(me)}</Text>
             </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: F.display, fontSize: 18, color: C.ink }} numberOfLines={1}>{me.name || prettyPhone(me.phone)}</Text>
+              <Text style={{ fontFamily: F.body, fontSize: 13, color: C.muted }}>{t("Ver perfil, gráficos e histórico")}</Text>
+            </View>
+            <ChevronRight size={20} color={C.ink} />
+          </Pressable>
+        ) : (
+          <Pressable accessibilityRole="button" onPress={() => router.push("/cadastro")}
+            style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: C.hero, borderRadius: R.card, padding: 18, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
+            <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: "rgba(255,255,255,0.12)", alignItems: "center", justifyContent: "center" }}>
+              <UserPlus size={22} color={C.onHero} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: F.display, fontSize: 18, color: C.onHero }}>{t("Criar conta ou entrar")}</Text>
+              <Text style={{ fontFamily: F.body, fontSize: 13, color: "rgba(255,255,255,0.65)" }}>{t("Guarde o histórico e os comprovativos.")}</Text>
+            </View>
+            <ChevronRight size={20} color={C.onHero} />
+          </Pressable>
+        )}
+        {me ? (
+          <Group title={t("Conta")}>
+            <ListRow first icon={Pencil} title={t("Editar perfil")} sub={[me.district, me.province].filter(Boolean).join(", ") || undefined} onPress={() => router.push("/perfil-editar")} />
+          </Group>
+        ) : null}
+
+        <Group title={t("Aparência")}>
+          <View style={{ padding: 16, gap: 12 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <Moon size={18} color={C.ink} />
+              <Text style={{ fontFamily: F.semi, fontSize: 15, color: C.ink }}>{t("Tema")}</Text>
+            </View>
+            <Segmented<ThemePref> value={prefs.theme} onChange={(v) => set({ theme: v })}
+              options={[{ key: "system", label: t("Automático") }, { key: "light", label: t("Claro") }, { key: "dark", label: t("Escuro") }]} />
+          </View>
+          <View style={{ padding: 16, gap: 12, borderTopWidth: 1, borderColor: C.line }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <Languages size={18} color={C.ink} />
+              <Text style={{ fontFamily: F.semi, fontSize: 15, color: C.ink }}>{t("Idioma")}</Text>
+            </View>
+            <Segmented<Lang> value={prefs.lang} onChange={(v) => set({ lang: v })}
+              options={[{ key: "pt", label: "Português" }, { key: "en", label: "English" }]} />
+          </View>
+        </Group>
+
+        <Group title={t("Notificações")}>
+          <ListRow first icon={Bell} title={t("Pagamentos confirmados")} right={<Toggle label={t("Pagamentos confirmados")} value={prefs.notifyPayments} onChange={toggleNotify} />} />
+        </Group>
+
+        <Group title={t("Segurança")}>
+          {Platform.OS !== "web" ? (
+            <ListRow first icon={Fingerprint} title={t("Pedir biometria ao abrir")} right={<Toggle label={t("Pedir biometria ao abrir")} value={prefs.biometric} onChange={toggleBiometric} />} />
           ) : null}
-        </View>
-        <RoundButton icon={Pencil} label={t("Editar perfil")} onPress={() => router.push("/perfil")} />
-      </Card>
+          <ListRow first={Platform.OS === "web"} icon={Vibrate} title={t("Vibração ao tocar")} right={<Toggle label={t("Vibração ao tocar")} value={prefs.haptics} onChange={(v) => set({ haptics: v })} />} />
+        </Group>
 
-      <View style={{ flexDirection: "row", gap: 12 }}>
-        <Card style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 20 }}>
-          <Ring value={list.length ? done.length / list.length : 0} size={116}>
-            <Text style={{ fontFamily: F.display, fontSize: 26, color: C.ink }}>{done.length}/{list.length}</Text>
-            <Text style={{ fontFamily: F.body, fontSize: 11, color: C.muted }}>{t("Pagos")}</Text>
-          </Ring>
-        </Card>
-        <Card dark style={{ flex: 1, justifyContent: "space-between", gap: 10 }}>
-          <Text style={{ fontFamily: F.display, fontSize: 30, color: C.onHero }}>“</Text>
-          <Text style={{ fontFamily: F.light, fontSize: 20, lineHeight: 26, color: C.onHero }} adjustsFontSizeToFit numberOfLines={1}>
-            {formatMZN(done.reduce((a, p) => a + p.total, 0)).replace(",00", "")}
-          </Text>
-          <Text style={{ fontFamily: F.body, fontSize: 12, color: "rgba(255,255,255,0.6)" }}>{t("Total pago")}</Text>
-        </Card>
-      </View>
+        <Group title={t("Privacidade")}>
+          <ListRow first icon={Shield} title={t("Política de privacidade")} onPress={() => router.push("/privacidade")} />
+          <ListRow icon={Trash2} title={t("Apagar dados deste aparelho")} danger onPress={wipe} />
+        </Group>
 
-      <Segmented<Filter> value={filter} onChange={setFilter}
-        options={[{ key: "all", label: t("Todos") }, { key: "ok", label: t("Pagos") }, { key: "wait", label: t("Pendentes") }, { key: "bad", label: t("Falhados") }]} />
+        <Group title={t("Ajuda")}>
+          <ListRow first icon={HelpCircle} title={t("Perguntas frequentes")} onPress={() => WebBrowser.openBrowserAsync(`${WEB}/#faq`)} />
+          <ListRow icon={Sparkles} title={t("Ver boas-vindas outra vez")} onPress={async () => { await setItem(ONBOARDED, ""); router.replace("/bem-vindo"); }} />
+        </Group>
 
-      {error ? <Alert>{error}</Alert> : null}
-      {items === null ? <Loading /> : shown.length === 0 ? <P muted>{t("Ainda não pagou nada com esta conta.")}</P> : (
-        <View style={{ gap: 10 }}>
-          {shown.map((p) => {
-            const tone = toneOf(p.status);
-            const color = { ok: C.ok, wait: C.wait, bad: C.accent }[tone];
-            const Icon = { ok: CheckCircle2, wait: Clock3, bad: XCircle }[tone];
-            return (
-              <Pressable key={p.reference} accessibilityRole="button" onPress={() => router.push(`/pagamento/${p.reference}`)}
-                style={({ pressed }) => ({ backgroundColor: C.surface, borderRadius: 20, padding: 14, gap: 10, transform: [{ scale: pressed ? 0.985 : 1 }], ...shadow() })}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                  <BrandMark slug={p.institution_slug} name={p.institution_name} size={42} round />
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontFamily: F.semi, fontSize: 15, color: C.ink }} numberOfLines={1}>{p.service_name}</Text>
-                    <Text style={{ fontFamily: F.body, fontSize: 12, color: C.muted }}>{formatDateTime(p.created_at)} · {formatMZN(p.total)}</Text>
-                  </View>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                    <Text style={{ fontFamily: F.semi, fontSize: 12, color }}>{PAYMENT_STATUS[p.status]?.label}</Text>
-                    <Icon size={15} color={color} />
-                  </View>
-                </View>
-                <Progress value={tone === "wait" ? 0.5 : 1} tone={color} />
-              </Pressable>
-            );
-          })}
-        </View>
-      )}
+        <Group title={t("Sobre")}>
+          <ListRow first icon={Info} title="PagaMOZ" sub={`${t("Versão")} ${Constants.expoConfig?.version ?? "1.0.0"}`} />
+        </Group>
 
-      <Button variant="danger" icon={LogOut} onPress={async () => { await api("/api/auth/logout", { body: {} }).catch(() => {}); onLogout(); }}>{t("Sair")}</Button>
-    </ScrollView>
+        {me ? (
+          <Group>
+            <ListRow first icon={LogOut} title={t("Sair")} danger onPress={async () => { await api("/api/auth/logout", { body: {} }).catch(() => {}); setMe(null); }} />
+          </Group>
+        ) : null}
+      </ScrollView>
+    </View>
   );
 }

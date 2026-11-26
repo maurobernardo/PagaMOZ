@@ -22,8 +22,8 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Label>{t("Verificar")}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="conta">
-        <NativeTabs.Trigger.Icon sf={{ default: "person", selected: "person.fill" }} md="person" />
-        <NativeTabs.Trigger.Label>{t("Perfil")}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: "gearshape", selected: "gearshape.fill" }} md="settings" />
+        <NativeTabs.Trigger.Label>{t("Definições")}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );

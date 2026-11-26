@@ -1,5 +1,6 @@
 import { router, useFocusEffect } from "expo-router";
-import { ArrowRight, ChevronRight, Search, Settings } from "lucide-react-native";
+import { ArrowRight, Bell, ChevronRight, Moon, Receipt, Search, Settings, Sun, Wallet } from "lucide-react-native";
+import { HeroArt } from "../../components/hero-art";
 import { useCallback, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -36,6 +37,7 @@ export default function Home() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [code, setCode] = useState("");
   const [codeErr, setCodeErr] = useState("");
+  const [heroW, setHeroW] = useState(0);
 
   const loadMe = useCallback(() => {
     api<Me>("/api/me")
@@ -56,46 +58,50 @@ export default function Home() {
     else setCodeErr(t("O código começa por PMZ e tem 13 caracteres."));
   };
 
+  const sunny = (new Date().getUTCHours() + 2) % 24 < 18;
   return (
-    <ScrollView style={{ backgroundColor: C.canvas }} contentContainerStyle={{ paddingTop: top + 8, paddingHorizontal: 18, paddingBottom: 120, gap: 22 }} keyboardShouldPersistTaps="handled"
+    <ScrollView style={{ backgroundColor: C.canvas }} contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 120, gap: 18 }} keyboardShouldPersistTaps="handled"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { refresh(); loadMe(); }} tintColor={C.ink} />}>
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-        <LogoMark size={34} />
-        <RoundButton icon={Settings} label={t("Definições")} onPress={() => router.push("/definicoes")} />
+      {/* Topo ilustrado: logótipo, sino, saudação */}
+      <View onLayout={(e) => setHeroW(e.nativeEvent.layout.width)} style={{ marginHorizontal: -18, paddingTop: top + 8, paddingHorizontal: 18, paddingBottom: 64, backgroundColor: C.soft, overflow: "hidden" }}>
+        {heroW ? <HeroArt width={heroW} height={top + 230} /> : null}
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <LogoMark size={34} />
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            <RoundButton icon={Bell} label={t("Notificações")} onPress={() => router.push("/notificacoes")} />
+            <RoundButton icon={Settings} label={t("Definições")} onPress={() => router.push("/conta")} />
+          </View>
+        </View>
+        <View style={{ marginTop: 26, gap: 2 }}>
+          <Text style={{ fontFamily: F.body, fontSize: 18, color: C.ink }}>{greeting()},</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Text style={{ fontFamily: F.display, fontSize: 34, letterSpacing: -1, color: C.ink }} numberOfLines={1}>
+              {me?.first_name || (me ? me.phone.replace(/^\+258(\d{2})(\d{3})(\d{4})$/, "$1 $2 $3") : "PagaMOZ")}
+            </Text>
+            {sunny ? <Sun size={26} color={C.ink} /> : <Moon size={24} color={C.ink} />}
+          </View>
+          <Text style={{ fontFamily: F.body, fontSize: 15, lineHeight: 21, color: C.muted, maxWidth: 260 }}>{t("O que vamos pagar hoje? Sem filas, com comprovativo na hora.")}</Text>
+        </View>
       </View>
 
-      <View style={{ gap: 2 }}>
-        <Text style={{ fontFamily: F.body, fontSize: 17, color: C.muted }}>{greeting()},</Text>
-        <Text style={{ fontFamily: F.display, fontSize: 32, letterSpacing: -1, color: C.ink }}>
-          {me?.first_name || (me ? me.phone.replace(/^\+258(\d{2})(\d{3})(\d{4})$/, "$1 $2 $3") : t("O que vamos pagar?"))}
-        </Text>
-      </View>
-
-      <Pressable accessibilityRole="search" onPress={() => router.push("/servicos")}
-        style={{ flexDirection: "row", alignItems: "center", gap: 10, minHeight: 54, borderRadius: R.pill, backgroundColor: C.surface, paddingHorizontal: 18, ...shadow() }}>
-        <Search size={20} color={C.muted} />
-        <Text style={{ flex: 1, fontFamily: F.body, fontSize: 15, color: C.muted }}>{t("Pesquisar serviço ou instituição")}</Text>
+      {/* Cartão sobreposto */}
+      <Pressable accessibilityRole="button" onPress={() => router.push(last ? `/pagamento/${last.reference}` : "/servicos")}
+        style={({ pressed }) => ({ marginTop: -46, backgroundColor: C.surface, borderRadius: R.card, padding: 16, flexDirection: "row", alignItems: "center", gap: 14, transform: [{ scale: pressed ? 0.985 : 1 }], ...shadow() })}>
+        {last ? <BrandMark slug={last.institution_slug} name={last.institution_name} size={50} round /> : (
+          <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: C.soft, alignItems: "center", justifyContent: "center" }}><Search size={22} color={C.ink} /></View>
+        )}
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontFamily: F.body, fontSize: 12, color: C.muted }}>{last ? t("Último pagamento") : t("Pesquisar")}</Text>
+          <Text style={{ fontFamily: F.bold, fontSize: 17, color: C.ink }} numberOfLines={1}>{last ? last.service_name : t("Pesquisar serviço ou instituição")}</Text>
+          {last ? <Text style={{ fontFamily: F.semi, fontSize: 12, color: C.muted }}>{PAYMENT_STATUS[last.status]?.label} · {formatMZN(last.total)}</Text> : null}
+        </View>
+        <ChevronRight size={20} color={C.ink} />
       </Pressable>
 
-      {last ? (
-        <Pressable accessibilityRole="button" onPress={() => router.push(`/pagamento/${last.reference}`)}
-          style={({ pressed }) => ({ backgroundColor: C.surface, borderRadius: R.card, padding: 16, flexDirection: "row", alignItems: "center", gap: 14, transform: [{ scale: pressed ? 0.985 : 1 }], ...shadow() })}>
-          <BrandMark slug={last.institution_slug} name={last.institution_name} size={48} round />
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: F.body, fontSize: 12, color: C.muted }}>{t("Último pagamento")}</Text>
-            <Text style={{ fontFamily: F.bold, fontSize: 16, color: C.ink }} numberOfLines={1}>{last.service_name}</Text>
-            <Text style={{ fontFamily: F.semi, fontSize: 12, color: C.muted }}>{PAYMENT_STATUS[last.status]?.label} · {formatMZN(last.total)}</Text>
-          </View>
-          <ChevronRight size={20} color={C.muted} />
-        </Pressable>
-      ) : null}
-
-      {me ? (
-        <View style={{ flexDirection: "row", gap: 12 }}>
-          <Stat label={t("Pagamentos")} value={String(payments.length)} />
-          <Stat label={t("Total pago")} value={formatMZN(paid.reduce((a, p) => a + p.total, 0)).replace(",00", "")} />
-        </View>
-      ) : null}
+      <View style={{ flexDirection: "row", gap: 12 }}>
+        <Stat icon={Receipt} label={t("Pagamentos")} value={me ? String(payments.length) : "-"} sub={me ? t("no total") : t("Entre para ver")} />
+        <Stat icon={Wallet} label={t("Total pago")} value={me ? formatMZN(paid.reduce((a, p) => a + p.total, 0)).replace(",00", "").replace(" MT", "") : "-"} sub="MT" />
+      </View>
 
       <View style={{ gap: 12 }}>
         <View>
@@ -158,11 +164,18 @@ export default function Home() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ icon: Icon, label, value, sub }: { icon: typeof Wallet; label: string; value: string; sub: string }) {
   return (
-    <View style={{ flex: 1, backgroundColor: C.surface, borderRadius: 22, padding: 16, gap: 4, ...shadow() }}>
-      <Text style={{ fontFamily: F.body, fontSize: 12, color: C.muted }}>{label}</Text>
-      <Text style={{ fontFamily: F.display, fontSize: 22, color: C.ink }} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
+    <View style={{ flex: 1, backgroundColor: C.surface, borderRadius: 22, padding: 14, flexDirection: "row", alignItems: "center", gap: 12, ...shadow() }}>
+      <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: C.soft, alignItems: "center", justifyContent: "center" }}>
+        <Icon size={18} color={C.ink} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontFamily: F.body, fontSize: 12, color: C.muted }}>{label}</Text>
+        <Text style={{ fontFamily: F.display, fontSize: 19, color: C.ink }} numberOfLines={1} adjustsFontSizeToFit>
+          {value} <Text style={{ fontFamily: F.body, fontSize: 12, color: C.muted }}>{sub}</Text>
+        </Text>
+      </View>
     </View>
   );
 }

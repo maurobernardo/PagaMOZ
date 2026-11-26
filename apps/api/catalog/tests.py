@@ -151,3 +151,18 @@ def test_seed_covers_all_categories_and_is_idempotent():
     assert set(Service.objects.values_list("integration_level", flat=True)) == {1, 2, 3}
     for s in Service.objects.filter(pricing="fixo"):
         s.full_clean()
+
+
+def test_smart_search_finds_by_acronym_old_name_synonym_and_typo(client):
+    from django.core.management import call_command
+
+    call_command("seed_demo", verbosity=0)
+
+    def names(q):
+        return [s["name"] for s in client.get("/api/catalog/services", {"q": q}).json()["results"]]
+
+    assert any("Multas" in n for n in names("INATRO"))  # nome antigo do INATTER
+    assert any("Multas" in n for n in names("inater"))  # erro de escrita
+    assert any("electricidade" in n.lower() or "Credelec" in n for n in names("luz"))  # sinónimo
+    assert any("Recarga" in n for n in names("credito movitel"))
+    assert names("zzzzqqq") == []

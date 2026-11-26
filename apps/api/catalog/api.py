@@ -1,4 +1,7 @@
-from django.db.models import Count, Q
+import json
+from pathlib import Path
+
+from django.db.models import Case, Count, IntegerField, Q, When
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_field, extend_schema_view
 from rest_framework import generics, mixins, permissions, serializers, viewsets
 
@@ -7,6 +10,7 @@ from institutions.models import Institution, Membership
 from institutions.permissions import InstitutionRole, resolve_membership
 
 from .models import Category, Service
+from .search import rank
 
 # ---------- Serializers ----------
 
@@ -114,19 +118,11 @@ class MembershipSerializer(serializers.ModelSerializer):
         fields = ["institution", "role"]
 
 
-PROVINCES = [
-    "Maputo Cidade",
-    "Maputo Província",
-    "Gaza",
-    "Inhambane",
-    "Sofala",
-    "Manica",
-    "Tete",
-    "Zambézia",
-    "Nampula",
-    "Cabo Delgado",
-    "Niassa",
-]
+# Províncias e distritos oficiais (Lei 26/2013; ver accounts/districts.json).
+DISTRICTS: dict[str, list[str]] = json.loads(
+    (Path(__file__).resolve().parent.parent / "accounts" / "districts.json").read_text("utf-8")
+)["provincias"]
+PROVINCES = list(DISTRICTS)
 
 
 class MeSerializer(serializers.Serializer):
@@ -139,6 +135,13 @@ class MeSerializer(serializers.Serializer):
     district = serializers.CharField(max_length=60, required=False, allow_blank=True)
     memberships = MembershipSerializer(many=True, read_only=True)
     is_staff = serializers.BooleanField(read_only=True)
+
+    def validate(self, attrs):
+        prov = attrs.get("province", getattr(self.instance, "province", ""))
+        dist = attrs.get("district", getattr(self.instance, "district", ""))
+        if dist and dist not in DISTRICTS.get(prov, []):
+            raise serializers.ValidationError({"district": "Escolha um distrito da província indicada."})
+        return attrs
 
     def update(self, instance, validated):
         for k, v in validated.items():
@@ -185,7 +188,10 @@ class PublicServiceViewSet(viewsets.ReadOnlyModelViewSet):
         if inst := p.get("institution"):
             qs = qs.filter(institution__slug=inst)
         if q := p.get("q", "").strip():
-            qs = qs.filter(Q(name__icontains=q) | Q(description__icontains=q) | Q(institution__name__icontains=q))
+            # Pesquisa inteligente (siglas, sinónimos, erros de escrita), ordenada por relevância.
+            ids = [x.pk for x in rank(qs, q)]
+            order = Case(*[When(pk=pk, then=i) for i, pk in enumerate(ids)], output_field=IntegerField())
+            qs = qs.filter(pk__in=ids).order_by(order) if ids else qs.none()
         return qs
 
 

@@ -7,6 +7,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { AuthFrame } from "@/components/auth-frame";
 import { GOOGLE_ERRORS, GoogleButton, OrDivider } from "@/components/google-button";
 import { useToast } from "@/components/toast";
+import { ProfileForm } from "@/components/profile-form";
 import { Alert, Button, Toolbar } from "@/components/ui";
 import { api, errorMessage } from "@/lib/api";
 import { isValidPhone, normalizePhone } from "@/lib/i18n";
@@ -28,6 +29,7 @@ function Entrar() {
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [sent, setSent] = useState(false);
+  const [profile, setProfile] = useState<Record<string, string> | null>(null);
   const [demoCode, setDemoCode] = useState("");
   const [error, setError] = useState(GOOGLE_ERRORS[params.get("erro") ?? ""] ?? "");
   const [busy, setBusy] = useState(false);
@@ -63,6 +65,10 @@ function Entrar() {
     const r = await api.POST("/api/auth/otp/verify", { body: { phone: normalizePhone(phone), code } });
     setBusy(false);
     if (!r.data) return setError(errorMessage(r.error));
+    // Conta nova (ou incompleta): pede nome, província e distrito antes de seguir.
+    const me = await api.GET("/api/me");
+    const m = me.data as Record<string, string> | undefined;
+    if (m && !(m.first_name && m.province && m.district)) return setProfile(m);
     toast("Bem-vindo de volta.");
     router.replace(safeNext);
     router.refresh();
@@ -72,13 +78,15 @@ function Entrar() {
     <AuthFrame
       eyebrow="Conta de cidadão"
       icon={UserRound}
-      title={sent ? "Introduza o código" : "Entrar"}
-      sub={sent ? <>Enviámos 6 dígitos para <strong className="text-ink">{normalizePhone(phone)}</strong>.</> : "Sem palavra-passe: enviamos um código para o seu telemóvel."}
+      title={profile ? "Os seus dados" : sent ? "Introduza o código" : "Entrar ou criar conta"}
+      sub={profile ? "Para os comprovativos e lembretes da sua zona. Só precisa de fazer isto uma vez." : sent ? <>Enviámos 6 dígitos para <strong className="text-ink">{normalizePhone(phone)}</strong>.</> : "Sem palavra-passe: enviamos um código para o seu telemóvel."}
       footer={<>É de uma instituição? <Link href="/portal" className="font-semibold text-ink underline-offset-4 hover:underline">Entrar no portal</Link></>}
     >
       {error ? <div className="mb-6"><Alert>{error}</Alert></div> : null}
 
-      {!sent ? (
+      {profile ? (
+        <ProfileForm initial={profile} cta="Concluir" onSaved={() => { toast("Conta pronta."); router.replace(safeNext); router.refresh(); }} />
+      ) : !sent ? (
         <>
           <GoogleButton flow="cidadao" next={safeNext} />
           <OrDivider />

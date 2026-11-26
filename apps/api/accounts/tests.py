@@ -97,8 +97,16 @@ def test_csrf_endpoint_returns_token(client):
 def test_profile_patch_updates_name_and_province(client, django_user_model):
     u = django_user_model.objects.create_user("+258841111111")
     client.force_login(u)
-    r = client.patch("/api/me", {"first_name": "Ana", "province": "Gaza", "district": "Xai-Xai"}, content_type="application/json")
+    r = client.patch(
+        "/api/me", {"first_name": "Ana", "province": "Gaza", "district": "Xai-Xai"}, content_type="application/json"
+    )
     assert r.status_code == 200 and r.json()["province"] == "Gaza"
     u.refresh_from_db()
     assert (u.first_name, u.district) == ("Ana", "Xai-Xai")
     assert client.patch("/api/me", {"province": "Lisboa"}, content_type="application/json").status_code == 400
+
+
+def test_profile_rejects_district_from_other_province(client, django_user_model):
+    client.force_login(django_user_model.objects.create_user("+258842222222"))
+    r = client.patch("/api/me", {"province": "Gaza", "district": "Matola"}, content_type="application/json")
+    assert r.status_code == 400
