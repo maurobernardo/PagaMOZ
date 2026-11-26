@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUp, Mic, ShieldAlert, MessageCircle, Volume2 } from "lucide-react";
+import { ArrowUp, CalendarClock, CreditCard, Mic, ShieldAlert, ShieldCheck, MessageCircle, Volume2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Eyebrow } from "@/components/eyebrow";
@@ -14,6 +14,12 @@ const START: Msg = {
   text: "Olá! Diga-me o que quer pagar ou pergunte o que vence esta semana. Eu preparo; o pagamento confirma-o sempre você.",
   suggestions: ["Paga 500 de Credelec", "O que vence esta semana?", "Recarga Movitel 100", "Isto é burla?"],
 };
+
+const EXAMPLES = [
+  { icon: CreditCard, title: "Pagar", items: ["Paga 500 de Credelec", "Recarga Movitel 100", "Paga a água"] },
+  { icon: CalendarClock, title: "Consultar", items: ["O que vence esta semana?", "Quanto devo de propinas?"] },
+  { icon: ShieldCheck, title: "Segurança", items: ["Isto é burla?"] },
+];
 
 /** Assistente por texto (regras + pesquisa inteligente, sem custos). Prepara o pagamento; nunca paga sozinho. */
 export default function Assistente() {
@@ -75,13 +81,26 @@ export default function Assistente() {
   }
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6">
-      <div>
-        <Eyebrow icon={MessageCircle}>Assistente</Eyebrow>
-        <h1 className="mt-4 text-4xl font-bold">Diga o que quer pagar</h1>
-        <p className="mt-2 text-muted">Em português simples. Eu encontro o serviço e preparo o pagamento.</p>
-      </div>
-      <div className="flex min-h-[50vh] flex-col gap-4 rounded-[var(--radius-card)] border border-line bg-white p-5">
+    <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[320px_minmax(0,1fr)]">
+      <aside className="flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
+        <div>
+          <Eyebrow icon={MessageCircle}>Assistente</Eyebrow>
+          <h1 className="mt-4 text-4xl font-bold leading-tight">Diga o que quer pagar</h1>
+          <p className="mt-2 text-muted">Em português simples. Eu encontro o serviço e preparo o pagamento; quem confirma é sempre você.</p>
+        </div>
+        {EXAMPLES.map(({ icon: I, title, items }) => (
+          <div key={title} className="rounded-[var(--radius-card)] border border-line bg-white p-4">
+            <p className="flex items-center gap-2 text-sm font-bold"><I className="h-4 w-4" /> {title}</p>
+            <ul className="mt-3 space-y-1">
+              {items.map((x) => (
+                <li key={x}><button type="button" onClick={() => send(x)} className="frame-none w-full rounded-xl px-3 py-2 text-left text-sm text-muted hover:bg-canvas hover:text-ink">{x}</button></li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </aside>
+      <div className="flex min-h-[75vh] flex-col rounded-[var(--radius-card)] border border-line bg-white">
+      <div className="flex flex-1 flex-col gap-4 p-5 sm:p-7">
         {msgs.map((m, i) => (
           <div key={i} className={`flex flex-col gap-2 ${m.from === "me" ? "items-end" : "items-start"}`}>
             <div className={`max-w-[85%] rounded-3xl px-4 py-3 text-[15px] leading-relaxed ${m.from === "me" ? "rounded-br-md bg-ink text-white" : "rounded-bl-md bg-canvas"}`}>
@@ -117,7 +136,7 @@ export default function Assistente() {
         {busy ? <p className="text-sm text-muted">A pensar…</p> : null}
         <div ref={end} />
       </div>
-      <form onSubmit={(e) => { e.preventDefault(); send(text); }} className="glass sticky bottom-4 flex items-center gap-2 rounded-full p-2">
+      <form onSubmit={(e) => { e.preventDefault(); send(text); }} className="sticky bottom-4 m-3 flex items-center gap-2 rounded-full border border-line bg-canvas p-2">
         <label htmlFor="msg" className="sr-only">Mensagem</label>
         <input id="msg" value={text} onChange={(e) => setText(e.target.value)} placeholder="Ex.: paga 500 de Credelec da casa da mãe" autoComplete="off"
           className="min-h-11 min-w-0 flex-1 bg-transparent px-4 text-base focus:outline-none" />
@@ -130,6 +149,7 @@ export default function Assistente() {
           <ArrowUp className="h-5 w-5" />
         </button>
       </form>
+      </div>
     </div>
   );
 }

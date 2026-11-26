@@ -30,11 +30,11 @@ export default async function Home() {
   return (
     <>
       {/* ---------- Hero ---------- */}
-      <section className="relative isolate overflow-hidden bg-ink pt-32 text-white sm:pt-40">
+      <section className="relative isolate overflow-hidden bg-ink pt-24 text-white sm:pt-28">
         <HeroBackdrop />
         <div className="relative mx-auto max-w-5xl px-5 text-center sm:px-8">
           <div className="animate-rise"><Eyebrow dark icon={MapPin}>Pagamentos de serviços em Moçambique</Eyebrow></div>
-          <h1 className="mx-auto mt-8 max-w-4xl animate-rise text-[2.6rem] font-bold leading-[1.02] tracking-[-0.035em] [animation-delay:80ms] sm:text-7xl">
+          <h1 className="mx-auto mt-6 max-w-4xl animate-rise text-[2.6rem] font-bold leading-[1.02] tracking-[-0.035em] [animation-delay:80ms] sm:text-7xl">
             Pague contas e taxas,{" "}
             <span className="bg-gradient-to-r from-white via-white/75 to-white/35 bg-clip-text text-transparent">sem ir ao balcão.</span>
           </h1>
