@@ -68,6 +68,7 @@ export default function Root() {
       const url = String(r.notification.request.content.data?.url ?? "");
       const ref = url.match(/pagamento\/(PMZ[0-9A-Z]+)/)?.[1];
       if (ref) router.push(`/pagamento/${ref}`);
+      else if (url.endsWith("contas")) router.push("/contas");
     });
     return () => sub.remove();
   }, [prefs?.notifyPayments]);

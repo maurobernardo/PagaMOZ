@@ -1,5 +1,7 @@
 import { router, useFocusEffect } from "expo-router";
-import { ArrowRight, Bell, ChevronRight, CreditCard, Moon, Search, ShieldCheck, Smartphone, Sun, UserRound } from "lucide-react-native";
+import { ArrowRight, Bell, CalendarClock, Camera, ChevronRight, CreditCard, Moon, Search, ShieldCheck, Sun, UserRound } from "lucide-react-native";
+import { scanBill, type Bills } from "../../lib/intel";
+import { Alert } from "../../components/ui";
 import { Avatar } from "../../components/avatar";
 import { shortName, type Me as FullMe } from "../../lib/me";
 import { Image } from "expo-image";
@@ -39,6 +41,8 @@ export default function Home() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [code, setCode] = useState("");
   const [codeErr, setCodeErr] = useState("");
+  const [scanMsg, setScanMsg] = useState("");
+  const [bills, setBills] = useState<Bills | null>(null);
 
   const loadMe = useCallback(() => {
     api<Me>("/api/me")
@@ -46,12 +50,21 @@ export default function Home() {
         setMe(m);
         const r = await api<Payment[] | { results: Payment[] }>("/api/me/payments");
         setPayments(Array.isArray(r) ? r : r.results);
+        setBills(await api<Bills>("/api/intel/bills"));
       })
       .catch(() => { setMe(null); setPayments([]); });
   }, []);
   useFocusEffect(loadMe);
 
   const last = payments[0];
+  // Próximas contas (as 3 mais perto) e energia a acabar.
+  const next = [
+    ...(bills?.credelec ?? []).filter((c) => c.days_left != null).map((c) => ({ label: `Credelec ${c.key}`, slug: c.institution_slug, d: c.days_left as number, energy: true })),
+    ...(bills?.recurring ?? []).map((r) => ({ label: r.service_name, slug: r.institution_slug, d: r.days_left as number, energy: false })),
+  ].sort((a, b) => a.d - b.d).slice(0, 3).map((n) => ({
+    ...n, urgent: n.d <= (n.energy ? 3 : 2),
+    when: n.energy ? `~${Math.max(0, n.d)} ${t("dias de energia")}` : n.d <= 0 ? t("Hoje") : `${t("Daqui a")} ${n.d} ${t("dias")}`,
+  }));
   const paid = payments.filter((p) => ["CONFIRMADA", "LIQUIDADA"].includes(p.status));
   // Este mês e mini-barras dos últimos 6 meses (hora de Maputo).
   const ym = (iso: string) => { const d = new Date(new Date(iso).getTime() + 2 * 3600_000); return d.getUTCFullYear() * 12 + d.getUTCMonth(); };
@@ -118,8 +131,9 @@ export default function Home() {
 
         {/* Atalhos */}
         <View style={{ marginTop: 16, flexDirection: "row", justifyContent: "space-between" }}>
-          {([[CreditCard, "Pagar", "/servicos"], [Search, "Acompanhar", "/notificacoes"], [ShieldCheck, "Verificar", "/verificar"], [Smartphone, "Recarga", "/grupo/recarga"]] as const).map(([I, label, href]) => (
-            <Pressable key={label} accessibilityRole="button" accessibilityLabel={t(label)} onPress={() => router.push(href)} style={{ alignItems: "center", gap: 6, width: 72 }}>
+          {([[CreditCard, "Pagar", "/servicos"], [Camera, "Fotografar", "scan"], [CalendarClock, "Contas", "/contas"], [ShieldCheck, "Verificar", "/verificar"]] as const).map(([I, label, href]) => (
+            <Pressable key={label} accessibilityRole="button" accessibilityLabel={t(label)} style={{ alignItems: "center", gap: 6, width: 72 }}
+              onPress={async () => (href === "scan" ? setScanMsg((await scanBill(true)) ?? "") : router.push(href))}>
               <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: "rgba(255,255,255,0.14)", borderWidth: 1, borderColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" }}>
                 <I size={21} color={C.onHero} />
               </View>
@@ -129,6 +143,7 @@ export default function Home() {
         </View>
       </View>
 
+      {scanMsg ? <Alert>{scanMsg}</Alert> : null}
       {/* Cartão sobreposto */}
       <Pressable accessibilityRole="button" onPress={() => router.push(last ? `/pagamento/${last.reference}` : "/servicos")}
         style={({ pressed }) => ({ marginTop: -46, backgroundColor: C.surface, borderRadius: R.card, padding: 16, flexDirection: "row", alignItems: "center", gap: 14, transform: [{ scale: pressed ? 0.985 : 1 }], ...shadow() })}>
@@ -143,6 +158,23 @@ export default function Home() {
         <ChevronRight size={20} color={C.ink} />
       </Pressable>
 
+
+      {next.length ? (
+        <Pressable accessibilityRole="button" onPress={() => router.push("/contas")}
+          style={({ pressed }) => ({ backgroundColor: C.surface, borderRadius: R.card, padding: 16, gap: 10, transform: [{ scale: pressed ? 0.985 : 1 }], ...shadow() })}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <Text style={{ fontFamily: F.display, fontSize: 17, color: C.ink }}>{t("Próximas contas")}</Text>
+            <ChevronRight size={18} color={C.muted} />
+          </View>
+          {next.map((n) => (
+            <View key={n.label} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <BrandMark slug={n.slug} name={n.label} size={30} round />
+              <Text style={{ flex: 1, fontFamily: F.body, fontSize: 14, color: C.ink }} numberOfLines={1}>{n.label}</Text>
+              <Text style={{ fontFamily: F.semi, fontSize: 13, color: n.urgent ? C.accent : C.muted }}>{n.when}</Text>
+            </View>
+          ))}
+        </Pressable>
+      ) : null}
 
       <View style={{ gap: 12 }}>
         <View>

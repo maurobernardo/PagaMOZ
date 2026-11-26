@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "portal",
     "reconciliation",
     "backoffice",
+    "intel",
 ]
 
 MIDDLEWARE = [
@@ -114,6 +115,7 @@ CELERY_BEAT_SCHEDULE = {
         "task": "reconciliation.services.run_daily_reconciliation",
         "schedule": crontab(hour=23, minute=30),
     },
+    "lembretes-contas": {"task": "intel.tasks.remind_due_bills", "schedule": crontab(hour=8, minute=0)},
     "liquidacao-diaria": {
         "task": "settlement.services.run_daily_settlement",
         "schedule": crontab(hour=18, minute=0),

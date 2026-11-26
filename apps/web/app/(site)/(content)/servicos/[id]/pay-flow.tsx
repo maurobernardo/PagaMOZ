@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  ArrowLeft, ArrowRight, BadgeCheck, Bookmark, CheckCircle2, CircleAlert, ClipboardList, FileCheck2, FlaskConical, Lock, Pencil,
-  ReceiptText, Search, Share2, Upload, UserRound, Wallet,
+  AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, Bookmark, CheckCircle2, CircleAlert, ClipboardList, FileCheck2, FlaskConical, Lock, Pencil,
+  ReceiptText, Search, Share2, Sparkles, Upload, UserRound, Wallet,
 } from "lucide-react";
 import { useCardForm } from "@/components/card-form";
 import { BrandMark } from "@/components/brand-mark";
@@ -203,6 +203,18 @@ export function PayFlow({
   }
 
   const idx = STEPS.findIndex(([k]) => k === step);
+  // Saúde dos métodos na última hora: sugere o que está a funcionar (sem trocar o que a pessoa escolheu).
+  const [health, setHealth] = useState<Record<string, { state: string; recommended: boolean }>>({});
+  const [picked, setPicked] = useState(false);
+  useEffect(() => {
+    if (step !== "metodo") return;
+    fetch("/api/intel/methods").then((r) => r.json()).then((rows: { method: string; state: string; recommended: boolean }[]) => {
+      setHealth(Object.fromEntries(rows.map((x) => [x.method, x])));
+      const rec = rows.find((x) => x.recommended)?.method;
+      if (rec && !picked) setMethod(rec);
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
   const isWallet = WALLETS.includes(method);
 
   return (
@@ -222,6 +234,9 @@ export function PayFlow({
       </ol>
 
       {error ? <div className="mb-5"><Alert>{error}</Alert></div> : null}
+      {prefill.origem === "fatura" && step === "dados" ? (
+        <div className="mb-5 rounded-2xl bg-canvas p-4 text-sm font-semibold">Lemos estes dados da sua fatura. Confirme se estão certos antes de continuar.</div>
+      ) : null}
 
       {step === "dados" && (
         <Card className="animate-rise">
@@ -356,9 +371,14 @@ export function PayFlow({
                 {Object.entries(METHOD_LABEL).map(([k, label]) => (
                   <label key={k}
                     className={`relative flex cursor-pointer flex-col gap-3 rounded-2xl border p-4 transition ${method === k ? "border-ink bg-ink text-white" : "border-line bg-white hover:border-ink/40"}`}>
-                    <input type="radio" name="method" value={k} checked={method === k} onChange={() => setMethod(k)} className="sr-only" />
+                    <input type="radio" name="method" value={k} checked={method === k} onChange={() => { setMethod(k); setPicked(true); }} className="sr-only" />
                     {WALLET_PREFIXES[k] ? <BrandMark slug={k} name={label} size={44} /> : k === "cartao" ? <span className="flex gap-1.5"><BrandMark slug="visa" name="Visa" size={44} /><BrandMark slug="mastercard" name="Mastercard" size={44} /></span> : <MethodIcon method={k} className={method === k ? "!bg-white/15 !text-white" : ""} />}
                     <span className="text-sm font-semibold leading-tight">{label}</span>
+                    {health[k]?.recommended ? (
+                      <span className={`inline-flex items-center gap-1 text-xs font-semibold ${method === k ? "text-white" : "text-emerald-700"}`}><Sparkles className="h-3 w-3" /> A funcionar bem agora</span>
+                    ) : health[k] && ["instavel", "falhas"].includes(health[k].state) ? (
+                      <span className={`inline-flex items-center gap-1 text-xs font-semibold ${method === k ? "text-white" : "text-amber-700"}`}><AlertTriangle className="h-3 w-3" /> {health[k].state === "falhas" ? "Com falhas agora" : "Instável agora"}</span>
+                    ) : null}
                     {method === k ? <CheckCircle2 className="absolute right-3 top-3 h-4 w-4" /> : null}
                   </label>
                 ))}

@@ -1,7 +1,8 @@
 import * as DocumentPicker from "expo-document-picker";
 import { router, useLocalSearchParams } from "expo-router";
-import { ArrowLeft, ArrowRight, CheckCircle2, CreditCard, FileCheck2, Info, Lock, Search, Upload } from "lucide-react-native";
+import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Sparkles, CreditCard, FileCheck2, Info, Lock, Search, Upload } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
+import { useMethodHealth } from "../../lib/intel";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { BrandMark, MethodMark } from "../../components/brand";
 import { Alert, Button, Card, Field, H2, Header, Loading, P, Row, Steps } from "../../components/ui";
@@ -37,16 +38,24 @@ export default function Servico() {
 }
 
 function PayFlow({ s }: { s: Service }) {
+  // Dados vindos de uma fatura lida ou de uma conta recorrente (a pessoa revê antes de continuar).
+  const params = useLocalSearchParams<{ prefill?: string; valor?: string; origem?: string }>();
+  const prefill = (() => { try { return JSON.parse(params.prefill ?? "{}") as Record<string, string>; } catch { return {}; } })();
   const [step, setStep] = useState(0);
   const [values, setValues] = useState<Record<string, string>>(() =>
-    Object.fromEntries(s.fields.filter((f) => f.type !== "file").map((f) => [f.name, f.type === "select" ? s.variants[0]?.key ?? "" : ""])));
+    Object.fromEntries(s.fields.filter((f) => f.type !== "file").map((f) => [f.name, prefill[f.name] ?? (f.type === "select" ? s.variants[0]?.key ?? "" : "")])));
   const [files, setFiles] = useState<Record<string, Picked>>({});
-  const [amountMt, setAmountMt] = useState("");
+  const [amountMt, setAmountMt] = useState(params.valor && s.pricing === "aberto" ? params.valor : "");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmed, setConfirmed] = useState<Confirmed | null>(null);
   const [method, setMethod] = useState("mpesa");
+  const [picked, setPicked] = useState(false);
+  const health = useMethodHealth(step === 2);
+  // Sugere o método que está a funcionar agora, enquanto a pessoa não escolher outro.
+  const rec = Object.values(health).find((h) => h.recommended)?.method;
+  useEffect(() => { if (rec && !picked) setMethod(rec); }, [rec, picked]);
   const [phone, setPhone] = useState("");
   const [card, setCard] = useState({ number: "", exp: "", cvv: "", holder: "" });
   const idem = useRef("");
@@ -170,6 +179,7 @@ function PayFlow({ s }: { s: Service }) {
         </View>
 
         <Steps steps={STEPS()} current={step} />
+        {params.origem === "fatura" && step === 0 ? <Alert tone="info">{t("Lemos estes dados da sua fatura. Confirme se estão certos antes de continuar.")}</Alert> : null}
         {error ? <Alert>{error}</Alert> : null}
 
         {step === 0 && (
@@ -276,10 +286,21 @@ function PayFlow({ s }: { s: Service }) {
                 const on = method === k;
                 return (
                   <Pressable key={k} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={label}
-                    onPress={() => { setMethod(k); setErrors({}); }}
+                    onPress={() => { setMethod(k); setPicked(true); setErrors({}); }}
                     style={{ width: "48%", flexGrow: 1, minHeight: 108, padding: 14, gap: 10, borderRadius: 22, borderWidth: 1.5, borderColor: on ? C.ink : C.line, backgroundColor: on ? C.ink : C.white }}>
                     <MethodMark method={k} size={40} active={on} />
                     <Text style={{ fontFamily: F.bold, fontSize: 14, lineHeight: 18, color: on ? C.white : C.ink }}>{label}</Text>
+                    {health[k]?.recommended ? (
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                        <Sparkles size={12} color={on ? C.white : C.ok} />
+                        <Text style={{ fontFamily: F.semi, fontSize: 11, color: on ? C.white : C.ok }}>{t("A funcionar bem agora")}</Text>
+                      </View>
+                    ) : health[k] && ["instavel", "falhas"].includes(health[k].state) ? (
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                        <AlertTriangle size={12} color={on ? C.white : C.wait} />
+                        <Text style={{ fontFamily: F.semi, fontSize: 11, color: on ? C.white : C.wait }}>{t(health[k].state === "falhas" ? "Com falhas agora" : "Instável agora")}</Text>
+                      </View>
+                    ) : null}
                     {on ? <CheckCircle2 size={18} color={C.white} style={{ position: "absolute", right: 12, top: 12 }} /> : null}
                   </Pressable>
                 );

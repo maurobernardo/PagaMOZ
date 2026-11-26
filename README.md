@@ -34,3 +34,12 @@ Guião da apresentação: `docs/guiao-demo.md`. API: `docs/api.md`. Produção: 
 
 - Cada resposta traz `X-Request-ID` (aceita o do proxy); logs em JSON com `LOG_JSON=true` (por omissão fora de `DEBUG`).
 - `GET /metrics` (formato Prometheus) só com `Authorization: Bearer $METRICS_TOKEN`; sem token fica desligado.
+
+## Fotografe e pague (OCR gratuito)
+
+A leitura de faturas usa o Tesseract (código aberto, corre no servidor, sem custos nem envio de dados para fora).
+
+- Docker: já instalado pela imagem (`tesseract-ocr` + `tesseract-ocr-por`).
+- Windows (desenvolvimento): instale o Tesseract para Windows e o pacote de idioma português, e garanta que `tesseract` está no PATH.
+
+Sem Tesseract, `POST /api/intel/scan` responde 503 a fotos, mas aceita o texto já lido em `text`.

@@ -8,6 +8,7 @@ from rest_framework import generics, mixins, permissions, serializers, viewsets
 from audit.models import record
 from institutions.models import Institution, Membership
 from institutions.permissions import InstitutionRole, resolve_membership
+from intel.models import log
 
 from .models import Category, Service
 from .search import rank
@@ -191,6 +192,7 @@ class PublicServiceViewSet(viewsets.ReadOnlyModelViewSet):
         if q := p.get("q", "").strip():
             # Pesquisa inteligente (siglas, sinónimos, erros de escrita), ordenada por relevância.
             ids = [x.pk for x in rank(qs, q)]
+            log("search", self.request, q=q[:80], results=len(ids))
             order = Case(*[When(pk=pk, then=i) for i, pk in enumerate(ids)], output_field=IntegerField())
             qs = qs.filter(pk__in=ids).order_by(order) if ids else qs.none()
         return qs

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CategoryIcon } from "@/components/category-icon";
 import { Eyebrow } from "@/components/eyebrow";
+import { ScanBill } from "@/components/scan-bill";
 import { GroupCard, ServiceCard } from "@/components/service-card";
 import { Empty } from "@/components/ui";
 import { api } from "@/lib/api";
@@ -37,6 +38,7 @@ export default async function Servicos({ searchParams }: { searchParams: Promise
                 className="min-h-11 min-w-0 flex-1 bg-transparent text-base text-white placeholder:text-white/40 focus:outline-none" />
               <button className="frame-none min-h-11 shrink-0 rounded-full bg-white px-5 font-semibold text-ink hover:bg-white/90">Pesquisar</button>
             </form>
+            <div className="mt-4"><ScanBill dark /></div>
           </div>
           <dl className="grid grid-cols-3 gap-2">
             {[["Serviços", String(total)], ["Nesta lista", String(list.data?.count ?? 0)], ["Instituições", String(institutions)]].map(([l, v]) => (

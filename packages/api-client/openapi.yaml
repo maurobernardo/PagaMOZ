@@ -654,6 +654,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/Health'
           description: ''
+  /api/intel/bills:
+    get:
+      operationId: intel_bills_retrieve
+      description: 'Contas da casa: o que se repete (com próxima data e valor) e a
+        previsão Credelec.'
+      tags:
+      - intel
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bills'
+          description: ''
+  /api/intel/methods:
+    get:
+      operationId: intel_methods_list
+      description: Saúde de cada método de pagamento na última hora e o recomendado
+        agora.
+      tags:
+      - intel
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MethodHealth'
+          description: ''
+  /api/intel/scan:
+    post:
+      operationId: intel_scan_create
+      description: |-
+        Lê uma fatura (foto em `image`, ou texto já lido em `text`) e propõe o pagamento.
+
+        A pessoa revê tudo antes de pagar.
+      tags:
+      - intel
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                text:
+                  type: string
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanResult'
+          description: ''
   /api/me:
     get:
       operationId: me_retrieve
@@ -894,6 +959,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedPaymentList'
           description: ''
+  /api/me/push-token:
+    post:
+      operationId: me_push_token_create
+      description: Regista (ou esquece, com DELETE) o token push da Expo deste telemóvel.
+      tags:
+      - me
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PushTokenRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PushTokenRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PushTokenRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+    delete:
+      operationId: me_push_token_destroy
+      description: Regista (ou esquece, com DELETE) o token push da Expo deste telemóvel.
+      tags:
+      - me
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/me/requests:
     get:
       operationId: me_requests_list
@@ -1936,6 +2034,18 @@ components:
       - a_liquidar
       - conta_destino
       - liquidado
+    Bills:
+      type: object
+      properties:
+        recurring:
+          type: array
+          items: {}
+        credelec:
+          type: array
+          items: {}
+      required:
+      - credelec
+      - recurring
     BlankEnum:
       enum:
       - ''
@@ -2548,6 +2658,30 @@ components:
         * `cartao` - Cartão Visa/Mastercard
         * `referencia_bancaria` - Referência bancária
         * `qr` - QR Code
+    MethodHealth:
+      type: object
+      properties:
+        method:
+          type: string
+        ok:
+          type: integer
+        failed:
+          type: integer
+        rate:
+          type: number
+          format: double
+          nullable: true
+        state:
+          type: string
+        recommended:
+          type: boolean
+      required:
+      - failed
+      - method
+      - ok
+      - rate
+      - recommended
+      - state
     MfaCodeRequest:
       type: object
       properties:
@@ -3497,6 +3631,17 @@ components:
         Província\n* `Gaza` - Gaza\n* `Inhambane` - Inhambane\n* `Sofala` - Sofala\n*
         `Manica` - Manica\n* `Tete` - Tete\n* `Zambézia` - Zambézia\n* `Nampula` -
         Nampula\n* `Cabo Delgado` - Cabo Delgado\n* `Niassa` - Niassa\n* `` - "
+    PushTokenRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          minLength: 1
+        platform:
+          type: string
+          minLength: 1
+      required:
+      - token
     QuoteItem:
       type: object
       properties:
@@ -3786,6 +3931,34 @@ components:
           type: integer
       required:
       - discrepancies
+    ScanResult:
+      type: object
+      properties:
+        service:
+          type: integer
+          nullable: true
+        service_name:
+          type: string
+        institution_name:
+          type: string
+        fields:
+          type: object
+          additionalProperties: {}
+        amount:
+          type: integer
+          nullable: true
+        due_date:
+          type: string
+          nullable: true
+        confidence:
+          type: number
+          format: double
+      required:
+      - amount
+      - confidence
+      - due_date
+      - fields
+      - service
     ScenarioEnum:
       enum:
       - sucesso
