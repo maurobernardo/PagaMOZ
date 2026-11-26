@@ -20,7 +20,7 @@ $$ LANGUAGE plpgsql;
 def forwards(apps, schema_editor):
     if schema_editor.connection.vendor != "postgresql":
         return
-    schema_editor.execute(FUNC)
+    schema_editor.execute(FUNC, params=None)  # None: o "%" do RAISE não é um parâmetro
     for t in TABLES:
         schema_editor.execute(f"DROP TRIGGER IF EXISTS {t}_append_only ON {t};")
         schema_editor.execute(

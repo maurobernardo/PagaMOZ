@@ -1,12 +1,13 @@
 # Produção no VPS: Postgres + Redis + API (gunicorn) + Celery.
 # O HTTPS é do Caddy que já existe no VPS (/opt/terra/deploy): a API entra na rede dele como "pagamoz-api".
+# Na rede partilhada há outro "db": por isso a base e o Redis usam nomes únicos (pagamoz-db, pagamoz-redis).
 # Uso: no VPS, em infra/prod:  cp .env.example .env  (preencher)  &&  docker compose -p pagamoz up -d --build
 x-api: &api
   build: ../../apps/api
   env_file: .env
   environment:
-    DATABASE_URL: postgres://pagamoz:${POSTGRES_PASSWORD}@db:5432/pagamoz
-    REDIS_URL: redis://redis:6379/0
+    DATABASE_URL: postgres://pagamoz:${POSTGRES_PASSWORD}@pagamoz-db:5432/pagamoz
+    REDIS_URL: redis://pagamoz-redis:6379/0
     RECEIPT_LOGO_DIR: /logos
     MEDIA_ROOT: /data/media
   volumes:
@@ -20,12 +21,14 @@ x-api: &api
 services:
   db:
     image: postgres:16-alpine
+    networks: { default: { aliases: [pagamoz-db] } }
     environment: { POSTGRES_USER: pagamoz, POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}", POSTGRES_DB: pagamoz }
     volumes: [pg:/var/lib/postgresql/data]
     healthcheck: { test: ["CMD", "pg_isready", "-U", "pagamoz"], interval: 5s, retries: 10 }
     restart: unless-stopped
   redis:
     image: redis:7-alpine
+    networks: { default: { aliases: [pagamoz-redis] } }
     healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 5s, retries: 10 }
     restart: unless-stopped
   api:
