@@ -51,6 +51,20 @@ GROUPS = {
 }
 
 
+def deposit(cfg, bank, holder, account="0000 0000 0000 0000 0000 0"):
+    """Depósito na conta da instituição (substitui a ida ao banco).
+
+    A conta é de DEMONSTRAÇÃO: a verdadeira é posta pelo super admin no backoffice, confirmada com a instituição.
+    Comissão: paga pelo cidadão, fixa e mostrada antes de pagar; a instituição recebe o valor por inteiro.
+    """
+    return {**cfg, "deposit": {"bank": bank, "account": account, "holder": holder},
+            "commission": {"bps": 0, "fixed": DEPOSIT_FEE, "payer": "cidadao"}}  # fmt: skip
+
+
+# Taxa de conveniência do depósito (centavos), paga pelo cidadão. Decisão de negócio: ajustar no backoffice.
+DEPOSIT_FEE = 2_500
+
+
 def grouped(cfg, group, option):
     return {**cfg, "group": group, "option": option}
 
@@ -336,6 +350,33 @@ INSTITUTIONS = [
                     "Multas por pagar impedem a renovação da carta.",
                 ),
             ),
+            # Valores indicados pelo utilizador (Nov. 2026); confirmar com o INATRO antes de usar a sério.
+            (
+                "exame-teorico",
+                "Exame teórico de condução",
+                L2,
+                FIXO,
+                218_500,
+                [NOME, BI],
+                deposit(
+                    conf(None, "Depósito na conta do INATRO no BCI.", "Leve o comprovativo e o BI ao INATRO."),
+                    "BCI",
+                    "Instituto Nacional dos Transportes Terrestres",
+                ),
+            ),
+            (
+                "levantamento-carta",
+                "Levantamento da carta de condução",
+                L2,
+                FIXO,
+                300_000,
+                [NOME, BI],
+                deposit(
+                    conf(None, "Depósito na conta do INATRO no BCI.", "Leve o comprovativo e o BI ao INATRO."),
+                    "BCI",
+                    "Instituto Nacional dos Transportes Terrestres",
+                ),
+            ),
         ],
     ),
     (
@@ -428,11 +469,23 @@ INSTITUTIONS = [
             (
                 "propinas",
                 "Propinas",
-                L1,
-                CONSULTA,
+                L2,
+                ABERTO,
                 None,
-                [f("n_estudante", "N.º de estudante", pattern=r"^\d{5,10}$", help="Está no cartão de estudante.")],
-                grouped(conf("uem_propinas", "Mostra as prestações em dívida."), "propinas", "UCM"),
+                [
+                    NOME,
+                    BI,
+                    f("n_estudante", "N.º de estudante", pattern=r"^\d{5,10}$", help="Está no cartão de estudante."),
+                ],
+                grouped(
+                    deposit(
+                        conf(None, "Depósito na conta da UCM no BIM.", "Leve o comprovativo à secretaria."),
+                        "BIM (Millennium bim)",
+                        "Universidade Católica de Moçambique",
+                    ),
+                    "propinas",
+                    "UCM",
+                ),
             ),
         ],
     ),

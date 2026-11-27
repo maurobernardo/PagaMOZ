@@ -6,7 +6,7 @@ import { MethodIcon } from "@/components/method-icon";
 import { filterInput, Table, TableEmpty } from "@/components/table";
 import { useToast } from "@/components/toast";
 import { Badge, Button, Toolbar, useDialog } from "@/components/ui";
-import { api, errorMessage } from "@/lib/api";
+import { api, csrfToken, errorMessage } from "@/lib/api";
 import { formatDateTime, formatMZN, METHOD_LABEL, PAYMENT_STATUS } from "@/lib/i18n";
 import { useLoad, usePortal } from "../portal-context";
 
@@ -42,6 +42,21 @@ export default function Transacoes() {
     reload();
   }
 
+  /** Balcão: aceitou o comprovativo; fica marcado e não serve outra vez. */
+  async function markUsed(reference: string, who: string) {
+    const ok = await dialog.confirm({
+      title: "Aceitar este comprovativo?",
+      body: `${who ? who + " · " : ""}${reference}. Depois de aceite não pode ser usado outra vez.`,
+      confirm: "Aceitar e marcar como utilizado",
+    });
+    if (!ok) return;
+    const r = await fetch(`/api/portal/${slug}/transactions/${reference}/used`, { method: "POST", headers: { "X-CSRFToken": csrfToken() } });
+    const b = await r.json().catch(() => ({}));
+    if (r.ok) toast(`Comprovativo ${reference} aceite.`);
+    else toast(b.detail ?? "Não foi possível marcar.", "bad");
+    reload();
+  }
+
   return (
     <div className="space-y-6">
       {dialog.ui}
@@ -50,7 +65,7 @@ export default function Transacoes() {
           <label className="relative flex-1 basis-48">
             <span className="sr-only">Referência ou detalhe</span>
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-            <input className={`${filterInput} w-full pl-10`} value={f.q} onChange={(e) => setF({ ...f, q: e.target.value })} placeholder="Pesquisar referência…" />
+            <input className={`${filterInput} w-full pl-10`} value={f.q} onChange={(e) => setF({ ...f, q: e.target.value })} placeholder="Referência, BI ou nome…" />
           </label>
           <select aria-label="Estado" className={filterInput} value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}>
             <option value="">Todos os estados</option>
@@ -89,6 +104,7 @@ export default function Transacoes() {
                   <div className="min-w-0">
                     <p className="truncate font-semibold">{t.service_name}</p>
                     <p className="font-mono text-xs text-muted">{t.reference} · {t.method_label}</p>
+                    {t.payer_name || t.payer_bi ? <p className="text-xs text-muted">{t.payer_name}{t.payer_bi ? ` · BI ${t.payer_bi}` : ""}</p> : null}
                   </div>
                 </div>
               </td>
@@ -97,11 +113,22 @@ export default function Transacoes() {
               <td className="text-right font-display font-bold tabular-nums">{formatMZN(t.institution_net)}</td>
               <td><Badge tone={st?.tone ?? "info"}>{st?.label ?? t.status}</Badge></td>
               <td className="text-right">
+                <div className="flex flex-wrap justify-end gap-2">
+                {t.is_deposit && ["CONFIRMADA", "LIQUIDADA"].includes(t.status) ? (
+                  t.used_at ? (
+                    <span className="inline-flex min-h-9 items-center rounded-full bg-canvas px-3 text-xs font-semibold text-muted">Utilizado {formatDateTime(t.used_at)}</span>
+                  ) : (
+                    <button onClick={() => markUsed(t.reference, t.payer_name)} className="inline-flex min-h-9 items-center rounded-full bg-ink px-3.5 text-sm font-semibold text-white hover:bg-ink/85">
+                      Aceitar comprovativo
+                    </button>
+                  )
+                ) : null}
                 {t.status === "CONFIRMADA" && canWrite(["admin", "financeiro"]) ? (
                   <button onClick={() => reverse(t.reference, t.total)} className="frame inline-flex min-h-9 items-center gap-1.5 rounded-full bg-white px-3 text-sm font-semibold text-accent hover:bg-accent-soft">
                     <Undo2 className="h-4 w-4" /> Devolver
                   </button>
                 ) : null}
+                </div>
               </td>
             </tr>
           );

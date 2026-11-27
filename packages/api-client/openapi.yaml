@@ -534,6 +534,62 @@ paths:
               schema:
                 $ref: '#/components/schemas/Member'
           description: ''
+  /api/backoffice/institutions/{slug}/services:
+    get:
+      operationId: backoffice_institutions_services_list
+      description: 'Super admin: conta de destino (depósito) e comissão de cada serviço.
+        A instituição só as vê.'
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - backoffice
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceDeposit'
+          description: ''
+    patch:
+      operationId: backoffice_institutions_services_partial_update
+      description: 'Super admin: conta de destino (depósito) e comissão de cada serviço.
+        A instituição só as vê.'
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - backoffice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedServiceDepositRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedServiceDepositRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedServiceDepositRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceDeposit'
+          description: ''
   /api/backoffice/overview:
     get:
       operationId: backoffice_overview_retrieve
@@ -2210,6 +2266,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/PortalTransaction'
           description: ''
+  /api/portal/{institution_slug}/transactions/{reference}/used:
+    post:
+      operationId: portal_transactions_used_create
+      description: 'O balcão aceitou o comprovativo: fica marcado e não pode ser aceite
+        outra vez (como carimbar o talão).'
+      parameters:
+      - in: path
+        name: institution_slug
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: reference
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalTransaction'
+          description: ''
   /api/receipts/{code}:
     get:
       operationId: receipts_retrieve
@@ -3818,6 +3901,38 @@ components:
       properties:
         role:
           $ref: '#/components/schemas/RoleEnum'
+    PatchedServiceDepositRequest:
+      type: object
+      properties:
+        deposit_bank:
+          type: string
+          title: Banco do depósito
+          maxLength: 60
+        deposit_account:
+          type: string
+          title: Conta / NIB do depósito
+          maxLength: 40
+        deposit_holder:
+          type: string
+          title: Titular da conta
+          maxLength: 160
+        commission_bps:
+          type: integer
+          maximum: 10000
+          minimum: 0
+          nullable: true
+          title: Comissão (pontos base)
+        commission_fixed:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          title: Comissão fixa (centavos)
+        commission_payer:
+          oneOf:
+          - $ref: '#/components/schemas/CommissionPayerEnum'
+          - $ref: '#/components/schemas/BlankEnum'
     PatchedServicePortalRequest:
       type: object
       properties:
@@ -4167,6 +4282,20 @@ components:
         reference:
           type: string
           readOnly: true
+        payer_name:
+          type: string
+          readOnly: true
+        payer_bi:
+          type: string
+          readOnly: true
+        is_deposit:
+          type: boolean
+          readOnly: true
+        used_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
         status:
           allOf:
           - $ref: '#/components/schemas/PaymentStatusEnum'
@@ -4237,8 +4366,11 @@ components:
       - failure_reason
       - institution_net
       - institution_ref
+      - is_deposit
       - method
       - method_label
+      - payer_bi
+      - payer_name
       - provider_ref
       - reference
       - service
@@ -4247,6 +4379,7 @@ components:
       - settlement_date
       - status
       - total
+      - used_at
     PriceRequestRequest:
       type: object
       properties:
@@ -4622,12 +4755,14 @@ components:
       - anulado
       - em_analise
       - adulterado
+      - utilizado
       type: string
       description: |-
         * `valido` - valido
         * `anulado` - anulado
         * `em_analise` - em_analise
         * `adulterado` - adulterado
+        * `utilizado` - utilizado
     ReverseRequestRequest:
       type: object
       properties:
@@ -4747,6 +4882,58 @@ components:
       required:
       - demo_mode
       - scenarios
+    ServiceDeposit:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        pricing:
+          allOf:
+          - $ref: '#/components/schemas/PricingEnum'
+          readOnly: true
+        amount:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: Valor fixo (centavos)
+        deposit_bank:
+          type: string
+          title: Banco do depósito
+          maxLength: 60
+        deposit_account:
+          type: string
+          title: Conta / NIB do depósito
+          maxLength: 40
+        deposit_holder:
+          type: string
+          title: Titular da conta
+          maxLength: 160
+        commission_bps:
+          type: integer
+          maximum: 10000
+          minimum: 0
+          nullable: true
+          title: Comissão (pontos base)
+        commission_fixed:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          title: Comissão fixa (centavos)
+        commission_payer:
+          oneOf:
+          - $ref: '#/components/schemas/CommissionPayerEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+      required:
+      - amount
+      - id
+      - name
+      - pricing
     ServiceField:
       type: object
       properties:
@@ -4878,8 +5065,23 @@ components:
           type: string
           format: date-time
           readOnly: true
+        deposit_bank:
+          type: string
+          readOnly: true
+          title: Banco do depósito
+        deposit_account:
+          type: string
+          readOnly: true
+          title: Conta / NIB do depósito
+        deposit_holder:
+          type: string
+          readOnly: true
+          title: Titular da conta
       required:
       - category
+      - deposit_account
+      - deposit_bank
+      - deposit_holder
       - id
       - integration_level
       - name
@@ -5046,9 +5248,22 @@ components:
               type: string
           readOnly: true
           description: 'Assunto comum a várias opções (ex.: recarga por operadora).'
+        deposit:
+          type: object
+          nullable: true
+          properties:
+            bank:
+              type: string
+            account:
+              type: string
+            holder:
+              type: string
+          readOnly: true
+          description: Depósito na conta da instituição (banco, conta, titular).
       required:
       - amount
       - category
+      - deposit
       - description
       - fields
       - group
@@ -5182,6 +5397,20 @@ components:
         reference:
           type: string
           readOnly: true
+        payer_name:
+          type: string
+          readOnly: true
+        payer_bi:
+          type: string
+          readOnly: true
+        is_deposit:
+          type: boolean
+          readOnly: true
+        used_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
         status:
           allOf:
           - $ref: '#/components/schemas/PaymentStatusEnum'
@@ -5253,8 +5482,11 @@ components:
       - institution_name
       - institution_net
       - institution_ref
+      - is_deposit
       - method
       - method_label
+      - payer_bi
+      - payer_name
       - provider_ref
       - reference
       - service
@@ -5263,6 +5495,7 @@ components:
       - settlement_date
       - status
       - total
+      - used_at
     StatusChangeRequest:
       type: object
       properties:
@@ -5340,6 +5573,16 @@ components:
           type: string
         demonstracao:
           type: boolean
+        deposito:
+          type: object
+          additionalProperties: {}
+        depositante:
+          type: object
+          additionalProperties: {}
+        utilizado_em:
+          type: string
+          format: date-time
+          nullable: true
       required:
       - codigo
       - data_hora

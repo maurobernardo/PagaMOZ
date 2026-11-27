@@ -46,6 +46,17 @@ export default async function ServicePage({ params, searchParams }: Props) {
           {s.description ? <p className="mt-3 text-white/65">{s.description}</p> : null}
           <p className="mt-8 font-display text-3xl font-bold">{price}</p>
         </div>
+        {s.deposit ? (
+          <div className="mt-5 rounded-3xl border border-line bg-white p-5">
+            <p className="flex items-center gap-2 text-sm font-bold"><Landmark className="h-4 w-4" /> Depósito na conta da instituição</p>
+            <p className="mt-2 text-sm text-muted">Substitui a ida ao banco. O comprovativo serve como o talão do depósito.</p>
+            <dl className="mt-3 grid gap-1 text-sm">
+              <div className="flex justify-between gap-3"><dt className="text-muted">Banco</dt><dd className="text-right font-semibold">{s.deposit.bank}</dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-muted">Conta / NIB</dt><dd className="text-right font-mono font-semibold">{s.deposit.account}</dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-muted">Titular</dt><dd className="text-right font-semibold">{s.deposit.holder}</dd></div>
+            </dl>
+          </div>
+        ) : null}
         {s.guide.length ? (
           <div className="mt-5 rounded-3xl border border-line bg-white p-5">
             <p className="flex items-center gap-2 text-sm font-bold"><Info className="h-4 w-4" /> Como funciona este serviço</p>

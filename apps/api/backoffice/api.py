@@ -160,6 +160,45 @@ def logo_data_url(f) -> str:
     return "data:image/webp;base64," + base64.b64encode(buf.getvalue()).decode()
 
 
+class ServiceDepositSerializer(serializers.ModelSerializer):
+    class Meta:
+        from catalog.models import Service
+
+        model = Service
+        fields = ["id", "name", "pricing", "amount", "deposit_bank", "deposit_account", "deposit_holder",
+                  "commission_bps", "commission_fixed", "commission_payer"]  # fmt: skip
+        read_only_fields = ["id", "name", "pricing", "amount"]
+
+    def validate_deposit_account(self, v):
+        v = " ".join(v.split())
+        if v and not all(c.isdigit() or c == " " for c in v):
+            raise serializers.ValidationError("Só algarismos (NIB ou número de conta).")
+        return v
+
+
+class InstitutionServices(APIView):
+    """Super admin: conta de destino (depósito) e comissão de cada serviço. A instituição só as vê."""
+
+    permission_classes = [IsPlatformStaff]
+
+    @extend_schema(responses=ServiceDepositSerializer(many=True))
+    def get(self, request, slug):
+        inst = get_object_or_404(Institution, slug=slug)
+        return Response(ServiceDepositSerializer(inst.services.order_by("name"), many=True).data)
+
+    @extend_schema(request=ServiceDepositSerializer, responses=ServiceDepositSerializer)
+    def patch(self, request, slug, pk=None):
+        inst = get_object_or_404(Institution, slug=slug)
+        svc = get_object_or_404(inst.services, pk=request.data.get("id"))
+        before = {f: getattr(svc, f) for f in ("deposit_bank", "deposit_account", "deposit_holder")}
+        s = ServiceDepositSerializer(svc, data=request.data, partial=True)
+        s.is_valid(raise_exception=True)
+        s.save()
+        record("service.deposit", request=request, institution=inst, target=svc,
+               changes={k: [before[k], getattr(svc, k)] for k in before if before[k] != getattr(svc, k)})  # fmt: skip
+        return Response(s.data)
+
+
 class InstitutionLogo(APIView):
     """POST multipart `logo` (JPG/PNG/WebP até 3 MB) define o logótipo; DELETE tira-o."""
 

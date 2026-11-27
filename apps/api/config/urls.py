@@ -43,6 +43,7 @@ from payments.api import (
 from portal.api import (
     Dashboard,
     PortalForecast,
+    PortalMarkUsed,
     PortalMember,
     PortalMembers,
     PortalReconciliation,
@@ -74,6 +75,7 @@ urlpatterns = [
     path("api/backoffice/institutions/<slug:slug>", bo.InstitutionDetail.as_view()),
     path("api/backoffice/institutions/<slug:slug>/members", bo.InstitutionAdmins.as_view()),
     path("api/backoffice/institutions/<slug:slug>/logo", bo.InstitutionLogo.as_view()),
+    path("api/backoffice/institutions/<slug:slug>/services", bo.InstitutionServices.as_view()),
     path("api/catalog/institutions/<slug:slug>/logo", institution_logo),
     path("api/backoffice/users/<int:pk>/invite", bo.ResendInvite.as_view()),
     path("api/backoffice/transactions", bo.Transactions.as_view()),
@@ -132,6 +134,7 @@ urlpatterns = [
     path("api/portal/<slug:institution_slug>/forecast", PortalForecast.as_view()),
     path("api/portal/<slug:institution_slug>/transactions", PortalTransactions.as_view()),
     path("api/portal/<slug:institution_slug>/transactions/<str:reference>/reverse", PortalReverse.as_view()),
+    path("api/portal/<slug:institution_slug>/transactions/<str:reference>/used", PortalMarkUsed.as_view()),
     path("api/portal/<slug:institution_slug>/reconciliation", PortalReconciliation.as_view()),
     path("api/portal/<slug:institution_slug>/reconciliation/<int:pk>/resolve", PortalResolveDiscrepancy.as_view()),
     path("api/portal/<slug:institution_slug>/members", PortalMembers.as_view()),

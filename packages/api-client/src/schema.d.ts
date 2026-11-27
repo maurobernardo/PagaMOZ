@@ -304,6 +304,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/backoffice/institutions/{slug}/services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Super admin: conta de destino (depósito) e comissão de cada serviço. A instituição só as vê. */
+        get: operations["backoffice_institutions_services_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Super admin: conta de destino (depósito) e comissão de cada serviço. A instituição só as vê. */
+        patch: operations["backoffice_institutions_services_partial_update"];
+        trace?: never;
+    };
     "/api/backoffice/overview": {
         parameters: {
             query?: never;
@@ -1140,6 +1158,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/portal/{institution_slug}/transactions/{reference}/used": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description O balcão aceitou o comprovativo: fica marcado e não pode ser aceite outra vez (como carimbar o talão). */
+        post: operations["portal_transactions_used_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/receipts/{code}": {
         parameters: {
             query?: never;
@@ -1886,6 +1921,22 @@ export interface components {
         PatchedRoleChangeRequest: {
             role?: components["schemas"]["RoleEnum"];
         };
+        PatchedServiceDepositRequest: {
+            /** Banco do depósito */
+            deposit_bank?: string;
+            /** Conta / NIB do depósito */
+            deposit_account?: string;
+            /** Titular da conta */
+            deposit_holder?: string;
+            /** Comissão (pontos base) */
+            commission_bps?: number | null;
+            /**
+             * Comissão fixa (centavos)
+             * Format: int64
+             */
+            commission_fixed?: number | null;
+            commission_payer?: components["schemas"]["CommissionPayerEnum"] | components["schemas"]["BlankEnum"];
+        };
         PatchedServicePortalRequest: {
             name?: string;
             slug?: string;
@@ -2028,6 +2079,11 @@ export interface components {
         };
         PortalTransaction: {
             readonly reference: string;
+            readonly payer_name: string;
+            readonly payer_bi: string;
+            readonly is_deposit: boolean;
+            /** Format: date-time */
+            readonly used_at: string | null;
             readonly status: components["schemas"]["PaymentStatusEnum"];
             readonly service: number;
             service_name: string;
@@ -2213,9 +2269,10 @@ export interface components {
          *     * `anulado` - anulado
          *     * `em_analise` - em_analise
          *     * `adulterado` - adulterado
+         *     * `utilizado` - utilizado
          * @enum {string}
          */
-        ResultadoEnum: "valido" | "anulado" | "em_analise" | "adulterado";
+        ResultadoEnum: "valido" | "anulado" | "em_analise" | "adulterado" | "utilizado";
         ReverseRequestRequest: {
             reason: string;
         };
@@ -2270,6 +2327,27 @@ export interface components {
             scenarios: {
                 [key: string]: string;
             };
+        };
+        ServiceDeposit: {
+            readonly id: number;
+            readonly name: string;
+            readonly pricing: components["schemas"]["PricingEnum"];
+            /** Valor fixo (centavos) */
+            readonly amount: number | null;
+            /** Banco do depósito */
+            deposit_bank?: string;
+            /** Conta / NIB do depósito */
+            deposit_account?: string;
+            /** Titular da conta */
+            deposit_holder?: string;
+            /** Comissão (pontos base) */
+            commission_bps?: number | null;
+            /**
+             * Comissão fixa (centavos)
+             * Format: int64
+             */
+            commission_fixed?: number | null;
+            commission_payer?: components["schemas"]["CommissionPayerEnum"] | components["schemas"]["BlankEnum"];
         };
         ServiceField: {
             name: string;
@@ -2330,6 +2408,12 @@ export interface components {
             commission_payer?: components["schemas"]["CommissionPayerEnum"] | components["schemas"]["BlankEnum"];
             /** Format: date-time */
             readonly updated_at: string;
+            /** Banco do depósito */
+            readonly deposit_bank: string;
+            /** Conta / NIB do depósito */
+            readonly deposit_account: string;
+            /** Titular da conta */
+            readonly deposit_holder: string;
         };
         ServicePortalRequest: {
             name: string;
@@ -2393,6 +2477,12 @@ export interface components {
                 prompt: string;
                 option: string;
             } | null;
+            /** @description Depósito na conta da instituição (banco, conta, titular). */
+            readonly deposit: {
+                bank?: string;
+                account?: string;
+                holder?: string;
+            } | null;
         };
         Session: {
             phone: string;
@@ -2434,6 +2524,11 @@ export interface components {
         StaffTransaction: {
             institution_name: string;
             readonly reference: string;
+            readonly payer_name: string;
+            readonly payer_bi: string;
+            readonly is_deposit: boolean;
+            /** Format: date-time */
+            readonly used_at: string | null;
             readonly status: components["schemas"]["PaymentStatusEnum"];
             readonly service: number;
             service_name: string;
@@ -2494,6 +2589,14 @@ export interface components {
             emitido_em: string;
             hash_conteudo: string;
             demonstracao: boolean;
+            deposito?: {
+                [key: string]: unknown;
+            };
+            depositante?: {
+                [key: string]: unknown;
+            };
+            /** Format: date-time */
+            utilizado_em?: string | null;
         };
         VerifyFileRequest: {
             /** Format: binary */
@@ -3029,6 +3132,54 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Member"];
+                };
+            };
+        };
+    };
+    backoffice_institutions_services_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceDeposit"][];
+                };
+            };
+        };
+    };
+    backoffice_institutions_services_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedServiceDepositRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedServiceDepositRequest"];
+                "multipart/form-data": components["schemas"]["PatchedServiceDepositRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceDeposit"];
                 };
             };
         };
@@ -4536,6 +4687,28 @@ export interface operations {
                 "multipart/form-data": components["schemas"]["ReverseRequestRequest"];
             };
         };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalTransaction"];
+                };
+            };
+        };
+    };
+    portal_transactions_used_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                institution_slug: string;
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {

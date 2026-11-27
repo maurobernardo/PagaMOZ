@@ -74,6 +74,11 @@ class Transaction(models.Model):
     institution_ref = models.CharField(max_length=64, blank=True)  # recibo da instituição (confirm_payment)
     institution_notified_at = models.DateTimeField(null=True, blank=True)
     delivery = models.JSONField(default=dict, blank=True)
+    # Comprovativo já apresentado e aceite na instituição: não pode servir duas vezes (como um talão carimbado).
+    used_at = models.DateTimeField(null=True, blank=True)
+    used_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
     # Cartão: só marca e últimos 4 dígitos (o número e o CVV nunca chegam ao servidor).
     card_brand = models.CharField(max_length=12, blank=True)
     card_last4 = models.CharField(max_length=4, blank=True)

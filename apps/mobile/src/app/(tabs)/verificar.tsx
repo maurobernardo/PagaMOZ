@@ -48,7 +48,7 @@ export default function Verificar() {
           <Card style={{ gap: 10 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
               {good ? <CheckCircle2 size={26} color={C.ok} /> : <XCircle size={26} color={C.accent} />}
-              <H2>{t(good ? "Comprovativo autêntico" : "Não confirmado")}</H2>
+              <H2>{t(good ? "Comprovativo autêntico" : v.resultado === "utilizado" ? "Comprovativo já utilizado" : "Não confirmado")}</H2>
             </View>
             <P muted>{v.mensagem}</P>
             {good ? (
@@ -56,6 +56,13 @@ export default function Verificar() {
                 <Row label={t("Instituição")} value={v.instituicao} />
                 <Row label={t("Serviço")} value={v.servico} />
                 <Row label={t("Referência")} value={v.referencia} />
+                {v.deposito ? (
+                  <>
+                    <Row label={t("Depositado em")} value={`${v.deposito.banco} · ${v.deposito.conta}`} />
+                    <Row label={t("Depositante")} value={String(v.depositante?.nome ?? "")} />
+                    <Row label={t("BI (parcial)")} value={String(v.depositante?.bi ?? "")} />
+                  </>
+                ) : null}
                 <Row label={t("Data")} value={v.data_hora ? formatDateTime(v.data_hora) : "-"} />
                 <Row label="Total" value={formatMZN(v.total)} strong />
               </View>

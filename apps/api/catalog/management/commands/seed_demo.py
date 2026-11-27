@@ -59,25 +59,36 @@ class Command(BaseCommand):
                 is_active=False
             )
             for s_slug, s_name, level, pricing, amount, fields, connector_config in services:
+                connector_config = dict(connector_config)
+                dep = connector_config.pop("deposit", None) or {}
+                com = connector_config.pop("commission", None) or {}
                 if connector_config.get("variants"):
                     opts = [{"key": v["key"], "label": v["label"]} for v in connector_config["variants"]]
                     fields = [{**fl, "options": opts} if fl["type"] == "select" else fl for fl in fields]
-                Service.objects.update_or_create(
-                    institution=inst,
-                    slug=s_slug,
-                    defaults={
-                        "category": cats[cat],
-                        "name": s_name,
-                        "integration_level": level,
-                        "pricing": pricing,
-                        "amount": amount,
-                        "min_amount": 1_000 if pricing == "aberto" else None,  # 10 MT
-                        "max_amount": 5_000_000 if pricing == "aberto" else None,
-                        "fields": fields,
-                        "connector_config": connector_config,
-                        "is_active": True,
-                    },
-                )
+                defaults = {
+                    "category": cats[cat],
+                    "name": s_name,
+                    "integration_level": level,
+                    "pricing": pricing,
+                    "amount": amount,
+                    "min_amount": 1_000 if pricing == "aberto" else None,  # 10 MT
+                    "max_amount": 5_000_000 if pricing == "aberto" else None,
+                    "fields": fields,
+                    "connector_config": connector_config,
+                    "is_active": True,
+                    "deposit_bank": dep.get("bank", ""),
+                    "deposit_account": dep.get("account", ""),
+                    "deposit_holder": dep.get("holder", ""),
+                    "commission_bps": com.get("bps"),
+                    "commission_fixed": com.get("fixed"),
+                    "commission_payer": com.get("payer", ""),
+                }
+                # A conta de destino e a comissão postas pelo super admin não se apagam ao voltar a correr o seed.
+                if Service.objects.filter(institution=inst, slug=s_slug).exclude(deposit_account="").exists():
+                    for k in ("deposit_bank", "deposit_account", "deposit_holder",
+                              "commission_bps", "commission_fixed", "commission_payer"):  # fmt: skip
+                        defaults.pop(k)
+                Service.objects.update_or_create(institution=inst, slug=s_slug, defaults=defaults)
                 n_services += 1
             # Um admin por instituição: +2588400000NN (números fictícios de demo).
             admin = self._user(f"+25884000{i:04d}", PEOPLE[(i - 1) % len(PEOPLE)], password)

@@ -104,7 +104,11 @@ def render(content: dict, verify_url: str, demo: bool, compress: bool = True, br
     name = content["instituicao"]
     c.drawString(tx, H - 15 * mm, name if len(name) <= 38 else name[:36] + "…")
     c.setFont("Helvetica", 9)
-    c.drawString(tx, H - 21 * mm, "Comprovativo de pagamento")
+    c.drawString(
+        tx,
+        H - 21 * mm,
+        "Comprovativo de depósito" if content.get("tipo") == "deposito" else "Comprovativo de pagamento",
+    )
     # selo do estado
     st = content["estado"]
     c.setFont("Helvetica-Bold", 8.5)
@@ -127,6 +131,15 @@ def render(content: dict, verify_url: str, demo: bool, compress: bool = True, br
     ]
     if content.get("entrega"):
         rows.append(tuple(content["entrega"]))
+    if content.get("tipo") == "deposito":
+        d, p = content["deposito"], content["depositante"]
+        rows[2:2] = [
+            ("Banco", d["banco"]),
+            ("Conta / NIB", d["conta"]),
+            ("Titular da conta", d["titular"]),
+            ("Depositante", p["nome"]),
+            ("BI do depositante", p["bi"]),
+        ]
     y = H - 44 * mm
     for label, value in rows:
         c.setFont("Helvetica", 8.5)

@@ -10,6 +10,7 @@ const LOOK = {
   anulado: { title: "Comprovativo anulado", cls: "bg-accent-soft text-accent", icon: "x" },
   em_analise: { title: "Pagamento em análise", cls: "bg-white text-ink", icon: "clock" },
   adulterado: { title: "Registo não confere", cls: "bg-accent-soft text-accent", icon: "x" },
+  utilizado: { title: "Comprovativo já utilizado", cls: "bg-accent-soft text-accent", icon: "x" },
 } as const;
 
 export function VerificationResult({ v }: { v: Verification }) {
@@ -34,6 +35,14 @@ export function VerificationResult({ v }: { v: Verification }) {
           <Row label="Referência">{v.referencia}</Row>
           <Row label="Instituição">{v.instituicao}</Row>
           <Row label="Serviço">{v.servico}</Row>
+          {v.deposito ? (
+            <>
+              <Row label="Depositado em">{`${v.deposito.banco} · ${v.deposito.conta}`}</Row>
+              <Row label="Titular da conta">{String(v.deposito.titular)}</Row>
+              <Row label="Depositante">{String(v.depositante?.nome ?? "")}</Row>
+              <Row label="BI (parcial)">{String(v.depositante?.bi ?? "")}</Row>
+            </>
+          ) : null}
           <Row label="Data e hora">{v.data_hora}</Row>
           <Row label="Total" strong>{formatMZN(v.total)}</Row>
         </dl>

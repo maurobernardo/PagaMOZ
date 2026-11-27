@@ -42,6 +42,11 @@ class Service(Commission):
     max_amount = models.PositiveBigIntegerField("máximo (centavos)", null=True, blank=True)
     # Campos que o cidadão preenche: [{"name","label","type","required","pattern"}]
     fields = models.JSONField(default=list, blank=True)
+    # Depósito na conta da instituição (substitui a ida ao banco): o parceiro deposita aqui e o comprovativo
+    # mostra banco, conta e titular, como o talão. Vazio = pagamento normal (consulta, recarga...).
+    deposit_bank = models.CharField("banco do depósito", max_length=60, blank=True)
+    deposit_account = models.CharField("conta / NIB do depósito", max_length=40, blank=True)
+    deposit_holder = models.CharField("titular da conta", max_length=160, blank=True)
     connector = models.CharField(max_length=40, default="simulado")
     connector_config = models.JSONField(default=dict, blank=True)
     is_active = models.BooleanField(default=True)
@@ -54,6 +59,10 @@ class Service(Commission):
 
     def __str__(self):
         return f"{self.name}: {self.institution}"
+
+    @property
+    def is_deposit(self) -> bool:
+        return bool(self.deposit_account)
 
     def clean(self):
         if self.pricing == self.Pricing.FIXED and not self.amount:

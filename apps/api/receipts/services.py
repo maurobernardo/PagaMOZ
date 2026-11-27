@@ -46,6 +46,21 @@ def _content(txn: Transaction, code: str, issued) -> dict:
         else [],
         "moeda": txn.currency,
         "demo": settings.DEMO_MODE,
+        **_deposit(txn),
+    }
+
+
+def _deposit(txn: Transaction) -> dict:
+    """Depósito na conta da instituição: o comprovativo substitui o talão do banco, por isso leva o que o talão
+    leva (conta de destino e quem depositou, com o BI que a instituição confere ao balcão)."""
+    s = txn.service
+    if not s.is_deposit:
+        return {}
+    p = txn.payload or {}
+    return {
+        "tipo": "deposito",
+        "deposito": {"banco": s.deposit_bank, "conta": s.deposit_account, "titular": s.deposit_holder},
+        "depositante": {"nome": p.get("nome_completo", ""), "bi": p.get("bi", "")},
     }
 
 

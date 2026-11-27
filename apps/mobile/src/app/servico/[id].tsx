@@ -207,9 +207,17 @@ function PayFlow({ s }: { s: Service }) {
               {s.guide.map((g) => (
                 <View key={g} style={{ flexDirection: "row", gap: 8 }}>
                   <Info size={16} color={C.accent} style={{ marginTop: 2 }} />
-                  <Text style={{ flex: 1, fontFamily: F.body, fontSize: 14, lineHeight: 20, color: "rgba(255,255,255,0.75)" }}>{g}</Text>
+                  <Text style={{ flex: 1, fontFamily: F.body, fontSize: 14, lineHeight: 20, color: "rgba(255,255,255,0.75)" }}>{t(g)}</Text>
                 </View>
               ))}
+            </View>
+          ) : null}
+          {s.deposit ? (
+            // Depósito na conta da instituição: substitui a ida ao banco; o comprovativo serve de talão.
+            <View style={{ marginTop: 6, borderRadius: 16, padding: 12, backgroundColor: "rgba(255,255,255,0.1)", gap: 4 }}>
+              <Text style={{ fontFamily: F.bold, fontSize: 13, color: C.onHero }}>{t("Depósito na conta da instituição")}</Text>
+              <Text style={{ fontFamily: F.body, fontSize: 13, color: "rgba(255,255,255,0.75)" }}>{`${s.deposit.bank} · ${s.deposit.account}`}</Text>
+              <Text style={{ fontFamily: F.body, fontSize: 13, color: "rgba(255,255,255,0.75)" }}>{s.deposit.holder}</Text>
             </View>
           ) : null}
         </View>

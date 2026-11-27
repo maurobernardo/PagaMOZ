@@ -84,6 +84,14 @@ class ServicePublicSerializer(serializers.ModelSerializer):
     guide = serializers.SerializerMethodField(help_text="Notas do processo (presencial, prazos…).")
     group = serializers.SerializerMethodField(help_text="Assunto comum a várias opções (ex.: recarga por operadora).")
     variants = serializers.SerializerMethodField(help_text="Modalidades com preço próprio.")
+    deposit = serializers.SerializerMethodField(help_text="Depósito na conta da instituição (banco, conta, titular).")
+
+    @extend_schema_field({"type": "object", "nullable": True, "properties": {
+        k: {"type": "string"} for k in ("bank", "account", "holder")}})  # fmt: skip
+    def get_deposit(self, obj):
+        if not obj.is_deposit:
+            return None
+        return {"bank": obj.deposit_bank, "account": obj.deposit_account, "holder": obj.deposit_holder}
 
     def get_lookup(self, obj) -> bool:
         return obj.pricing == "consulta" or bool((obj.connector_config or {}).get("profile"))
@@ -109,6 +117,7 @@ class ServicePublicSerializer(serializers.ModelSerializer):
         fields = [
             "id", "name", "slug", "description", "institution", "category", "integration_level",
             "pricing", "amount", "min_amount", "max_amount", "fields", "lookup", "guide", "variants", "group",
+            "deposit",
         ]  # fmt: skip
         read_only_fields = fields
 
@@ -123,8 +132,9 @@ class ServicePortalSerializer(serializers.ModelSerializer):
             "id", "name", "slug", "description", "category", "integration_level", "pricing",
             "amount", "min_amount", "max_amount", "fields", "is_active",
             "commission_bps", "commission_fixed", "commission_payer", "updated_at",
+            "deposit_bank", "deposit_account", "deposit_holder",
         ]  # fmt: skip
-        read_only_fields = ["updated_at"]
+        read_only_fields = ["updated_at", "deposit_bank", "deposit_account", "deposit_holder"]
 
     def validate(self, attrs):
         inst = Service(**{**self._current(), **attrs})

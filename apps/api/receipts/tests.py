@@ -112,3 +112,46 @@ def test_no_receipt_for_unpaid(django_capture_on_commit_callbacks):
     ref = r.json()["reference"]
     assert APIClient().get(f"/api/payments/{ref}/receipt.pdf").status_code == 404
     assert not Receipt.objects.exists()
+
+
+def test_deposit_replaces_bank_slip_and_cannot_be_used_twice(django_capture_on_commit_callbacks, django_user_model):
+    """Depósito na conta da instituição: talão digital com conta e depositante; o balcão marca-o como utilizado."""
+    from institutions.models import Membership
+
+    cat = Category.objects.create(name="Transportes", slug="transportes")
+    inst = Institution.objects.create(name="INATTER", slug="inatter", commission_bps=150)
+    s = Service.objects.create(institution=inst, category=cat, name="Exame teórico", slug="exame", integration_level=2,
+                               pricing="fixo", amount=218_500, deposit_bank="BCI", deposit_account="0001 2345",
+                               deposit_holder="INATTER", commission_bps=0, commission_fixed=2_500,
+                               commission_payer="cidadao",
+                               fields=[{"name": "nome_completo", "label": "Nome", "type": "text", "required": True},
+                                       {"name": "bi", "label": "BI", "type": "text", "required": True}])  # fmt: skip
+    with django_capture_on_commit_callbacks(execute=True):
+        r = APIClient().post("/api/payments", {"service": s.id, "method": "mpesa", "scenario": "sucesso",
+                                               "payer_phone": "+258841234567",
+                                               "fields": {"nome_completo": "Ana Machava", "bi": "110100123456B"}},
+                             format="json", HTTP_IDEMPOTENCY_KEY="dep-0001")  # fmt: skip
+    assert r.status_code == 201, r.content
+    t = Transaction.objects.get(reference=r.json()["reference"])
+    # Comissão justa: o cidadão paga 25 MT à parte e a instituição recebe o valor inteiro.
+    assert (t.amount, t.commission, t.total, t.institution_net) == (218_500, 2_500, 221_000, 218_500)
+    rc = Receipt.objects.get(transaction=t)
+    assert rc.content["tipo"] == "deposito" and rc.content["deposito"]["banco"] == "BCI"
+    assert rc.content["depositante"] == {"nome": "Ana Machava", "bi": "110100123456B"}
+    pdf = pdf_bytes(t.reference)
+    assert pdf.startswith(b"%PDF")
+
+    code = rc.code
+    v = APIClient().get(f"/api/receipts/{code}").json()
+    assert v["resultado"] == "valido" and v["depositante"]["bi"] == "1101•••6B"
+
+    staff = django_user_model.objects.create_user("+258840000777", password="x")
+    Membership.objects.create(user=staff, institution=inst, role="operador")
+    c = APIClient()
+    c.force_authenticate(staff)
+    found = c.get("/api/portal/inatter/transactions?q=110100123456").json()["results"]
+    assert [x["reference"] for x in found] == [t.reference] and found[0]["payer_name"] == "Ana Machava"
+    assert c.post(f"/api/portal/inatter/transactions/{t.reference}/used").status_code == 200
+    assert c.post(f"/api/portal/inatter/transactions/{t.reference}/used").status_code == 409
+    v = APIClient().get(f"/api/receipts/{code}").json()
+    assert v["resultado"] == "utilizado" and "Não aceitar" in v["mensagem"]

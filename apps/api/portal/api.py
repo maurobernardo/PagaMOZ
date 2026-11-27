@@ -128,11 +128,18 @@ class PortalTransactionSerializer(serializers.ModelSerializer):
     service_name = serializers.CharField(source="service.name")
     method_label = serializers.CharField(source="get_method_display")
     settlement_date = serializers.DateField(source="settlement.business_date", allow_null=True)
+    payer_name = serializers.SerializerMethodField()
+    payer_bi = serializers.SerializerMethodField()
+    is_deposit = serializers.BooleanField(source="service.is_deposit", read_only=True)
 
     class Meta:
         model = Transaction
         fields = [
             "reference",
+            "payer_name",
+            "payer_bi",
+            "is_deposit",
+            "used_at",
             "status",
             "service",
             "service_name",
@@ -153,6 +160,12 @@ class PortalTransactionSerializer(serializers.ModelSerializer):
             "failure_reason",
         ]
         read_only_fields = fields
+
+    def get_payer_name(self, t) -> str:
+        return (t.payload or {}).get("nome_completo", "")
+
+    def get_payer_bi(self, t) -> str:
+        return (t.payload or {}).get("bi", "")
 
 
 FILTERS = [
@@ -185,7 +198,12 @@ def filtered(inst, p):
     except ValueError:
         raise serializers.ValidationError({"date": "Use AAAA-MM-DD."}) from None
     if v := p.get("q", "").strip():
-        qs = qs.filter(Q(reference__icontains=v) | Q(description__icontains=v))
+        qs = qs.filter(
+            Q(reference__icontains=v)
+            | Q(description__icontains=v)
+            | Q(payload__bi__icontains=v)  # depósito: o balcão procura pelo BI ou pelo nome
+            | Q(payload__nome_completo__icontains=v)
+        )
     return qs
 
 
@@ -194,6 +212,9 @@ EXPORT_COLS = [
     ("Estado", lambda t: t.status),
     ("Serviço", lambda t: t.service.name),
     ("Detalhe", lambda t: t.description),
+    ("Depositante", lambda t: (t.payload or {}).get("nome_completo", "")),
+    ("BI", lambda t: (t.payload or {}).get("bi", "")),
+    ("Utilizado em", lambda t: timezone.localtime(t.used_at).strftime("%Y-%m-%d %H:%M") if t.used_at else ""),
     ("Método", lambda t: t.get_method_display()),
     ("Valor (MT)", lambda t: t.amount / 100),
     ("Comissão (MT)", lambda t: t.commission / 100),
@@ -288,6 +309,27 @@ class PortalReverse(PortalView):
                 {"detail": "Só é possível devolver pagamentos confirmados e ainda não liquidados."}, status=409
             )
         txn.refresh_from_db()
+        return Response(PortalTransactionSerializer(txn).data)
+
+
+class PortalMarkUsed(PortalView):
+    """O balcão aceitou o comprovativo: fica marcado e não pode ser aceite outra vez (como carimbar o talão)."""
+
+    write_roles = {R.ADMIN, R.FINANCE, R.OPERATOR}
+
+    @extend_schema(request=None, responses=PortalTransactionSerializer)
+    def post(self, request, institution_slug, reference):
+        inst = self.institution()
+        with db.atomic():
+            txn = get_object_or_404(Transaction.objects.select_for_update(), institution=inst, reference=reference)
+            if txn.status not in PAID:
+                return Response({"detail": "Este pagamento não está pago."}, status=409)
+            if txn.used_at:
+                when = timezone.localtime(txn.used_at)
+                return Response({"detail": f"Este comprovativo já foi utilizado em {when:%d/%m/%Y %H:%M}."}, status=409)
+            txn.used_at, txn.used_by = timezone.now(), request.user
+            txn.save(update_fields=["used_at", "used_by", "updated_at"])
+        record("payment.used", request=request, institution=inst, target=txn)
         return Response(PortalTransactionSerializer(txn).data)
 
 

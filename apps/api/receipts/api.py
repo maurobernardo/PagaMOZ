@@ -30,7 +30,7 @@ STATE = {
 
 
 class VerificationSerializer(serializers.Serializer):
-    resultado = serializers.ChoiceField(["valido", "anulado", "em_analise", "adulterado"])
+    resultado = serializers.ChoiceField(["valido", "anulado", "em_analise", "adulterado", "utilizado"])
     mensagem = serializers.CharField()
     codigo = serializers.CharField()
     referencia = serializers.CharField()
@@ -41,6 +41,9 @@ class VerificationSerializer(serializers.Serializer):
     emitido_em = serializers.DateTimeField()
     hash_conteudo = serializers.CharField()
     demonstracao = serializers.BooleanField()
+    deposito = serializers.DictField(required=False)
+    depositante = serializers.DictField(required=False)
+    utilizado_em = serializers.DateTimeField(required=False, allow_null=True)
 
 
 def verification(r: Receipt) -> dict:
@@ -54,7 +57,27 @@ def verification(r: Receipt) -> dict:
         "resultado": result, "mensagem": msg, "codigo": c["codigo"], "referencia": c["referencia"],
         "instituicao": c["instituicao"], "servico": c["servico"], "total": c["total"], "data_hora": c["data_hora"],
         "emitido_em": r.issued_at, "hash_conteudo": r.content_hash, "demonstracao": r.is_demo,
+        **_deposit_public(c, r.transaction),
     }  # fmt: skip
+
+
+def _mask_bi(bi: str) -> str:
+    return f"{bi[:4]}•••{bi[-2:]}" if len(bi) > 6 else "•••"
+
+
+def _deposit_public(c: dict, txn) -> dict:
+    if c.get("tipo") != "deposito":
+        return {}
+    dep = c["depositante"]
+    out = {"deposito": c["deposito"], "depositante": {"nome": dep["nome"], "bi": _mask_bi(dep["bi"])},
+           "utilizado_em": txn.used_at}  # fmt: skip
+    if txn.used_at:
+        from django.utils import timezone
+
+        when = timezone.localtime(txn.used_at)
+        out["mensagem"] = f"Já utilizado na instituição em {when:%d/%m/%Y %H:%M}. Não aceitar outra vez."
+        out["resultado"] = "utilizado"
+    return out
 
 
 def _normalize(code: str) -> str:

@@ -5,6 +5,7 @@ import { useToast } from "@/components/toast";
 import { Badge, Button, Card, Field, useDialog } from "@/components/ui";
 import { api, csrfToken, errorMessage, type Schemas } from "@/lib/api";
 import { BrandMark } from "@/components/brand-mark";
+import { DepositEditor } from "@/components/deposit-editor";
 import { formatMZN } from "@/lib/i18n";
 import { useLoad } from "@/lib/use-load";
 
@@ -20,6 +21,7 @@ export default function Instituicoes() {
   const [showNew, setShowNew] = useState(false);
   const [invite, setInvite] = useState<Invite | null>(null);
   const [logo, setLogo] = useState<File | null>(null);
+  const [editing, setEditing] = useState<{ slug: string; name: string } | null>(null);
 
   /** Envia o logótipo (JPG/PNG/WebP até 3 MB); o servidor reduz e guarda em WebP. */
   async function uploadLogo(slug: string, file: File) {
@@ -98,6 +100,8 @@ export default function Instituicoes() {
         </Card>
       ) : null}
 
+      {editing ? <DepositEditor slug={editing.slug} name={editing.name} onClose={() => setEditing(null)} /> : null}
+
       {invite ? (
         <Card>
           <p className="font-display text-lg font-bold">{invite.who} é administrador de {invite.inst}</p>
@@ -150,6 +154,8 @@ export default function Instituicoes() {
                       const email = await dialog.prompt({ title: `Administrador de ${i.name}`, body: "Recebe um link para definir a própria senha.", input: { label: "Email", initial: "" }, confirm: "Convidar" });
                       if (email) addAdmin(i.slug, i.name, email.trim(), "");
                     }}>Convidar admin</button>
+                    <button className="min-h-9 rounded-full border border-line bg-white px-3.5 text-sm font-semibold transition hover:border-ink"
+                      onClick={() => { setEditing({ slug: i.slug, name: i.name }); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Contas e comissões</button>
                     <label className="inline-flex min-h-9 cursor-pointer items-center rounded-full border border-line bg-white px-3.5 text-sm font-semibold transition hover:border-ink">
                       Logótipo
                       <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => e.target.files?.[0] && uploadLogo(i.slug, e.target.files[0])} />
