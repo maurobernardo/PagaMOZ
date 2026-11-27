@@ -255,7 +255,7 @@ export default function Home() {
     </ScrollView>
     {/* Assistente: botão flutuante, sempre à mão */}
     <Pressable accessibilityRole="button" accessibilityLabel={t("Assistente")} onPress={() => router.push("/assistente")}
-      style={({ pressed }) => ({ position: "absolute", right: 18, bottom: Platform.OS === "ios" ? bottomInset + 64 : 20, alignItems: "center", justifyContent: "center", width: 58, height: 58, borderRadius: 29, backgroundColor: C.ink, transform: [{ scale: pressed ? 0.95 : 1 }], shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 8 })}>
+      style={({ pressed }) => ({ position: "absolute", right: 18, bottom: Platform.OS === "ios" ? bottomInset + 64 : Math.max(bottomInset, 10) + 92, alignItems: "center", justifyContent: "center", width: 58, height: 58, borderRadius: 29, backgroundColor: C.ink, transform: [{ scale: pressed ? 0.95 : 1 }], shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 8 })}>
       <MessageCircle size={24} color={C.white} />
     </Pressable>
     </View>

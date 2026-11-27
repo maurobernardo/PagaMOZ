@@ -1,4 +1,6 @@
+import { Tabs } from "expo-router";
 import { NativeTabs } from "expo-router/native-tabs";
+import { FloatingTabBar } from "../../components/floating-tabs";
 import { Platform } from "react-native";
 import { t } from "../../lib/i18n";
 import { C, F } from "../../theme";
@@ -8,6 +10,16 @@ import { C, F } from "../../theme";
  * O activo fica a preto (ou branco no modo escuro).
  */
 export default function TabsLayout() {
+  // Android: a barra do sistema ocupa a largura toda e cola ao fundo; aqui usa-se uma pílula flutuante como no iOS.
+  if (Platform.OS === "android")
+    return (
+      <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <FloatingTabBar {...props} />}>
+        <Tabs.Screen name="index" />
+        <Tabs.Screen name="servicos" />
+        <Tabs.Screen name="verificar" />
+        <Tabs.Screen name="conta" />
+      </Tabs>
+    );
   return (
     // Android: nomes sempre visíveis (por omissão o Material esconde-os) e sem fonte própria, que o Android não aplicava.
     <NativeTabs
