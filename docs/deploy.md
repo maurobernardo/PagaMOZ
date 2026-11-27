@@ -5,7 +5,8 @@
 - Código em `/opt/pagamoz`, `.env` em `/opt/pagamoz/infra/prod/.env` (senhas geradas no VPS, só lá).
 - Projecto Docker `pagamoz`: db, redis, api, worker, beat. A API entra na rede `deploy_default` como `pagamoz-api`.
 - HTTPS pelo Caddy já existente (`/opt/terra/deploy/Caddyfile`, bloco de `Caddyfile.snippet`; cópia antiga em `Caddyfile.bak-antes-pagamoz`).
-- Actualizar (do PC): `git archive HEAD | ssh -i ~/.ssh/pagamoz_vps root@89.117.37.161 "tar -x -C /opt/pagamoz && cd /opt/pagamoz/infra/prod && docker compose -p pagamoz up -d --build"`.
+- Actualizar (do PC): `git archive HEAD | ssh -i ~/.ssh/pagamoz_vps root@89.117.37.161 "tar -x -C /opt/pagamoz && /opt/pagamoz/infra/prod/deploy.sh"`.
+  O `deploy.sh` constrói, arranca e limpa imagens órfãs e cache de construção com mais de 3 dias (nunca volumes).
 
 ## 2. Web na Vercel
 
