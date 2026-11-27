@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 const API_URL = process.env.API_URL ?? "http://localhost:8000";
@@ -18,6 +19,9 @@ const CSP = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  // Imagem de produção pequena: só o necessário para correr (sem dependências de desenvolvimento).
+  output: "standalone",
+  outputFileTracingRoot: path.join(__dirname, "../.."),
   transpilePackages: ["@pagamoz/api-client"],
   poweredByHeader: false,
   async rewrites() {

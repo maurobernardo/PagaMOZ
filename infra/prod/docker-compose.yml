@@ -3,6 +3,8 @@
 # Na rede partilhada há outro "db": por isso a base e o Redis usam nomes únicos (pagamoz-db, pagamoz-redis).
 # Uso: no VPS, em infra/prod:  cp .env.example .env  (preencher)  &&  docker compose -p pagamoz up -d --build
 x-api: &api
+  # Uma só imagem para api, worker e beat (antes construía-se três vezes a mesma).
+  image: pagamoz-api:latest
   build: ../../apps/api
   env_file: .env
   environment:
