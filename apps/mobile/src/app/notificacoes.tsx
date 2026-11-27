@@ -23,7 +23,7 @@ export default function Notificacoes() {
   const text = (p: Payment) => {
     if (["CONFIRMADA", "LIQUIDADA"].includes(p.status)) return [CheckCircle2, C.ok, `${t("Pagamento confirmado")}: ${p.service_name}`, p.delivery?.codigo ? `${p.delivery.titulo}: ${p.delivery.codigo}` : p.institution_name] as const;
     if (["CRIADA", "PENDENTE"].includes(p.status)) return [Clock3, C.wait, `${t("A aguardar pagamento")}: ${p.service_name}`, p.instructions || p.institution_name] as const;
-    return [XCircle, C.accent, `${p.service_name}`, p.failure_reason || p.status] as const;
+    return [XCircle, C.accent, t(p.service_name), p.failure_reason || p.status] as const;
   };
 
   return (

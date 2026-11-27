@@ -86,7 +86,7 @@ export default function Pagamento() {
           <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
             <BrandMark slug={p.institution_slug} name={p.institution_name} size={46} round />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: F.semi, fontSize: 15, color: C.onHero }} numberOfLines={1}>{p.service_name}</Text>
+              <Text style={{ fontFamily: F.semi, fontSize: 15, color: C.onHero }} numberOfLines={1}>{t(p.service_name)}</Text>
               <Text style={{ fontFamily: F.body, fontSize: 12, color: "rgba(255,255,255,0.55)" }}>{formatDateTime(p.created_at)}</Text>
             </View>
           </View>

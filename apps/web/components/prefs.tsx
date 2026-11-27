@@ -44,14 +44,14 @@ function write(k: string, v: string) {
   try { localStorage.setItem(k, v); } catch { /* sem armazenamento: vale só nesta visita */ }
 }
 
-/** Botões de tema e idioma (vão na barra de navegação). */
-export function Prefs({ dark: onDark = false }: { dark?: boolean }) {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+/** Tradutor global (vai no layout raiz): corre em todas as páginas, com ou sem barra de topo. */
+export function Translator() {
   const [lang, setLang] = useState<"pt" | "en">("pt");
-
   useEffect(() => {
-    setTheme(document.documentElement.dataset.theme === "dark" ? "dark" : "light");
-    setLang(read("lang") === "en" ? "en" : "pt");
+    const sync = () => setLang(read("lang") === "en" ? "en" : "pt");
+    sync();
+    window.addEventListener("pagamoz:lang", sync);
+    return () => window.removeEventListener("pagamoz:lang", sync);
   }, []);
 
   useEffect(() => {
@@ -66,7 +66,18 @@ export function Prefs({ dark: onDark = false }: { dark?: boolean }) {
     obs.observe(document.body, { childList: true, subtree: true, characterData: true });
     return () => obs.disconnect();
   }, [lang]);
+  return null;
+}
 
+/** Botões de tema e idioma (vão na barra de navegação). */
+export function Prefs({ dark: onDark = false }: { dark?: boolean }) {
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [lang, setLang] = useState<"pt" | "en">("pt");
+
+  useEffect(() => {
+    setTheme(document.documentElement.dataset.theme === "dark" ? "dark" : "light");
+    setLang(read("lang") === "en" ? "en" : "pt");
+  }, []);
   const btn = `frame-none grid h-10 w-10 place-items-center rounded-full transition ${onDark ? "text-white/80 hover:bg-white/10" : "text-ink/70 hover:bg-ink/5"}`;
   return (
     <>
@@ -84,6 +95,7 @@ export function Prefs({ dark: onDark = false }: { dark?: boolean }) {
           const l = lang === "en" ? "pt" : "en";
           setLang(l);
           write("lang", l);
+          window.dispatchEvent(new Event("pagamoz:lang"));
         }}>
         <Languages className="mr-1 h-4 w-4" />{lang === "en" ? "PT" : "EN"}
       </button>

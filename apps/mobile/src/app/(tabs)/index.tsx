@@ -228,7 +228,7 @@ export default function Home() {
                   <I size={19} color={C.ink} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontFamily: F.semi, fontSize: 15, color: C.ink }}>{c.name}</Text>
+                  <Text style={{ fontFamily: F.semi, fontSize: 15, color: C.ink }}>{t(c.name)}</Text>
                   <Text style={{ fontFamily: F.body, fontSize: 12, color: C.muted }}>{c.service_count} {t(c.service_count === 1 ? "serviço" : "serviços")}</Text>
                 </View>
                 <ChevronRight size={18} color={C.muted} />

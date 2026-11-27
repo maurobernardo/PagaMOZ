@@ -16,7 +16,7 @@ function price(e: Entry & { kind: "service" }) {
 /** Cartão branco com sombra suave: logótipo(s), nome, e o próximo passo. */
 export function EntryCard({ e }: { e: Entry }) {
   const isGroup = e.kind === "group";
-  const title = isGroup ? e.title : e.s.name;
+  const title = t(isGroup ? e.title : e.s.name);
   const sub = isGroup ? e.prompt : e.s.institution.name;
   const logos = isGroup ? [...new Map(e.options.map((o) => [o.institution.slug, o])).values()] : [e.s];
   return (

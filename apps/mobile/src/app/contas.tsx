@@ -60,7 +60,7 @@ export default function Contas() {
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
                   <BrandMark slug={r.institution_slug} name={r.institution_name} size={42} round />
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontFamily: F.semi, fontSize: 15, color: C.ink }} numberOfLines={1}>{r.service_name}</Text>
+                    <Text style={{ fontFamily: F.semi, fontSize: 15, color: C.ink }} numberOfLines={1}>{t(r.service_name)}</Text>
                     <Text style={{ fontFamily: F.body, fontSize: 12, color: C.muted }}>{r.key} · {r.explain}</Text>
                   </View>
                   <View style={{ alignItems: "flex-end" }}>

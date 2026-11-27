@@ -121,7 +121,7 @@ export default function Perfil() {
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
                     <BrandMark slug={p.institution_slug} name={p.institution_name} size={42} round />
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontFamily: F.semi, fontSize: 15, color: C.ink }} numberOfLines={1}>{p.service_name}</Text>
+                      <Text style={{ fontFamily: F.semi, fontSize: 15, color: C.ink }} numberOfLines={1}>{t(p.service_name)}</Text>
                       <Text style={{ fontFamily: F.body, fontSize: 12, color: C.muted }}>{formatDateTime(p.created_at)} · {formatMZN(p.total)}</Text>
                     </View>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>

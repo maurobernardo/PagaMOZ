@@ -1,6 +1,7 @@
 import { ArrowLeft, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "./logo";
+import { Prefs } from "./prefs";
 import { Eyebrow } from "./eyebrow";
 
 /** Página de entrada: uma só coluna, cartão central, sem painéis de cor. */
@@ -11,10 +12,13 @@ export function AuthFrame({ eyebrow, icon, title, sub, children, footer }: {
     <div className="flex min-h-dvh flex-col bg-canvas">
       <header className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-5 pt-6 sm:px-8">
         <Link href="/" aria-label="PagaMOZ, início"><Logo /></Link>
+        <div className="flex items-center gap-1">
+        <Prefs />
         <div className="glass inline-flex rounded-full p-1.5">
           <Link href="/" className="inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold transition hover:bg-ink hover:text-white">
             <ArrowLeft className="h-4 w-4" /> Voltar ao site
           </Link>
+        </div>
         </div>
       </header>
 

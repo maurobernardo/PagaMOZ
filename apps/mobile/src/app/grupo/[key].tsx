@@ -23,7 +23,7 @@ export default function Grupo() {
       ) : (
         <ScrollView contentContainerStyle={{ padding: 18, gap: 14, paddingBottom: 48 }}>
           <Eyebrow icon={ListChecks}>{t("Passo 1 de 2")}</Eyebrow>
-          <PageTitle title={g.title} sub={`${g.prompt}.`} />
+          <PageTitle title={t(g.title)} sub={`${t(g.prompt)}.`} />
           <View style={{ height: 4 }} />
           {options.map((s) => (
             <Pressable key={s.id} accessibilityRole="button" accessibilityLabel={s.group?.option} onPress={() => router.push(`/servico/${s.id}`)}

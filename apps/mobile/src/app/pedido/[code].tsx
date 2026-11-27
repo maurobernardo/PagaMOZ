@@ -30,7 +30,7 @@ export default function Pedido() {
       <Header title={t("Pedido")} />
       {error ? <View style={{ padding: 16 }}><Alert>{error}</Alert></View> : !r ? <Loading /> : (
         <ScrollView contentContainerStyle={{ padding: 18, gap: 16, paddingBottom: 60 }}>
-          <PageTitle title={r.service_name} sub={`${r.institution_name} · ${r.code}`} />
+          <PageTitle title={t(r.service_name)} sub={`${r.institution_name} · ${r.code}`} />
           <Card dark style={{ gap: 6 }}>
             <Text style={{ fontFamily: F.body, fontSize: 12, color: "rgba(255,255,255,0.6)" }}>{t("Estado")}</Text>
             <Text style={{ fontFamily: F.display, fontSize: 24, color: C.onHero }}>{t(STATUS[r.status] ?? r.status)}</Text>

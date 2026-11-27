@@ -46,7 +46,7 @@ export default function Dividir() {
               <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
                 {s.state === "pago" ? <CheckCircle2 size={22} color={C.ok} /> : <Clock3 size={22} color={C.muted} />}
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontFamily: F.semi, fontSize: 15, color: C.ink }}>{s.name}</Text>
+                  <Text style={{ fontFamily: F.semi, fontSize: 15, color: C.ink }}>{t(s.name)}</Text>
                   <Text style={{ fontFamily: F.body, fontSize: 12, color: C.muted }}>{formatMZN(s.amount)} · {t(s.state === "pago" ? "Pago" : s.state === "a_pagar" ? "A pagar agora" : "Por pagar")}</Text>
                 </View>
                 {s.state === "por_pagar" ? (

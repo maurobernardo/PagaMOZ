@@ -52,7 +52,7 @@ export default function Servicos() {
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4, paddingRight: 8 }}>
             <Pill label={t("Todos")} active={!cat} onPress={() => setCat("")} />
-            {cats.map((c) => <Pill key={c.slug} label={c.name} icon={categoryIcon(c.slug)} active={cat === c.slug} onPress={() => setCat(c.slug)} />)}
+            {cats.map((c) => <Pill key={c.slug} label={t(c.name)} icon={categoryIcon(c.slug)} active={cat === c.slug} onPress={() => setCat(c.slug)} />)}
           </ScrollView>
           {offline ? <Alert tone="info">{t("Sem internet: a mostrar a última lista guardada. Pagar precisa de rede.")}</Alert> : null}
           {error ? <Alert>{error}</Alert> : null}

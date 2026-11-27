@@ -201,7 +201,7 @@ function PayFlow({ s }: { s: Service }) {
             <BrandMark slug={s.institution.slug} name={s.institution.name} size={52} />
             <Text style={{ flex: 1, fontFamily: F.bold, fontSize: 12, letterSpacing: 1, textTransform: "uppercase", color: "rgba(255,255,255,0.6)" }} numberOfLines={2}>{s.institution.name}</Text>
           </View>
-          <Text style={{ fontFamily: F.display, fontSize: 26, lineHeight: 31, letterSpacing: -0.6, color: C.onHero }}>{s.name}</Text>
+          <Text style={{ fontFamily: F.display, fontSize: 26, lineHeight: 31, letterSpacing: -0.6, color: C.onHero }}>{t(s.name)}</Text>
           {s.guide?.length ? (
             <View style={{ gap: 6 }}>
               {s.guide.map((g) => (
@@ -222,7 +222,7 @@ function PayFlow({ s }: { s: Service }) {
           <Card style={{ gap: 18 }}>
             {selectFields.map((f) => (
               <View key={f.name} style={{ gap: 8 }}>
-                <Text style={{ fontFamily: F.bold, fontSize: 14 }}>{f.label}</Text>
+                <Text style={{ fontFamily: F.bold, fontSize: 14 }}>{t(f.label)}</Text>
                 {s.variants.map((v) => {
                   const on = values[f.name] === v.key;
                   return (
@@ -239,7 +239,7 @@ function PayFlow({ s }: { s: Service }) {
               </View>
             ))}
             {textFields.map((f) => (
-              <Field key={f.name} label={f.label} hint={f.help} error={errors[f.name]} value={values[f.name] ?? ""}
+              <Field key={f.name} label={t(f.label)} hint={f.help ? t(f.help) : undefined} error={errors[f.name]} value={values[f.name] ?? ""}
                 onChangeText={(v) => setValues({ ...values, [f.name]: v })}
                 keyboardType={f.type === "phone" ? "phone-pad" : f.pattern?.startsWith("^\\d") ? "number-pad" : "default"}
                 placeholder={f.type === "date" ? "AAAA-MM-DD" : undefined} autoCapitalize={f.name === "matricula" ? "characters" : "sentences"} />
@@ -262,7 +262,7 @@ function PayFlow({ s }: { s: Service }) {
               </View>
             )}
             {fileFields.map((f) => (
-              <Pressable key={f.name} accessibilityRole="button" accessibilityLabel={f.label}
+              <Pressable key={f.name} accessibilityRole="button" accessibilityLabel={t(f.label)}
                 onPress={async () => {
                   const r = await DocumentPicker.getDocumentAsync({ type: ["application/pdf", "image/jpeg", "image/png"], copyToCacheDirectory: true });
                   const a = r.assets?.[0];
