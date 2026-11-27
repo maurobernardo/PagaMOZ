@@ -647,5 +647,6 @@ export const EN: Record<string, string> = {
 "Titular da conta": "Account holder",
 "Banco": "Bank",
 "Conta / NIB": "Account / NIB",
-"Substitui a ida ao banco. O comprovativo serve como o talão do depósito.": "Replaces the trip to the bank. The receipt works as the deposit slip."
+"Substitui a ida ao banco. O comprovativo serve como o talão do depósito.": "Replaces the trip to the bank. The receipt works as the deposit slip.",
+"Email ou telefone": "Email or phone"
 };

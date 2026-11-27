@@ -131,7 +131,7 @@ function PortalLogin() {
           <GoogleButton flow="portal" />
           <OrDivider />
           <form onSubmit={login} className="space-y-5" noValidate>
-            <Field id="who" label="Email" type="text" inputMode="email" autoComplete="username" value={who} onChange={(e) => setWho(e.target.value)} placeholder="nome@instituicao.co.mz" />
+            <Field id="who" label="Email ou telefone" type="text" inputMode="email" autoComplete="username" value={who} onChange={(e) => setWho(e.target.value)} placeholder="nome@instituicao.co.mz ou 84 000 0001" />
             <Field id="password" label="Senha" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
             <Button type="submit" disabled={busy || !ready} className="w-full !min-h-12">{busy ? "A verificar…" : "Continuar"}</Button>
           </form>
