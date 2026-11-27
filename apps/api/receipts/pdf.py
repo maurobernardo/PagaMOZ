@@ -140,6 +140,7 @@ def render(content: dict, verify_url: str, demo: bool, compress: bool = True, br
             ("Depositante", p["nome"]),
             ("BI do depositante", p["bi"]),
         ]
+    rows = [r for r in rows if str(r[1]).strip()]  # sem linhas vazias (ex.: Detalhe)
     y = H - 44 * mm
     for label, value in rows:
         c.setFont("Helvetica", 8.5)
