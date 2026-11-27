@@ -1,4 +1,5 @@
 import { NativeTabs } from "expo-router/native-tabs";
+import { Platform } from "react-native";
 import { t } from "../../lib/i18n";
 import { C, F } from "../../theme";
 
@@ -8,7 +9,17 @@ import { C, F } from "../../theme";
  */
 export default function TabsLayout() {
   return (
-    <NativeTabs tintColor={C.ink} labelStyle={{ fontFamily: F.bold, fontSize: 11, color: C.muted }} backgroundColor={C.surface}>
+    // Android: nomes sempre visíveis (por omissão o Material esconde-os) e sem fonte própria, que o Android não aplicava.
+    <NativeTabs
+      tintColor={C.ink}
+      labelVisibilityMode="labeled"
+      backgroundColor={C.surface}
+      iconColor={{ default: C.muted, selected: C.ink }}
+      labelStyle={{
+        default: { fontSize: 12, color: C.muted, ...(Platform.OS === "ios" ? { fontFamily: F.bold } : {}) },
+        selected: { fontSize: 12, color: C.ink, ...(Platform.OS === "ios" ? { fontFamily: F.bold } : {}) },
+      }}
+      indicatorColor={C.soft}>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Icon sf={{ default: "house", selected: "house.fill" }} md="home" />
         <NativeTabs.Trigger.Label>{t("Início")}</NativeTabs.Trigger.Label>

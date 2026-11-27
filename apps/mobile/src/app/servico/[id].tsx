@@ -222,7 +222,7 @@ function PayFlow({ s }: { s: Service }) {
           <Card style={{ gap: 18 }}>
             {selectFields.map((f) => (
               <View key={f.name} style={{ gap: 8 }}>
-                <Text style={{ fontFamily: F.bold, fontSize: 14 }}>{t(f.label)}</Text>
+                <Text style={{ fontFamily: F.bold, fontSize: 14, color: C.ink }}>{t(f.label)}</Text>
                 {s.variants.map((v) => {
                   const on = values[f.name] === v.key;
                   return (
@@ -271,13 +271,13 @@ function PayFlow({ s }: { s: Service }) {
                     setFiles({ ...files, [f.name]: { uri: a.uri, name: a.name, mimeType: a.mimeType ?? "application/pdf" } });
                   }
                 }}
-                style={{ flexDirection: "row", alignItems: "center", gap: 14, padding: 16, borderRadius: 20, borderWidth: 1.5, borderStyle: "dashed", borderColor: errors[f.name] ? C.accent : files[f.name] ? C.ink : "#cfcec8" }}>
+                style={{ flexDirection: "row", alignItems: "center", gap: 14, padding: 16, borderRadius: 20, borderWidth: 1.5, borderStyle: "dashed", borderColor: errors[f.name] ? C.accent : files[f.name] ? C.ink : C.line }}>
                 <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: C.ink, alignItems: "center", justifyContent: "center" }}>
                   {files[f.name] ? <FileCheck2 size={20} color={C.white} /> : <Upload size={20} color={C.white} />}
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontFamily: F.bold, fontSize: 15 }} numberOfLines={1}>{files[f.name]?.name ?? f.label}</Text>
-                  <Text style={{ fontFamily: F.body, fontSize: 13, color: errors[f.name] ? C.accent : C.muted }}>{errors[f.name] ?? "PDF, JPG ou PNG até 5 MB. Toque para escolher."}</Text>
+                  <Text style={{ fontFamily: F.bold, fontSize: 15, color: C.ink }} numberOfLines={1}>{files[f.name]?.name ?? t(f.label)}</Text>
+                  <Text style={{ fontFamily: F.body, fontSize: 13, color: errors[f.name] ? C.accent : C.muted }}>{errors[f.name] ?? t("PDF, JPG ou PNG até 5 MB. Toque para escolher.")}</Text>
                 </View>
               </Pressable>
             ))}
@@ -298,10 +298,10 @@ function PayFlow({ s }: { s: Service }) {
                 {confirmed.items.map((it, i) => (
                   <View key={it.referencia} style={{ flexDirection: "row", gap: 10, padding: 14, borderTopWidth: i ? 1 : 0, borderColor: C.line }}>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontFamily: F.bold, fontSize: 14 }}>{it.titulo}</Text>
+                      <Text style={{ fontFamily: F.bold, fontSize: 14, color: C.ink }}>{it.titulo}</Text>
                       <Text style={{ fontFamily: F.body, fontSize: 12, color: C.muted }}>{it.referencia} · {it.detalhe}</Text>
                     </View>
-                    <Text style={{ fontFamily: F.semi, fontSize: 14 }}>{formatMZN(it.valor)}</Text>
+                    <Text style={{ fontFamily: F.semi, fontSize: 14, color: C.ink }}>{formatMZN(it.valor)}</Text>
                   </View>
                 ))}
               </View>

@@ -123,6 +123,7 @@ const EN: Record<string, string> = {
   "Política de privacidade": "Privacy policy", "Termos de utilização": "Terms of use", "Apagar dados deste aparelho": "Clear data on this device",
   "Ajuda": "Help", "Perguntas frequentes": "FAQ", "Contactar apoio": "Contact support", "Sobre": "About", "Versão": "Version",
   "Ver boas-vindas outra vez": "Show welcome again", "Dados apagados.": "Data cleared.",
+  "PDF, JPG ou PNG até 5 MB. Toque para escolher.": "PDF, JPG or PNG up to 5 MB. Tap to choose.",
   // frases do catálogo e do servidor
   "pagamoz · portal da instituição": "pagamoz · institution portal",
   "Transacções": "Transactions",
